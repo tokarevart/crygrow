@@ -8,9 +8,13 @@
 
 namespace spt {
 
-template <std::size_t Dim, typename ValueType = double>
+using default_value_type = double;
+
+template <std::size_t Dim, typename ValueType = default_value_type>
 struct vec;
 
+template <std::size_t Dim> using vecf = vec<Dim, float>;
+template <std::size_t Dim> using vecd = vec<Dim, double>;
 template <typename Real> using vec2 = vec<2, Real>;
 using vec2f = vec2<float>;
 using vec2d = vec2<double>;
@@ -19,42 +23,153 @@ using vec3f = vec3<float>;
 using vec3d = vec3<double>;
 
 
+template <std::size_t Dim, typename ValueType>
+struct vec {
+    static constexpr std::size_t dim = Dim;
+    using value_type = ValueType;
+
+    std::array<ValueType, Dim> x;
+
+    ValueType magnitude() const {
+        return std::sqrt(sqr_magnitude());
+    }
+    ValueType sqr_magnitude() const {
+        return dot(*this, *this);
+    }
+
+    vec& normalize() {
+        auto inv_magn = static_cast<ValueType>(1) / magnitude();
+        //x[0] *= inv_magn;
+        //x[1] *= inv_magn;
+        //x[2] *= inv_magn;
+        return *this;
+    }
+
+    vec& operator=(const vec& right) {
+        x = right.x;
+        return *this;
+    }
+    vec operator-() const {
+        //return { -x[0], -x[1], -x[2] };
+    }
+    vec operator+(const vec& right) const {
+        //return {
+        //    x[0] + right.x[0],
+        //    x[1] + right.x[1],
+        //    x[2] + right.x[2] };
+    }
+    vec operator-(const vec& right) const {
+        //return {
+        //    x[0] - right.x[0],
+        //    x[1] - right.x[1],
+        //    x[2] - right.x[2] };
+    }
+    vec operator*(ValueType scalar) const {
+        //return {
+        //    x[0] * scalar,
+        //    x[1] * scalar,
+        //    x[2] * scalar };
+    }
+    vec operator/(ValueType scalar) const {
+        //return {
+        //    x[0] / scalar,
+        //    x[1] / scalar,
+        //    x[2] / scalar };
+    }
+    vec& operator+=(const vec& right) {
+        //x[0] += right.x[0];
+        //x[1] += right.x[1];
+        //x[2] += right.x[2];
+        return *this;
+    }
+    vec& operator-=(const vec& right) {
+        //x[0] -= right.x[0];
+        //x[1] -= right.x[1];
+        //x[2] -= right.x[2];
+        return *this;
+    }
+    vec& operator*=(ValueType scalar) {
+        //x[0] *= scalar;
+        //x[1] *= scalar;
+        //x[2] *= scalar;
+        return *this;
+    }
+    vec& operator/=(ValueType scalar) {
+        //x[0] /= scalar;
+        //x[1] /= scalar;
+        //x[2] /= scalar;
+        return *this;
+    }
+    ValueType& operator[](std::size_t i) {
+        return x[i];
+    }
+    const ValueType& operator[](std::size_t i) const {
+        return x[i];
+    }
+    template <typename NewValueType>
+    operator vec<3, NewValueType>() const {
+        //return {
+        //    static_cast<NewValueType>(x[0]),
+        //    static_cast<NewValueType>(x[1]),
+        //    static_cast<NewValueType>(x[2])
+        //};
+    }
+
+    vec() {
+        std::fill(x.begin(), x.end(), static_cast<ValueType>(0));
+    }
+    vec(const vec& other) {
+        x = other.x;
+    }
+    vec(const std::array<ValueType, Dim>& x)
+        : x{ x } {}
+    template <typename... TaleValues>
+    vec(ValueType x0, TaleValues... xt)
+        : x{ std::move(x0), std::move(const_cast<ValueType>(xt))... } {}
+};
+
+template<std::size_t Dim, typename ValueType>
+vec(const std::array<ValueType, Dim>& x) -> vec<Dim, ValueType>;
+
+template<typename ValueType, typename... TaleValues>
+vec(ValueType x0, TaleValues... xt) -> vec<1 + sizeof...(TaleValues), ValueType>;
+
+template<std::size_t Dim, typename ValueType>
+struct std::hash<spt::vec<Dim, ValueType>> {
+    std::size_t operator() (const spt::vec<Dim, ValueType>& key) const {
+        std::hash<ValueType> hasher;
+        std::size_t h = 0;
+        for (auto e : key.x)
+            h ^= hasher(e) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        return h;
+    }
+};
+
+
 template <typename ValueType>
 struct vec<3, ValueType> {
     static constexpr std::size_t dim = 3;
     using value_type = ValueType;
 
-    std::array<value_type, 3> x{
-        static_cast<value_type>(0),
-        static_cast<value_type>(0),
-        static_cast<value_type>(0)
+    std::array<ValueType, 3> x{
+        static_cast<ValueType>(0),
+        static_cast<ValueType>(0),
+        static_cast<ValueType>(0)
     };
 
-    value_type magnitude() const {
+    ValueType magnitude() const {
         return std::sqrt(sqr_magnitude());
     }
-    value_type sqr_magnitude() const {
+    ValueType sqr_magnitude() const {
         return dot(*this, *this);
     }
 
     vec& normalize() {
-        auto inv_magn = static_cast<value_type>(1) / magnitude();
+        auto inv_magn = static_cast<ValueType>(1) / magnitude();
         x[0] *= inv_magn;
         x[1] *= inv_magn;
         x[2] *= inv_magn;
         return *this;
-    }
-    vec& project(const vec& v) {
-        return *this = v * (dot(*this, v) / v.sqr_magnitude());
-    }
-    vec project(const vec& v) const {
-        return vec(*this).project(v);
-    }
-    vec& project(const vec& plane_v0, const vec& plane_v1) {
-        return *this -= vec(*this).project(cross(plane_v0, plane_v1));
-    }
-    vec project(const vec& plane_v0, const vec& plane_v1) const {
-        return vec(*this).project(plane_v0, plane_v1);
     }
 
     vec& operator=(const vec& right) {
@@ -76,13 +191,13 @@ struct vec<3, ValueType> {
             x[1] - right.x[1],
             x[2] - right.x[2] };
     }
-    vec operator*(value_type scalar) const {
+    vec operator*(ValueType scalar) const {
         return {
             x[0] * scalar,
             x[1] * scalar,
             x[2] * scalar };
     }
-    vec operator/(value_type scalar) const {
+    vec operator/(ValueType scalar) const {
         return {
             x[0] / scalar,
             x[1] / scalar,
@@ -100,22 +215,22 @@ struct vec<3, ValueType> {
         x[2] -= right.x[2];
         return *this;
     }
-    vec& operator*=(value_type scalar) {
+    vec& operator*=(ValueType scalar) {
         x[0] *= scalar;
         x[1] *= scalar;
         x[2] *= scalar;
         return *this;
     }
-    vec& operator/=(value_type scalar) {
+    vec& operator/=(ValueType scalar) {
         x[0] /= scalar;
         x[1] /= scalar;
         x[2] /= scalar;
         return *this;
     }
-    value_type& operator[](std::uint8_t i) {
+    ValueType& operator[](std::size_t i) {
         return x[i];
     }
-    const value_type& operator[](std::uint8_t i) const {
+    const ValueType& operator[](std::size_t i) const {
         return x[i];
     }
     template <typename NewValueType>
@@ -131,41 +246,35 @@ struct vec<3, ValueType> {
     vec(const vec& other) {
         x = other.x;
     }
-    vec(const std::array<value_type, 3> & x)
+    vec(const std::array<ValueType, 3>& x)
         : x{ x } {}
-    vec(value_type x0, value_type x1, value_type x2)
-        : x{ x0, x1, x2 } {}
+    vec(ValueType x0, ValueType x1, ValueType x2)
+        : x{ std::move(x0), std::move(x1), std::move(x2) } {}
 };
 
 
-template <typename Real>
-struct vec<2, Real> {
+template <typename ValueType>
+struct vec<2, ValueType> {
     static constexpr std::size_t dim = 2;
-    using value_type = Real;
+    using value_type = ValueType;
 
-    std::array<value_type, 2> x{
-        static_cast<value_type>(0),
-        static_cast<value_type>(0)
+    std::array<ValueType, 2> x{
+        static_cast<ValueType>(0),
+        static_cast<ValueType>(0)
     };
 
-    value_type magnitude() const {
+    ValueType magnitude() const {
         return std::sqrt(sqr_magnitude());
     }
-    value_type sqr_magnitude() const {
+    ValueType sqr_magnitude() const {
         return dot(*this, *this);
     }
 
     vec& normalize() {
-        auto inv_magn = static_cast<value_type>(1.0) / magnitude();
+        auto inv_magn = static_cast<ValueType>(1.0) / magnitude();
         x[0] *= inv_magn;
         x[1] *= inv_magn;
         return *this;
-    }
-    vec& project(const vec& v) {
-        return *this = v * (dot(*this, v) / v.sqr_magnitude());
-    }
-    vec project(const vec& v) const {
-        return vec(*this).project(vec);
     }
 
     vec& operator=(const vec& right) {
@@ -181,10 +290,10 @@ struct vec<2, Real> {
     vec operator-(const vec& right) const {
         return { x[0] - right.x[0], x[1] - right.x[1] };
     }
-    vec operator*(value_type scalar) const {
+    vec operator*(ValueType scalar) const {
         return { x[0] * scalar, x[1] * scalar };
     }
-    vec operator/(value_type scalar) const {
+    vec operator/(ValueType scalar) const {
         return { x[0] / scalar, x[1] / scalar };
     }
     vec& operator+=(const vec& right) {
@@ -197,20 +306,20 @@ struct vec<2, Real> {
         x[1] -= right.x[1];
         return *this;
     }
-    vec& operator*=(value_type scalar) {
+    vec& operator*=(ValueType scalar) {
         x[0] *= scalar;
         x[1] *= scalar;
         return *this;
     }
-    vec& operator/=(value_type scalar) {
+    vec& operator/=(ValueType scalar) {
         x[0] /= scalar;
         x[1] /= scalar;
         return *this;
     }
-    value_type& operator[](std::uint8_t i) {
+    ValueType& operator[](std::size_t i) {
         return x[i];
     }
-    const value_type& operator[](std::uint8_t i) const {
+    const ValueType& operator[](std::size_t i) const {
         return x[i];
     }
     template <typename NewValueType>
@@ -225,14 +334,14 @@ struct vec<2, Real> {
     vec(const vec& other) {
         x = other.x;
     }
-    vec(const std::array<value_type, 2> & x)
+    vec(const std::array<ValueType, 2> & x)
         : x{ x } {}
-    vec(value_type x0, value_type x1)
-        : x{ x0, x1 } {}
+    vec(ValueType x0, ValueType x1)
+        : x{ std::move(x0), std::move(x1) } {}
 };
 
-template <std::size_t N, typename ValueType>
-vec<N, ValueType> operator*(ValueType scalar, const vec<N, ValueType>& v) {
+template <std::size_t Dim, typename ValueType>
+vec<Dim, ValueType> operator*(ValueType scalar, const vec<Dim, ValueType>& v) {
     return v * scalar;
 }
 

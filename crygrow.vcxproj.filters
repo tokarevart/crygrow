@@ -29,5 +29,14 @@
     <ClInclude Include="vector-automata-base.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="unordered-map-automata-base.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="algs.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="mat.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

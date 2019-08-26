@@ -7,11 +7,11 @@
 
 namespace cgr {
 
-template <std::size_t N, typename Cell>
+template <std::size_t Dim, typename Cell>
 class automata_base {
 public:
-    virtual Cell* get_cell(const spt::vec<N, std::size_t>& pos) const = 0;
-    virtual void reset_cell(const spt::vec<N, std::size_t>& pos, Cell* ptr = nullptr) = 0;
+    virtual Cell* get_cell(const spt::vec<Dim, std::size_t>& pos) const = 0;
+    virtual void reset_cell(const spt::vec<Dim, std::size_t>& pos, Cell* ptr = nullptr) = 0;
 
     virtual bool iterate(std::size_t num_iters = 1) final {
         for (auto&& step : m_iteration_steps) 

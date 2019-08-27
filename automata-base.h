@@ -13,19 +13,21 @@ public:
     virtual Cell* get_cell(const spt::vec<Dim, std::size_t>& pos) const = 0;
     virtual void reset_cell(const spt::vec<Dim, std::size_t>& pos, Cell* ptr = nullptr) = 0;
 
-    virtual bool iterate(std::size_t num_iters = 1) final {
-        for (auto&& step : m_iteration_steps) 
+    virtual bool stop_condition() const = 0;
+    virtual bool iterate() final {
+        for (auto& step : m_steps) 
             step();
+        return !stop_condition();
     }
-    virtual void add_iteration_step(std::function<void()> step) final {
-        m_iteration_steps.push_back(step);
+    virtual void add_step(std::function<bool()> step) final {
+        m_steps.push_back(step);
     }
 
     virtual ~automata_base() {}
 
 
 private:
-    std::vector<std::function<void()>> m_iteration_steps;
+    std::vector<std::function<bool()>> m_steps;
 };
 
 } // namespace cgr

@@ -48,8 +48,7 @@ public:
         auto far_corner = cuboid_corner1;
 
         for (std::size_t i = 0; i < Dim; i++)
-            if (new_origin[i] > far_corner[i])
-                std::swap(new_origin[i], far_corner[i]);
+            sort2(new_origin[i], far_corner[i]);
 
         spt::vec<Dim, std::size_t> new_dims_lens = far_corner - new_origin;
         spt::vec<Dim, std::int64_t> dorigin = m_origin - new_origin;
@@ -84,8 +83,7 @@ public:
         auto far_corner = corner1;
 
         for (std::size_t i = 0; i < Dim; i++)
-            if (new_origin[i] > far_corner[i])
-                std::swap(new_origin[i], far_corner[i]);
+            sort2(new_origin[i], far_corner[i]);
 
         bool need_resize = false;
         for (std::size_t i = 0; i < Dim; i++)
@@ -161,11 +159,11 @@ private:
                                         const spt::vec<Dim, std::size_t>& dims_lens) const {
         // implement
     }
+    template <typename T>
+    void sort2(T& first, T& second) {
+        if (first > second)
+            std::swap(first, second);
+    }
 };
-
-namespace gridimpl {
-template <std::size_t Dim, typename Cell>
-using vector = vector_automata_base<Dim, Cell>;
-}
 
 } // namespace cgr

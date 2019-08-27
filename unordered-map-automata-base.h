@@ -39,9 +39,4 @@ private:
         std::unique_ptr<Cell>> m_cells; // try specify hasher excplicitly if there is error
 };
 
-namespace gridimpl {
-template <std::size_t Dim, typename Cell>
-using unordered_map = unordered_map_automata_base<Dim, Cell>;
-}
-
 } // namespace cgr

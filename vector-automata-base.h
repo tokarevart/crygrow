@@ -149,14 +149,14 @@ private:
         return actual_pos(pos, m_origin);
     }
     spt::vec<Dim, std::int64_t> actual_pos(const spt::vec<Dim, std::int64_t>& pos,
-                                         const spt::vec<Dim, std::int64_t>& origin) const {
+                                           const spt::vec<Dim, std::int64_t>& origin) const {
         return pos - origin;
     }
     spt::vec<Dim, std::size_t> actual_pos(std::size_t offset) const {
         return actual_pos(offset, m_dims_lens);
     }
     spt::vec<Dim, std::size_t> actual_pos(std::size_t offset,
-                                        const spt::vec<Dim, std::size_t>& dims_lens) const {
+                                          const spt::vec<Dim, std::size_t>& dims_lens) const {
         // implement
     }
     template <typename T>

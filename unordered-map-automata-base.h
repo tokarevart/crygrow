@@ -11,10 +11,21 @@ namespace cgr {
 template <std::size_t Dim, typename Cell>
 class unordered_map_automata_base : automata_base<Dim, Cell> {
 public:
-    Cell* get(const spt::vec<Dim, std::int64_t>& pos) const override final {
+    // try specify hasher excplicitly if there is error
+    using cells_container_type = std::unordered_map<veci, std::unique_ptr<Cell>>;
+    using iterator = cell_iterator<vector_automata_base<Dim, Cell>>;
+
+    iterator begin() const {
+        return { m_cells.begin() };
+    }
+    iterator end() const {
+        return { m_cells.end() };
+    }
+
+    Cell* get(const veci& pos) const override final {
         return m_cells[pos].get();
     }
-    void  reset(const spt::vec<Dim, std::int64_t>& pos, Cell* ptr = nullptr) override final {
+    void reset(const veci& pos, Cell* ptr = nullptr) override final {
         m_cells[pos].reset(ptr);
     }
 
@@ -34,9 +45,22 @@ public:
 
 
 private:
-    std::unordered_map<
-        spt::vec<Dim, std::int64_t>,
-        std::unique_ptr<Cell>> m_cells; // try specify hasher excplicitly if there is error
+    cells_container_type m_cells;
+};
+
+
+template <std::size_t Dim, typename Cell>
+class cell_iterator<unordered_map_automata_base<Dim, Cell>> 
+    : cell_iterator_base<unordered_map_automata_base<Dim, Cell>> {
+public:
+    // implementation
+
+    cell_iterator(from_iterator it)
+        : m_it{ it } {}
+
+
+private:
+    from_iterator m_it;
 };
 
 } // namespace cgr

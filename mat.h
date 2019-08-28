@@ -3,12 +3,33 @@
 
 namespace spt {
 
-template <std::size_t Dim, typename ValueType = typename spt::vec<Dim>::value_type>
+using default_value_type = double;
+
+template <std::size_t N, typename ValueType = default_value_type>
 struct mat;
+
+template <std::size_t N> using mati = mat<N, std::int64_t>;
+template <std::size_t N> using matf = mat<N, float>;
+template <std::size_t N> using matd = mat<N, double>;
+template <typename ValueType> 
+using mat2 = mat<2, ValueType>;
+using mat2i = mati<2>;
+using mat2f = matf<2>;
+using mat2d = matd<2>;
+template <typename ValueType> 
+using mat3 = mat<3, ValueType>;
+using mat3i = mati<3>;
+using mat3f = matf<3>;
+using mat3d = matd<3>;
+template <typename ValueType> 
+using mat4 = mat<4, ValueType>;
+using mat4i = mati<4>;
+using mat4f = matf<4>;
+using mat4d = matd<4>;
 
 template <typename ValueType>
 struct mat<3, ValueType> {
-    static constexpr std::size_t dim = 3;
+    static constexpr std::size_t n = 3;
     using value_type = ValueType;
     using line_type = spt::vec<3, value_type>;
 
@@ -109,9 +130,9 @@ struct mat<3, ValueType> {
     mat(const std::array<line_type, 3> & x)
         : x{ x } {}
     mat(const std::array<value_type, 9> & x) {
-        this->x[0] = line_type(x[0], x[1], x[2]);
-        this->x[1] = line_type(x[3], x[4], x[5]);
-        this->x[2] = line_type(x[6], x[7], x[8]);
+        this->x[0] = line_type{ x[0], x[1], x[2] };
+        this->x[1] = line_type{ x[3], x[4], x[5] };
+        this->x[2] = line_type{ x[6], x[7], x[8] };
     }
     mat(const line_type& x0, const line_type& x1, const line_type& x2) {
         x[0] = x0;

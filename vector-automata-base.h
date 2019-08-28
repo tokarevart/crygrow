@@ -8,9 +8,20 @@
 namespace cgr {
 
 template <std::size_t Dim, typename Cell>
-class vector_automata_base : automata_base<Dim, Cell> {
+class vector_automata_base 
+    : automata_base<Dim, Cell> {
 public:
-    Cell* get(const spt::vec<Dim, std::int64_t>& pos) const override final {
+    using cells_container_type = std::vector<std::unique_ptr<Cell>>;
+    using iterator = cell_iterator<vector_automata_base<Dim, Cell>>;
+
+    iterator begin() const {
+        return { m_cells.begin() };
+    }
+    iterator end() const {
+        return { m_cells.end() };
+    }
+
+    Cell* get(const veci& pos) const override final {
         auto actualpos = actual_pos(pos);
         for (std::size_t i = 0; i < Dim; i++)
             if (actualpos[i] >= m_dims_lens[i] ||
@@ -19,7 +30,7 @@ public:
 
         return m_cells[offset(actualpos)].get();
     }
-    void  reset(const spt::vec<Dim, std::int64_t>& pos, Cell* ptr = nullptr) override final {
+    void reset(const veci& pos, Cell* ptr = nullptr) override final {
         auto actualpos = actual_pos(pos);
         bool need_resize = false;
         auto new_origin = m_origin;
@@ -42,16 +53,16 @@ public:
         m_cells[offset(actual_pos(pos))].reset(ptr);
     }
 
-    virtual void resize(const spt::vec<Dim, std::int64_t>& corner0,
-                        const spt::vec<Dim, std::int64_t>& corner1) final {
+    virtual void resize(const veci& corner0,
+                        const veci& corner1) final {
         auto new_origin = corner0;
         auto far_corner = corner1;
 
         for (std::size_t i = 0; i < Dim; i++)
             sort2(new_origin[i], far_corner[i]);
 
-        spt::vec<Dim, std::size_t> new_dims_lens = far_corner - new_origin;
-        spt::vec<Dim, std::int64_t> dorigin = m_origin - new_origin;
+        vecu new_dims_lens = far_corner - new_origin;
+        veci dorigin = m_origin - new_origin;
 
         std::vector<std::unique_ptr<Cell>> new_cells(
             std::accumulate(new_dims_lens.x.begin(), new_dims_lens.x.end(), 1,
@@ -77,8 +88,8 @@ public:
         m_origin = new_origin;
         m_dims_lens = new_dims_lens;
     }
-    virtual void reserve(const spt::vec<Dim, std::int64_t>& corner0,
-                         const spt::vec<Dim, std::int64_t>& corner1) final {
+    virtual void reserve(const veci& corner0,
+                         const veci& corner1) final {
         auto new_origin = corner0;
         auto far_corner = corner1;
 
@@ -104,22 +115,22 @@ public:
         resize(new_origin, far_corner);
     }
     virtual void shrink_to_fit() final {
-        // implement
+        // implementation
     }
 
     virtual ~vector_automata_base() {}
 
 
 private:
-    spt::vec<Dim, std::int64_t> m_origin;
-    spt::vec<Dim, std::size_t> m_dims_lens;
-    std::vector<std::unique_ptr<Cell>> m_cells;
+    veci m_origin;
+    vecu m_dims_lens;
+    cells_container_type m_cells;
 
-    std::size_t offset(const spt::vec<Dim, std::size_t>& pos) const {
-        return offset(m_dims_lens);
+    std::size_t offset(const vecu& pos) const {
+        return offset(pos, m_dims_lens);
     }
-    std::size_t offset(const spt::vec<Dim, std::size_t>& pos, 
-                       const spt::vec<Dim, std::size_t>& dims_lens) const {
+    std::size_t offset(const vecu& pos,
+                       const vecu& dims_lens) const {
         std::size_t res = pos.x[0];
         std::size_t mul = dims_lens[0];
         for (std::size_t i = 1; i < Dim; i++) {
@@ -128,25 +139,37 @@ private:
         }
         return res;
     }
-    spt::vec<Dim, std::int64_t> actual_pos(const spt::vec<Dim, std::int64_t>& pos) const {
+    veci actual_pos(const veci& pos) const {
         return actual_pos(pos, m_origin);
     }
-    spt::vec<Dim, std::int64_t> actual_pos(const spt::vec<Dim, std::int64_t>& pos,
-                                           const spt::vec<Dim, std::int64_t>& origin) const {
+    veci actual_pos(const veci& pos, const veci& origin) const {
         return pos - origin;
     }
-    spt::vec<Dim, std::size_t> actual_pos(std::size_t offset) const {
+    vecu actual_pos(std::size_t offset) const {
         return actual_pos(offset, m_dims_lens);
     }
-    spt::vec<Dim, std::size_t> actual_pos(std::size_t offset,
-                                          const spt::vec<Dim, std::size_t>& dims_lens) const {
-        // implement
+    vecu actual_pos(std::size_t offset, const vecu& dims_lens) const {
+        // implementation
     }
     template <typename T>
     void sort2(T& first, T& second) {
         if (first > second)
             std::swap(first, second);
     }
+};
+
+
+template <std::size_t Dim, typename Cell>
+class cell_iterator<vector_automata_base<Dim, Cell>> : cell_iterator_base<vector_automata_base<Dim, Cell>> {
+public:
+    // implementation
+
+    cell_iterator(from_iterator it) 
+        : m_it{ it } {}
+
+
+private:
+    from_iterator m_it;
 };
 
 } // namespace cgr

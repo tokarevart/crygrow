@@ -4,9 +4,7 @@
 // With help of David Eberly's and Dan Sunday's works.
 
 #pragma once
-#include <cmath>
-#include <algorithm>
-#include "mat.h"
+#include "sptops.h"
 
 // TODO: try pass by classes-containers instead of reference and make benchmark
 // TODO: try vectorization (SIMD) and make benchmark
@@ -30,55 +28,10 @@ bool weak_in_cuboid(const vec<Dim, ValueType>& corner0,
     //    weak_between(corner0.x[2], corner1.x[2], point.x[2]);
 }
 
-template <std::size_t Dim, typename ValueType>
-mat<Dim, ValueType> dot(const mat<Dim, ValueType>& mat0, const mat<Dim, ValueType>& mat1) {
-    //std::array mat1_cols{
-    //    vec<3, Real>{ mat1[0][0], mat1[1][0], mat1[2][0] },
-    //    vec<3, Real>{ mat1[0][1], mat1[1][1], mat1[2][1] },
-    //    vec<3, Real>{ mat1[0][2], mat1[1][2], mat1[2][2] } };
-    //return {
-    //    { dot(mat0[0], mat1_cols[0]), dot(mat0[0], mat1_cols[1]), dot(mat0[0], mat1_cols[2]) },
-    //    { dot(mat0[1], mat1_cols[0]), dot(mat0[1], mat1_cols[1]), dot(mat0[1], mat1_cols[2]) },
-    //    { dot(mat0[2], mat1_cols[0]), dot(mat0[2], mat1_cols[1]), dot(mat0[2], mat1_cols[2]) } };
-}
-
-template <std::size_t Dim, typename ValueType>
-vec<Dim, ValueType> dot(const mat<Dim, ValueType>& matr, const vec<Dim, ValueType>& vect) {
-    //return { dot(matr[0], vect), dot(matr[1], vect), dot(matr[2], vect) };
-}
-
-template <std::size_t Dim, typename ValueType>
-ValueType dot(const vec<Dim, ValueType>& vec0, const vec<Dim, ValueType>& vec1) {
-    //return vec0[0] * vec1[0] + vec0[1] * vec1[1] + vec0[2] * vec1[2];
-}
-
-template <typename Real>
-vec<3, Real> cross(const vec<3, Real>& vec0, const vec<3, Real>& vec1) {
-    return {
-        vec0.x[1] * vec1.x[2] - vec0.x[2] * vec1.x[1],
-        vec0.x[2] * vec1.x[0] - vec0.x[0] * vec1.x[2],
-        vec0.x[0] * vec1.x[1] - vec0.x[1] * vec1.x[0] };
-}
-
-template <typename Real>
-Real cross(const vec<2, Real>& vec0, const vec<2, Real>& vec1) {
-    return vec0[0] * vec1[1] - vec0[1] * vec1[0];
-}
-
-template <typename Real>
-Real mixed(const vec<3, Real>& vec0, const vec<3, Real>& vec1, const vec<3, Real>& vec2) {
-    return dot(cross(vec0, vec1), vec2);
-}
-
-template <std::size_t Dim, typename Real>
-Real cos(const vec<Dim, Real>& vec0, const vec<Dim, Real>& vec1) {
-    return dot(vec0, vec1) / std::sqrt(vec0.sqr_magnitude() * vec1.sqr_magnitude());
-}
-
 // NOTE: using with vec of integers needs different implementation
 template <std::size_t Dim, typename Real>
 vec<Dim, Real> project_on_vec(const vec<Dim, Real>& v, const vec<Dim, Real>& on_v) {
-    return on_v * (dot(v, on_v) / on_v.sqr_magnitude());
+    return on_v * (dot(v, on_v) / on_v.magnitude2());
 }
 
 template <std::size_t Dim, typename Real>
@@ -280,14 +233,14 @@ bool does_triangle_intersect_sphere(
     const vec<3, Real>& center, Real radius) {
 
     auto proj = project_on_plane(center, trngl_p0, trngl_p1, trngl_p2);
-    if ((proj - center).sqr_magnitude() > radius * radius)
+    if ((proj - center).magnitude2() > radius * radius)
         return false;
 
     if (is_point_on_triangle(proj, trngl_p0, trngl_p1, trngl_p2, max_sqrs_sum(trngl_p0, trngl_p1, trngl_p2)))
         return true;
 
     auto closest = closest_triangle_point_to_point_on_plane(proj, trngl_p0, trngl_p1, trngl_p2);
-    return (closest - center).sqr_magnitude() <= radius * radius;
+    return (closest - center).magnitude2() <= radius * radius;
 }
 
 template <typename Real>
@@ -296,9 +249,9 @@ Real sqrs_sum(
     const vec<3, Real>& trngl_p0, const vec<3, Real>& trngl_p1, const vec<3, Real>& trngl_p2) {
 
     std::array sqrs{
-        (trngl_p0 - point).sqr_magnitude(),
-        (trngl_p1 - point).sqr_magnitude(),
-        (trngl_p2 - point).sqr_magnitude()
+        (trngl_p0 - point).magnitude2(),
+        (trngl_p1 - point).magnitude2(),
+        (trngl_p2 - point).magnitude2()
     };
     return sqrs[0] + sqrs[1] + sqrs[2];
 }
@@ -308,9 +261,9 @@ Real max_sqrs_sum(
     const vec<3, Real>& trngl_p0, const vec<3, Real>& trngl_p1, const vec<3, Real>& trngl_p2) {
 
     std::array sqrs{
-        (trngl_p1 - trngl_p0).sqr_magnitude(),
-        (trngl_p2 - trngl_p1).sqr_magnitude(),
-        (trngl_p0 - trngl_p2).sqr_magnitude()
+        (trngl_p1 - trngl_p0).magnitude2(),
+        (trngl_p2 - trngl_p1).magnitude2(),
+        (trngl_p0 - trngl_p2).magnitude2()
     };
 
     std::array<std::size_t, 2> max_inds;
@@ -388,7 +341,7 @@ vec<3, Real> closest_segment_point_to_point(
 
     if (weak_in_cuboid(segm_p0, segm_p1, proj)) {
         return proj;
-    } else if (std::array sqr_magns{ (segm_p0 - point).sqr_magnitude(), (segm_p1 - point).sqr_magnitude() };
+    } else if (std::array sqr_magns{ (segm_p0 - point).magnitude2(), (segm_p1 - point).magnitude2() };
                sqr_magns[0] < sqr_magns[1]) {
         return segm_p0;
     } else {
@@ -408,9 +361,9 @@ vec<3, Real> closest_triangle_point_to_point_on_plane(
     };
 
     std::array sqrs{
-        (closest_points[0] - point).sqr_magnitude(),
-        (closest_points[1] - point).sqr_magnitude(),
-        (closest_points[2] - point).sqr_magnitude()
+        (closest_points[0] - point).magnitude2(),
+        (closest_points[1] - point).magnitude2(),
+        (closest_points[2] - point).magnitude2()
     };
 
     std::size_t min_i;
@@ -446,7 +399,7 @@ Real distance_point_to_segment(
 
     if (weak_in_cuboid(segm_p0, segm_p1, proj)) {
         return (proj - point).magnitude();
-    } else if (std::array sqr_magns{ (segm_p0 - point).sqr_magnitude(), (segm_p1 - point).sqr_magnitude() };
+    } else if (std::array sqr_magns{ (segm_p0 - point).magnitude2(), (segm_p1 - point).magnitude2() };
                sqr_magns[0] < sqr_magns[1]) {
         return std::sqrt(sqr_magns[0]);
     } else {
@@ -466,9 +419,9 @@ Real distance_point_to_triangle_on_plane(
     };
 
     std::array sqrs{
-        (closest_points[0] - point).sqr_magnitude(),
-        (closest_points[1] - point).sqr_magnitude(),
-        (closest_points[2] - point).sqr_magnitude()
+        (closest_points[0] - point).magnitude2(),
+        (closest_points[1] - point).magnitude2(),
+        (closest_points[2] - point).magnitude2()
     };
 
     return std::min({ sqrs[0], sqrs[1], sqrs[2] });

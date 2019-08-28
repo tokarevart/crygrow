@@ -13,14 +13,24 @@ using default_value_type = double;
 template <std::size_t Dim, typename ValueType = default_value_type>
 struct vec;
 
+template <std::size_t Dim> using veci = vec<Dim, std::int64_t>;
 template <std::size_t Dim> using vecf = vec<Dim, float>;
 template <std::size_t Dim> using vecd = vec<Dim, double>;
-template <typename Real> using vec2 = vec<2, Real>;
+template <typename ValueType> 
+using vec2 = vec<2, ValueType>;
+using vec2i = vec2<std::int64_t>;
 using vec2f = vec2<float>;
 using vec2d = vec2<double>;
-template <typename Real> using vec3 = vec<3, Real>;
+template <typename ValueType> 
+using vec3 = vec<3, ValueType>;
+using vec3i = vec3<std::int64_t>;
 using vec3f = vec3<float>;
 using vec3d = vec3<double>;
+template <typename ValueType> 
+using vec4 = vec<4, ValueType>;
+using vec4i = vec4<std::int64_t>;
+using vec4f = vec4<float>;
+using vec4d = vec4<double>;
 
 
 template <std::size_t Dim, typename ValueType>
@@ -31,9 +41,9 @@ struct vec {
     std::array<ValueType, Dim> x;
 
     ValueType magnitude() const {
-        return std::sqrt(sqr_magnitude());
+        return std::sqrt(magnitude2());
     }
-    ValueType sqr_magnitude() const {
+    ValueType magnitude2() const {
         return dot(*this, *this);
     }
 
@@ -121,18 +131,20 @@ struct vec {
     vec(const vec& other) {
         x = other.x;
     }
-    vec(const std::array<ValueType, Dim>& x)
+    vec(const std::array<ValueType, Dim> & x)
         : x{ x } {}
-    template <typename... TaleValues>
-    vec(ValueType x0, TaleValues... xt)
-        : x{ std::move(x0), std::move(const_cast<ValueType>(xt))... } {}
+    template <typename... Values>
+    vec(Values&&... xs)
+        : x{ std::forward<ValueType>(static_cast<ValueType>(xs))... } {}
 };
+
 
 template<std::size_t Dim, typename ValueType>
 vec(const std::array<ValueType, Dim>& x) -> vec<Dim, ValueType>;
 
 template<typename ValueType, typename... TaleValues>
 vec(ValueType x0, TaleValues... xt) -> vec<1 + sizeof...(TaleValues), ValueType>;
+
 
 template<std::size_t Dim, typename ValueType>
 struct std::hash<spt::vec<Dim, ValueType>> {
@@ -146,6 +158,7 @@ struct std::hash<spt::vec<Dim, ValueType>> {
 };
 
 } // namespace spt
+
 
 template <std::size_t Dim, typename ValueType>
 spt::vec<Dim, ValueType> operator*(ValueType scalar, const spt::vec<Dim, ValueType>& v) {

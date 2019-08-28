@@ -157,9 +157,10 @@
     <ClCompile Include="crygrow.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="algs.h" />
     <ClInclude Include="automata-base.h" />
     <ClInclude Include="mat.h" />
+    <ClInclude Include="sptalgs.h" />
+    <ClInclude Include="sptops.h" />
     <ClInclude Include="unordered-map-automata-base.h" />
     <ClInclude Include="vector-automata-base.h" />
     <ClInclude Include="vec.h" />

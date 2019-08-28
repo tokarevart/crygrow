@@ -10,7 +10,7 @@ namespace cgr {
 template <std::size_t Dim, typename Cell>
 class vector_automata_base : automata_base<Dim, Cell> {
 public:
-    Cell* get_cell(const spt::vec<Dim, std::int64_t>& pos) const override final {
+    Cell* get(const spt::vec<Dim, std::int64_t>& pos) const override final {
         auto actualpos = actual_pos(pos);
         for (std::size_t i = 0; i < Dim; i++)
             if (actualpos[i] >= m_dims_lens[i] ||
@@ -19,7 +19,7 @@ public:
 
         return m_cells[offset(actualpos)].get();
     }
-    void reset_cell(const spt::vec<Dim, std::int64_t>& pos, Cell* ptr = nullptr) override final {
+    void  reset(const spt::vec<Dim, std::int64_t>& pos, Cell* ptr = nullptr) override final {
         auto actualpos = actual_pos(pos);
         bool need_resize = false;
         auto new_origin = m_origin;
@@ -37,15 +37,15 @@ public:
             }
         }
         if (need_resize)
-            resize_cells(new_origin, far_corner);
+            resize(new_origin, far_corner);
 
         m_cells[offset(actual_pos(pos))].reset(ptr);
     }
 
-    virtual void resize_cells(const spt::vec<Dim, std::int64_t>& cuboid_corner0,
-                              const spt::vec<Dim, std::int64_t>& cuboid_corner1) final {
-        auto new_origin = cuboid_corner0;
-        auto far_corner = cuboid_corner1;
+    virtual void resize(const spt::vec<Dim, std::int64_t>& corner0,
+                        const spt::vec<Dim, std::int64_t>& corner1) final {
+        auto new_origin = corner0;
+        auto far_corner = corner1;
 
         for (std::size_t i = 0; i < Dim; i++)
             sort2(new_origin[i], far_corner[i]);
@@ -77,8 +77,8 @@ public:
         m_origin = new_origin;
         m_dims_lens = new_dims_lens;
     }
-    virtual void reserve_cells(const spt::vec<Dim, std::int64_t>& cuboid_corner0,
-                               const spt::vec<Dim, std::int64_t>& cuboid_corner1) final {
+    virtual void reserve(const spt::vec<Dim, std::int64_t>& corner0,
+                         const spt::vec<Dim, std::int64_t>& corner1) final {
         auto new_origin = corner0;
         auto far_corner = corner1;
 
@@ -101,26 +101,9 @@ public:
         for (std::size_t i = 0; i < Dim; i++)
             far_corner[i] = std::max(far_corner[i], m_origin[i] + m_dims_lens[i]);
 
-        resize_cells(new_origin, far_corner);
-
-        //spt::vec<Dim, std::size_t> new_dims_lens = far_corner - new_origin;
-        //spt::vec<Dim, std::size_t> dorigin = m_origin - new_origin;
-        //
-        //std::vector<std::unique_ptr<Cell>> new_cells(
-        //    std::accumulate(new_dims_lens.x.begin(), new_dims_lens.x.end(), 1,
-        //                    std::multiplies<std::size_t>()));
-        //
-        //for (std::size_t i = 0; i < m_cells.size(); i++) {
-        //    auto new_actualpos = actual_pos(i) + dorigin;
-        //    new_i = offset(new_actualpos, new_dims_lens);
-        //    new_cells[new_i] = std::move(m_cells[i]);
-        //}
-        //
-        //m_cells = std::move(new_cells);
-        //m_origin = new_origin;
-        //m_dims_lens = new_dims_lens;
+        resize(new_origin, far_corner);
     }
-    virtual void shrink_to_fit_cells() final {
+    virtual void shrink_to_fit() final {
         // implement
     }
 

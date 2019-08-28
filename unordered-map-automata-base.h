@@ -11,17 +11,17 @@ namespace cgr {
 template <std::size_t Dim, typename Cell>
 class unordered_map_automata_base : automata_base<Dim, Cell> {
 public:
-    Cell* get_cell(const spt::vec<Dim, std::int64_t>& pos) const override final {
+    Cell* get(const spt::vec<Dim, std::int64_t>& pos) const override final {
         return m_cells[pos].get();
     }
-    void reset_cell(const spt::vec<Dim, std::int64_t>& pos, Cell* ptr = nullptr) override final {
+    void  reset(const spt::vec<Dim, std::int64_t>& pos, Cell* ptr = nullptr) override final {
         m_cells[pos].reset(ptr);
     }
 
-    virtual void reserve_cells(std::size_t count) final {
+    virtual void reserve(std::size_t count) final {
         m_cells.reserve(count);
     }
-    virtual void shrink_to_fit_cells() final {
+    virtual void shrink_to_fit() final {
         for (auto it = m_cells.begin(); it != m_cells.end();) {
             if (!it->second)
                 it = c.erase(it);

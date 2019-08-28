@@ -3,27 +3,33 @@
 struct base {
     int a = 0;
 
-    virtual void foo() {
-        std::cout << "base::foo" << std::endl;
-    }
+    virtual void foo() = 0;
 };
 
 struct derived0 : base {
     int b = 1;
 
-    void foo() override final {
+    void foo() override {
         std::cout << "derived0::foo" << std::endl;
     }
 
     void bar() {
         std::cout << "derived0::bar" << std::endl;
     }
+
+    void foo_call() {
+        derived0::foo();
+    }
 };
 
-struct derived1 : base, derived0 {
+struct derived1 : derived0, base {
     int b = 1;
     int c = 2;
     
+    void foo() override {
+        std::cout << "derived1::foo" << std::endl;
+    }
+
     void bar() {
         std::cout << "derived1::bar" << std::endl;
     }
@@ -40,8 +46,10 @@ struct derived1 : base, derived0 {
 };
 
 int main() {
-    base* ptr = new derived1;
-    ptr->a = 2;
+    derived1* ptr = new derived1;
+    ptr->derived0::a = 2;
+    ptr->foo();
+    ptr->foo_call();
     std::cout << dynamic_cast<derived1*>(ptr)->derived0::a << ' ' << dynamic_cast<derived1*>(ptr)->b;
     return 0;
 }

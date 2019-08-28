@@ -145,7 +145,16 @@ vec(const std::array<ValueType, Dim>& x) -> vec<Dim, ValueType>;
 template<typename ValueType, typename... TaleValues>
 vec(ValueType x0, TaleValues... xt) -> vec<1 + sizeof...(TaleValues), ValueType>;
 
+} // namespace spt
 
+
+template <std::size_t Dim, typename ValueType>
+spt::vec<Dim, ValueType> operator*(ValueType scalar, const spt::vec<Dim, ValueType>& v) {
+    return v * scalar;
+
+}
+
+// taken from boost
 template<std::size_t Dim, typename ValueType>
 struct std::hash<spt::vec<Dim, ValueType>> {
     std::size_t operator() (const spt::vec<Dim, ValueType>& key) const {
@@ -156,11 +165,3 @@ struct std::hash<spt::vec<Dim, ValueType>> {
         return h;
     }
 };
-
-} // namespace spt
-
-
-template <std::size_t Dim, typename ValueType>
-spt::vec<Dim, ValueType> operator*(ValueType scalar, const spt::vec<Dim, ValueType>& v) {
-    return v * scalar;
-}

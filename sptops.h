@@ -31,21 +31,23 @@ ValueType dot(const vec<Dim, ValueType>& vec0, const vec<Dim, ValueType>& vec1) 
     //return vec0[0] * vec1[0] + vec0[1] * vec1[1] + vec0[2] * vec1[2];
 }
 
-template <typename Real>
-vec<3, Real> cross(const vec<3, Real>& vec0, const vec<3, Real>& vec1) {
+template <typename ValueType>
+vec<3, ValueType> cross(const vec<3, ValueType>& vec0, const vec<3, ValueType>& vec1) {
     return {
         vec0.x[1] * vec1.x[2] - vec0.x[2] * vec1.x[1],
         vec0.x[2] * vec1.x[0] - vec0.x[0] * vec1.x[2],
         vec0.x[0] * vec1.x[1] - vec0.x[1] * vec1.x[0] };
 }
 
-template <typename Real>
-Real cross(const vec<2, Real>& vec0, const vec<2, Real>& vec1) {
+template <typename ValueType>
+ValueType cross(const vec<2, ValueType>& vec0, const vec<2, ValueType>& vec1) {
     return vec0[0] * vec1[1] - vec0[1] * vec1[0];
 }
 
-template <typename Real>
-Real mixed(const vec<3, Real>& vec0, const vec<3, Real>& vec1, const vec<3, Real>& vec2) {
+template <typename ValueType>
+ValueType mixed(const vec<3, ValueType>& vec0, 
+                const vec<3, ValueType>& vec1, 
+                const vec<3, ValueType>& vec2) {
     return dot(cross(vec0, vec1), vec2);
 }
 

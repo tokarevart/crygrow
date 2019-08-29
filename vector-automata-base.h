@@ -22,37 +22,14 @@ public:
     }
 
     Cell* get(const veci& pos) const override final {
-        auto actualpos = actual_pos(pos);
-        for (std::size_t i = 0; i < Dim; i++)
-            if (actualpos[i] >= m_dims_lens[i] ||
-                actualpos[i] < 0)
-                return nullptr;
-
+        try_reallocate(pos);
         return m_cells[offset(actualpos)].get();
     }
     void reset(const veci& pos, Cell* ptr = nullptr) override final {
-        auto actualpos = actual_pos(pos);
-        bool need_resize = false;
-        auto new_origin = m_origin;
-        auto far_corner = m_origin + m_dims_lens;
-        for (std::size_t i = 0; i < Dim; i++) {
-            if (actualpos[i] >= m_dims_lens[i]) {
-                far_corner[i] += 1 + actualpos[i] - m_dims_lens[i];
-                far_corner[i] += (far_corner[i] - new_origin[i]) * 2;
-                need_resize = true;
-            }
-            else if (actualpos[i] < 0) {
-                new_origin[i] += actualpos[i];
-                new_origin[i] += (new_origin[i] - far_corner[i]) * 2;
-                need_resize = true;
-            }
-        }
-        if (need_resize)
-            resize(new_origin, far_corner);
-
+        try_reallocate(pos);
         m_cells[offset(actual_pos(pos))].reset(ptr);
     }
-
+    
     virtual void resize(const veci& corner0,
                         const veci& corner1) final {
         auto new_origin = corner0;
@@ -60,8 +37,8 @@ public:
 
         for (std::size_t i = 0; i < Dim; i++)
             sort2(new_origin[i], far_corner[i]);
-
-        vecu new_dims_lens = far_corner - new_origin;
+        
+        vecu new_dims_lens = far_corner + veci{ 1, 1, 1 } - new_origin;
         veci dorigin = m_origin - new_origin;
 
         std::vector<std::unique_ptr<Cell>> new_cells(
@@ -150,6 +127,27 @@ private:
     }
     vecu actual_pos(std::size_t offset, const vecu& dims_lens) const {
         // implementation
+    }
+    bool try_reallocate(const veci& pos) {
+        auto actualpos = actual_pos(pos);
+        bool need_resize = false;
+        auto new_origin = m_origin;
+        auto far_corner = m_origin + m_dims_lens;
+        for (std::size_t i = 0; i < Dim; i++) {
+            if (actualpos[i] >= m_dims_lens[i]) {
+                far_corner[i] += 1 + actualpos[i] - m_dims_lens[i];
+                far_corner[i] += (far_corner[i] - new_origin[i]) * 2;
+                need_resize = true;
+            } else if (actualpos[i] < 0) {
+                new_origin[i] += actualpos[i];
+                new_origin[i] += (new_origin[i] - far_corner[i]) * 2;
+                need_resize = true;
+            }
+        }
+        if (need_resize)
+            resize(new_origin, far_corner);
+
+        return need_resize;
     }
     template <typename T>
     void sort2(T& first, T& second) {

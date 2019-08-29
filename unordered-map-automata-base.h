@@ -9,7 +9,7 @@
 namespace cgr {
 
 template <std::size_t Dim, typename Cell>
-class unordered_map_automata_base : virtual automata_base<Dim, Cell> {
+class unordered_map_automata_base : automata_base<Dim, Cell> {
 public:
     // try specify hasher excplicitly if there is error
     using cells_container_type = std::unordered_map<veci, std::unique_ptr<Cell>>;

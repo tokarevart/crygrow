@@ -10,7 +10,7 @@ namespace cgr {
 template <typename Automata>
 struct cell_iterator_base : std::iterator<std::forward_iterator_tag, Automata::cell_type> {
     using cell_type = Automata::cell_type;
-    using value_type = cell_type*;
+    using value_type = Automata::cell_type*;
     using from_iterator = Automata::cells_container_type::iterator;
 };
 
@@ -18,7 +18,6 @@ template <typename Automata>
 class cell_iterator;
 
 
-// try change template Cell to cell_base class and make benchmarks
 template <std::size_t Dim, typename Cell>
 class automata_base {
 public:

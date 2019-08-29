@@ -8,7 +8,7 @@
 namespace cgr {
 
 template <std::size_t Dim, typename Cell>
-class vector_automata_base : virtual automata_base<Dim, Cell> {
+class vector_automata_base : automata_base<Dim, Cell> {
 public:
     using cells_container_type = std::vector<std::unique_ptr<Cell>>;
     using iterator = cell_iterator<vector_automata_base<Dim, Cell>>;

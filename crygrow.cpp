@@ -22,7 +22,7 @@ struct derived0 : base {
     }
 };
 
-struct derived1 : derived0, base {
+struct derived1 : derived0 {
     int b = 1;
     int c = 2;
     

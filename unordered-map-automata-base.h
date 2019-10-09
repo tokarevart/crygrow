@@ -23,16 +23,17 @@ public:
     }
 
     Cell* get(const veci& pos) const override final {
-        return m_cells[pos].get();
+        auto search = m_cells.find(pos);
+        return search != m_cells.end() ? search->second.get() : nullptr;
     }
     void reset(const veci& pos, Cell* ptr = nullptr) override final {
         m_cells[pos].reset(ptr);
     }
 
-    virtual void reserve(std::size_t count) final {
+    void reserve(std::size_t count) {
         m_cells.reserve(count);
     }
-    virtual void shrink_to_fit() final {
+    void shrink_to_fit() {
         for (auto it = m_cells.begin(); it != m_cells.end();) {
             if (!it->second)
                 it = c.erase(it);
@@ -53,7 +54,23 @@ template <std::size_t Dim, typename Cell>
 class cell_iterator<unordered_map_automata_base<Dim, Cell>> 
     : cell_iterator_base<unordered_map_automata_base<Dim, Cell>> {
 public:
-    // implementation
+    pointer to_ptr() const override final {
+        return m_it->second.get();
+    }
+
+    bool operator==(const cell_iterator& other) const {
+        return m_it == other.m_it;
+    }
+    bool operator!=(const cell_iterator& other) const {
+        return m_it != other.m_it;
+    }
+    cell_iterator& operator++() const {
+        ++m_it;
+        return *this;
+    }
+    value_type& operator*() const {
+        return *to_ptr();
+    }
 
     cell_iterator(from_iterator it)
         : m_it{ it } {}

@@ -21,16 +21,15 @@ public:
     }
 
     Cell* get(const veci& pos) const override final {
-        try_reallocate(pos);
-        return m_cells[offset(actualpos)].get();
+        auto offs = offset(actualpos);
+        return offs < m_cells.size() ? m_cells[offs].get() : nullptr;
     }
     void reset(const veci& pos, Cell* ptr = nullptr) override final {
         try_reallocate(pos);
         m_cells[offset(actual_pos(pos))].reset(ptr);
     }
     
-    virtual void resize(const veci& corner0,
-                        const veci& corner1) final {
+    void resize(const veci& corner0, const veci& corner1) {
         auto new_origin = corner0;
         auto far_corner = corner1;
 
@@ -56,7 +55,7 @@ public:
             if (abroad)
                 continue;
 
-            new_i = offset(new_actualpos, new_dims_lens);
+            auto new_i = offset(new_actualpos, new_dims_lens);
             new_cells[new_i] = std::move(m_cells[i]);
         }
 
@@ -64,8 +63,7 @@ public:
         m_origin = new_origin;
         m_dims_lens = new_dims_lens;
     }
-    virtual void reserve(const veci& corner0,
-                         const veci& corner1) final {
+    void reserve(const veci& corner0, const veci& corner1) {
         auto new_origin = corner0;
         auto far_corner = corner1;
 
@@ -90,7 +88,7 @@ public:
 
         resize(new_origin, far_corner);
     }
-    virtual void shrink_to_fit() final {
+    void shrink_to_fit() {
         // implementation
     }
 
@@ -157,9 +155,26 @@ private:
 
 
 template <std::size_t Dim, typename Cell>
-class cell_iterator<vector_automata_base<Dim, Cell>> : cell_iterator_base<vector_automata_base<Dim, Cell>> {
+class cell_iterator<vector_automata_base<Dim, Cell>> 
+    : cell_iterator_base<vector_automata_base<Dim, Cell>> {
 public:
-    // implementation
+    pointer to_ptr() const override final {
+        return m_it->get();
+    }
+
+    bool operator==(const cell_iterator& other) const {
+        return m_it == other.m_it;
+    }
+    bool operator!=(const cell_iterator& other) const {
+        return m_it != other.m_it;
+    }
+    cell_iterator& operator++() const {
+        ++m_it;
+        return *this;
+    }
+    value_type& operator*() const {
+        return *to_ptr();
+    }
 
     cell_iterator(from_iterator it) 
         : m_it{ it } {}

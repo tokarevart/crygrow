@@ -1,18 +1,20 @@
 #pragma once
-#include "automata-base.h"
 #include <array>
 #include <vector>
 #include <numeric>
 #include <memory>
+#include "automata-base.h"
+#include "cell-mutability.h"
 
 
 namespace cgr {
 
-template <std::size_t Dim, typename Cell>
+template <std::size_t Dim, typename Cell, cell_mut_group CellMutGr>
 class vector_automata_base : automata_base<Dim, Cell> {
 public:
     using cells_container_type = std::vector<std::unique_ptr<Cell>>;
-    using iterator = cell_iterator<vector_automata_base<Dim, Cell>>;
+    using iterator = cell_iterator<vector_automata_base<Dim, Cell, CellMutGr>>;
+    static constexpr cell_mut_group cell_mut_group = CellMutGr;
 
     iterator begin() const {
         return { m_cells.begin() };
@@ -156,11 +158,21 @@ private:
 
 
 template <std::size_t Dim, typename Cell>
-class cell_iterator<vector_automata_base<Dim, Cell>> 
-    : cell_iterator_base<vector_automata_base<Dim, Cell>> {
+class cell_iterator<vector_automata_base<Dim, Cell, cell_mut_group::mutable_only>>
+    : cell_iterator_base<vector_automata_base<Dim, Cell, cell_mut_group::mutable_only>> {
 public:
-    pointer to_ptr() const override final {
+    cell_type* to_ptr() const override {
         return m_it->get();
+    }
+    cell_iterator next_until(cell_iterator end) {
+        return cell_iterator(*this).adv_next_until(end);
+    }
+    cell_iterator& adv_next_until(cell_iterator end) {
+        if (*this == end)
+            return end;
+
+        ++m_it;
+        return *this;
     }
 
     bool operator==(const cell_iterator& other) const {
@@ -173,12 +185,51 @@ public:
         ++m_it;
         return *this;
     }
-    value_type& operator*() const {
+    cell_type& operator*() const {
         return *to_ptr();
     }
 
-    cell_iterator(from_iterator it) 
-        : m_it{ it } {}
+    cell_iterator(from_iterator it) : m_it{ it } {}
+
+
+private:
+    from_iterator m_it;
+};
+
+
+template <std::size_t Dim, typename Cell>
+class cell_iterator<vector_automata_base<Dim, Cell, cell_mut_group::universal>>
+    : cell_iterator_base<vector_automata_base<Dim, Cell, cell_mut_group::universal>> {
+public:
+    cell_type* to_ptr() const override {
+        return m_it->get();
+    }
+    cell_iterator next_until(cell_iterator end) {
+        return cell_iterator(*this).adv_next_until(end);
+    }
+    cell_iterator& adv_next_until(cell_iterator end) {
+        if (*this == end)
+            return end;
+
+        ++m_it;
+        return to_ptr()->mutability() == cell_mut::constant_cell ? adv_next_until(end) : *this;
+    }
+
+    bool operator==(const cell_iterator& other) const {
+        return m_it == other.m_it;
+    }
+    bool operator!=(const cell_iterator& other) const {
+        return m_it != other.m_it;
+    }
+    cell_iterator& operator++() const {
+        ++m_it;
+        return *this;
+    }
+    cell_type& operator*() const {
+        return *to_ptr();
+    }
+
+    cell_iterator(from_iterator it) : m_it{ it } {}
 
 
 private:

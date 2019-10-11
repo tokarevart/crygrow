@@ -160,6 +160,7 @@
   <ItemGroup>
     <ClInclude Include="automata-base.h" />
     <ClInclude Include="mat.h" />
+    <ClInclude Include="cell-mutability.h" />
     <ClInclude Include="sptalgs.h" />
     <ClInclude Include="sptops.h" />
     <ClInclude Include="umap-automata-base.h" />

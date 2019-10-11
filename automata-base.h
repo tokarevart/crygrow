@@ -6,11 +6,12 @@
 namespace cgr {
 
 template <typename Automata>
-struct cell_iterator_base : std::iterator<std::forward_iterator_tag, Automata::cell_type> {
+struct cell_iterator_base {
+    using iterator_category = std::forward_iterator_tag;
     using cell_type = Automata::cell_type;
     using from_iterator = Automata::cells_container_type::iterator;
 
-    virtual pointer to_ptr() const = 0;
+    virtual cell_type* to_ptr() const = 0;
 
     virtual ~cell_iterator_base() {}
 };

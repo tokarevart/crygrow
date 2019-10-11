@@ -9,7 +9,7 @@
 namespace cgr {
 
 template <std::size_t Dim, typename Cell>
-class unordered_map_automata_base : automata_base<Dim, Cell> {
+class umap_automata_base : automata_base<Dim, Cell> {
 public:
     // try specify hasher excplicitly if there is error
     using cells_container_type = std::unordered_map<veci, std::unique_ptr<Cell>>;
@@ -42,7 +42,7 @@ public:
         }
     }
 
-    virtual ~unordered_map_automata_base() {}
+    virtual ~umap_automata_base() {}
 
 
 private:
@@ -51,8 +51,8 @@ private:
 
 
 template <std::size_t Dim, typename Cell>
-class cell_iterator<unordered_map_automata_base<Dim, Cell>> 
-    : cell_iterator_base<unordered_map_automata_base<Dim, Cell>> {
+class cell_iterator<umap_automata_base<Dim, Cell>> 
+    : cell_iterator_base<umap_automata_base<Dim, Cell>> {
 public:
     pointer to_ptr() const override final {
         return m_it->second.get();

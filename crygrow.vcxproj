@@ -162,7 +162,7 @@
     <ClInclude Include="mat.h" />
     <ClInclude Include="sptalgs.h" />
     <ClInclude Include="sptops.h" />
-    <ClInclude Include="unordered-map-automata-base.h" />
+    <ClInclude Include="umap-automata-base.h" />
     <ClInclude Include="vector-automata-base.h" />
     <ClInclude Include="vec.h" />
   </ItemGroup>

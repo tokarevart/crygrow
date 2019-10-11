@@ -55,13 +55,12 @@ int main() {
     //std::cout << dynamic_cast<derived1*>(ptr)->derived0::a << ' ' << dynamic_cast<derived1*>(ptr)->b;
 
     std::unordered_map<int, std::unique_ptr<int>> example;
-    example.emplace(1, std::move(std::make_unique<int>(1)));
-    example.emplace(2, std::move(std::make_unique<int>(2)));
+    example.emplace(1, std::make_unique<int>(1));
+    example.emplace(2, std::make_unique<int>(2));
     auto search = example.find(2);
-    if (search != example.end()) {
+    if (search != example.end())
         std::cout << "Found " << search->first << " " << search->second << '\n';
-    } else {
+    else
         std::cout << "Not found\n";
-    }
     return 0;
 }

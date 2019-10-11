@@ -1,6 +1,7 @@
 #pragma once
 #include "automata-base.h"
 #include <array>
+#include <vector>
 #include <numeric>
 #include <memory>
 
@@ -20,11 +21,11 @@ public:
         return { m_cells.end() };
     }
 
-    Cell* get(const veci& pos) const override final {
+    Cell* get(const veci& pos) const override {
         auto offs = offset(actualpos);
         return offs < m_cells.size() ? m_cells[offs].get() : nullptr;
     }
-    void reset(const veci& pos, Cell* ptr = nullptr) override final {
+    void reset(const veci& pos, Cell* ptr = nullptr) override {
         try_reallocate(pos);
         m_cells[offset(actual_pos(pos))].reset(ptr);
     }

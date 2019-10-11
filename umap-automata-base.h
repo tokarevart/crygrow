@@ -1,9 +1,9 @@
 #pragma once
 #include "automata-base.h"
 #include <array>
+#include <unordered_map>
 #include <numeric>
 #include <memory>
-#include <unordered_map>
 
 
 namespace cgr {
@@ -22,11 +22,11 @@ public:
         return { m_cells.end() };
     }
 
-    Cell* get(const veci& pos) const override final {
+    Cell* get(const veci& pos) const override {
         auto search = m_cells.find(pos);
         return search != m_cells.end() ? search->second.get() : nullptr;
     }
-    void reset(const veci& pos, Cell* ptr = nullptr) override final {
+    void reset(const veci& pos, Cell* ptr = nullptr) override {
         m_cells[pos].reset(ptr);
     }
 

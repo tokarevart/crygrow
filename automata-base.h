@@ -1,7 +1,5 @@
 #pragma once
 #include <cstddef>
-#include <vector>
-#include <functional>
 #include "vec.h"
 
 

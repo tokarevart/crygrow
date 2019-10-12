@@ -1,5 +1,6 @@
 #pragma once
 #include <cstddef>
+#include <unordered_map>
 #include "vec.h"
 
 
@@ -28,8 +29,8 @@ public:
     using veci = spt::veci<Dim>;
     using vecu = spt::vec<Dim, std::uint64_t>;
 
-    virtual Cell* get(const vecu& pos) const = 0;
-    virtual void reset(const vecu& pos, Cell* ptr = nullptr) = 0;
+    virtual Cell* cell(const veci& pos) const = 0;
+    virtual void  cell(const veci& pos, const Cell* new_cell) = 0;
     
     virtual bool stop_condition() const = 0;
     virtual bool iterate() = 0;

@@ -47,6 +47,7 @@ struct derived1 : derived0 {
     }
 };
 
+
 int main() {
     //derived1* ptr = new derived1;
     //ptr->derived0::a = 2;
@@ -62,5 +63,6 @@ int main() {
         std::cout << "Found " << search->first << " " << search->second << '\n';
     else
         std::cout << "Not found\n";
+
     return 0;
 }

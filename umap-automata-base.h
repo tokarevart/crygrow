@@ -1,19 +1,20 @@
 #pragma once
 #include <array>
-#include <unordered_map>
 #include <numeric>
 #include <memory>
-#include "automata-base.h"
+#include <optional>
+#include "pos-automata-base.h"
 #include "cell-mutability.h"
 
 
 namespace cgr {
 
 template <std::size_t Dim, typename Cell, cell_mut_group CellMutGr>
-class umap_automata_base : automata_base<Dim, Cell> {
+class umap_automata_base : pos_automata_base<Dim, Cell> {
 public:
     // try specify hasher excplicitly if there is error
     using cells_container_type = std::unordered_map<veci, std::unique_ptr<Cell>>;
+    using positons_container = std::unordered_map<Cell*, veci>;
     using iterator = cell_iterator<umap_automata_base<Dim, Cell, CellMutGr>>;
     static constexpr cell_mut_group cell_mut_group = CellMutGr;
 
@@ -24,24 +25,24 @@ public:
         return { m_cells.end() };
     }
 
-    Cell* get(const veci& pos) const override {
+    Cell* cell(const veci& pos) const override {
         auto search = m_cells.find(pos);
         return search != m_cells.end() ? search->second.get() : nullptr;
     }
-    void reset(const veci& pos, Cell* ptr = nullptr) override {
-        m_cells[pos].reset(ptr);
-    }
-
-    void reserve(std::size_t count) {
-        m_cells.reserve(count);
-    }
-    void shrink_to_fit() {
-        for (auto it = m_cells.begin(); it != m_cells.end();) {
-            if (!it->second)
-                it = c.erase(it);
-            else
-                ++it;
+    void  cell(const veci& pos, const Cell* new_cell) override {
+        if (!new_cell) {
+            auto pcell = cell(pos);
+            if (pcell)
+                erase(pos, pcell);
+        } else {
+            m_cells[pos].reset(new_cell);
+            this->pos(new_cell, pos);
         }
+    }
+    
+    void reserve(std::size_t count) override {
+        m_cells.reserve(count);
+        pos_automata_base<Dim, Cell>::reserve(count);
     }
 
     virtual ~umap_automata_base() {}
@@ -49,6 +50,12 @@ public:
 
 private:
     cells_container_type m_cells;
+
+    void erase(const veci& pos, std::optional<const Cell*> corresp_cell) override {
+        auto pcell = corresp_cell ? corresp_cell.value() : cell(pos);
+        m_cells.erase(pos);
+        pos_automata_base<Dim, Cell>::erase(pcell);
+    }
 };
 
 

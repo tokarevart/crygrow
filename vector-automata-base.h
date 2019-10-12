@@ -3,14 +3,14 @@
 #include <vector>
 #include <numeric>
 #include <memory>
-#include "automata-base.h"
+#include "pos-automata-base.h"
 #include "cell-mutability.h"
 
 
 namespace cgr {
 
 template <std::size_t Dim, typename Cell, cell_mut_group CellMutGr>
-class vector_automata_base : automata_base<Dim, Cell> {
+class vector_automata_base : pos_automata_base<Dim, Cell> {
 public:
     using cells_container_type = std::vector<std::unique_ptr<Cell>>;
     using iterator = cell_iterator<vector_automata_base<Dim, Cell, CellMutGr>>;
@@ -23,15 +23,23 @@ public:
         return { m_cells.end() };
     }
 
-    Cell* get(const veci& pos) const override {
-        auto offs = offset(actualpos);
-        return offs < m_cells.size() ? m_cells[offs].get() : nullptr;
+    Cell* cell(const veci& pos) const override {
+        return inside(pos) ? m_cells[offset(actual_pos(pos))].get() : nullptr;
     }
-    void reset(const veci& pos, Cell* ptr = nullptr) override {
-        try_reallocate(pos);
-        m_cells[offset(actual_pos(pos))].reset(ptr);
+    void  cell(const veci& pos, const Cell* new_cell) override {
+        if (!new_cell) {
+            if (auto pcell = cell(pos); pcell)
+                pos_automata_base<Dim, Cell>::erase(pcell);
+            if (inside(pos))
+                m_cells[offset(actual_pos(pos))].reset(new_cell);
+        } else {
+            try_reallocate(pos);
+            m_cells[offset(actual_pos(pos))].reset(new_cell);
+        }
     }
-    
+
+    // NOTE: don't recomend reduce the sizes along the axes for now
+    // NOTE: needs implemented actual_pos(offset, dims_lens)
     void resize(const veci& corner0, const veci& corner1) {
         auto new_origin = corner0;
         auto far_corner = corner1;
@@ -42,9 +50,10 @@ public:
         vecu new_dims_lens = far_corner + veci{ 1, 1, 1 } - new_origin;
         veci dorigin = m_origin - new_origin;
 
-        std::vector<std::unique_ptr<Cell>> new_cells(
-            std::accumulate(new_dims_lens.x.begin(), new_dims_lens.x.end(), 1,
-                            std::multiplies<std::size_t>()));
+        auto num_new_cells = std::accumulate(new_dims_lens.x.begin(), new_dims_lens.x.end(), 1,
+                                             std::multiplies<std::size_t>());
+        pos_automata_base<Dim, Cell>::reserve(num_new_cells);
+        std::vector<std::unique_ptr<Cell>> new_cells(num_new_cells);
 
         for (std::size_t i = 0; i < m_cells.size(); i++) {
             auto new_actualpos = actual_pos(i) + dorigin;
@@ -106,8 +115,7 @@ private:
     std::size_t offset(const vecu& pos) const {
         return offset(pos, m_dims_lens);
     }
-    std::size_t offset(const vecu& pos,
-                       const vecu& dims_lens) const {
+    std::size_t offset(const vecu& pos, const vecu& dims_lens) const {
         std::size_t res = pos.x[0];
         std::size_t mul = dims_lens[0];
         for (std::size_t i = 1; i < Dim; i++) {
@@ -115,6 +123,25 @@ private:
             mul *= dims_lens[i];
         }
         return res;
+    }
+    bool inside(const veci& pos) const {
+        return inside(pos, m_dims_lens);
+    }
+    bool inside(const veci& pos, const vecu& dims_lens) const {
+        return inside(pos, dims_lens, m_origin);
+    }
+    bool inside(const veci& pos, const vecu& dims_lens, const veci& origin) const {
+        return inside(actual_pos(pos, origin), dims_lens);
+    }
+    bool inside(const vecu& pos) const {
+        return inside(pos, m_dims_lens);
+    }
+    bool inside(const vecu& pos, const vecu& dims_lens) const {
+        for (std::size_t i = 0; i < dims_lens.dim; i++)
+            if (pos[i] >= dims_lens[i])
+                return false;
+
+        return true;
     }
     veci actual_pos(const veci& pos) const {
         return actual_pos(pos, m_origin);
@@ -149,8 +176,7 @@ private:
 
         return need_resize;
     }
-    template <typename T>
-    void sort2(T& first, T& second) {
+    void sort2(veci::value_type& first, veci::value_type& second) {
         if (first > second)
             std::swap(first, second);
     }

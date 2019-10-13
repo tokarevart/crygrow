@@ -26,7 +26,7 @@ template <neighborhood_type NhoodType, std::size_t Dim, std::size_t Range, typen
 class neighborhood {
 public:
     using veci = spt::veci<Dim>;
-    using cell_func = std::function<Cell*(const veci&)>;
+    using get_cell_func = std::function<Cell*(const veci&)>;
 
     auto begin() const {
         return m_neighbors.cbegin();
@@ -35,7 +35,7 @@ public:
         return m_neighbors.cend();
     }
 
-    neighborhood(const veci& center, cell_func cellf) {
+    neighborhood(const veci& center, get_cell_func getcell) {
 
     }
 

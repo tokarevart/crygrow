@@ -16,16 +16,16 @@ template <std::size_t Dim, typename Cell, cell_mut_group CellMutGr>
 class umap_automata_base : pos_automata_base<Dim, Cell> {
 public:
     // try specify hasher excplicitly if there is error
-    using cells_container_type = std::unordered_map<veci, std::unique_ptr<Cell>>;
+    using cells_container = std::unordered_map<veci, std::unique_ptr<Cell>>;
     using positons_container = std::unordered_map<Cell*, veci>;
     using iterator = cell_iterator<umap_automata_base<Dim, Cell, CellMutGr>>;
     static constexpr cell_mut_group cell_mut_group = CellMutGr;
 
     iterator begin() const {
-        return { m_cells.begin() };
+        return { m_cells.cbegin() };
     }
     iterator end() const {
-        return { m_cells.end() };
+        return { m_cells.cend() };
     }
 
     Cell* cell(const veci& pos) const override {
@@ -52,7 +52,7 @@ public:
 
 
 private:
-    cells_container_type m_cells;
+    cells_container m_cells;
 
     void erase(const veci& pos, std::optional<const Cell*> corresp_cell) override {
         auto pcell = corresp_cell ? corresp_cell.value() : cell(pos);
@@ -94,7 +94,7 @@ public:
         return *to_ptr();
     }
 
-    cell_iterator(from_iterator it) : m_it{ it } {}
+    cell_iterator(from_iterator it) : m_it{it} {}
 
 
 private:
@@ -130,7 +130,7 @@ public:
         return *to_ptr();
     }
 
-    cell_iterator(from_iterator it) : m_it{ it } {}
+    cell_iterator(from_iterator it) : m_it{it} {}
 
 
 private:

@@ -36,7 +36,7 @@ public:
         return m_mut;
     }
 
-    cell_base(cell_mut mut) : m_mut{ mut } {}
+    cell_base(cell_mut mut) : m_mut{mut} {}
 
 
 private:

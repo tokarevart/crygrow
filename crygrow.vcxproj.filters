@@ -47,5 +47,8 @@
     <ClInclude Include="pos-automata-base.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="neighborhood.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

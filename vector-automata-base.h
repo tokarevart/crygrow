@@ -15,15 +15,15 @@ namespace cgr {
 template <std::size_t Dim, typename Cell, cell_mut_group CellMutGr>
 class vector_automata_base : pos_automata_base<Dim, Cell> {
 public:
-    using cells_container_type = std::vector<std::unique_ptr<Cell>>;
+    using cells_container = std::vector<std::unique_ptr<Cell>>;
     using iterator = cell_iterator<vector_automata_base<Dim, Cell, CellMutGr>>;
     static constexpr cell_mut_group cell_mut_group = CellMutGr;
 
     iterator begin() const {
-        return { m_cells.begin() };
+        return { m_cells.cbegin() };
     }
     iterator end() const {
-        return { m_cells.end() };
+        return { m_cells.cend() };
     }
 
     Cell* cell(const veci& pos) const override {
@@ -113,7 +113,7 @@ public:
 private:
     veci m_origin;
     vecu m_dims_lens;
-    cells_container_type m_cells;
+    cells_container m_cells;
 
     std::size_t offset(const vecu& pos) const {
         return offset(pos, m_dims_lens);
@@ -218,7 +218,7 @@ public:
         return *to_ptr();
     }
 
-    cell_iterator(from_iterator it) : m_it{ it } {}
+    cell_iterator(from_iterator it) : m_it{it} {}
 
 
 private:
@@ -258,7 +258,7 @@ public:
         return *to_ptr();
     }
 
-    cell_iterator(from_iterator it) : m_it{ it } {}
+    cell_iterator(from_iterator it) : m_it{it} {}
 
 
 private:

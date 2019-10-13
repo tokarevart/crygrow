@@ -131,8 +131,7 @@ struct vec {
     vec(const vec& other) {
         x = other.x;
     }
-    vec(const std::array<ValueType, Dim> & x)
-        : x{ x } {}
+    vec(const std::array<ValueType, Dim>& x) : x{x} {}
     template <typename... Values>
     vec(Values&&... xs)
         : x{ std::forward<ValueType>(static_cast<ValueType>(xs))... } {}

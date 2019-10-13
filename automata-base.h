@@ -13,7 +13,7 @@ template <typename Automata>
 struct cell_iterator_base {
     using iterator_category = std::forward_iterator_tag;
     using cell_type = Automata::cell_type;
-    using from_iterator = Automata::cells_container_type::iterator;
+    using from_iterator = Automata::cells_container::const_iterator;
 
     virtual cell_type* to_ptr() const = 0;
 

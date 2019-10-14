@@ -23,14 +23,14 @@ class cell_base;
 template <>
 class cell_base<cell_mut_group::mutable_only> {
 public:
-    static constexpr cell_mut_group mutability_group = cell_mut_group::mutable_only;
+    static constexpr auto mutability_group = cell_mut_group::mutable_only;
 };
 
 
 template <>
 class cell_base<cell_mut_group::universal> {
 public:
-    static constexpr cell_mut_group mutability_group = cell_mut_group::universal;
+    static constexpr auto mutability_group = cell_mut_group::universal;
 
     cell_mut mutability() const {
         return m_mut;

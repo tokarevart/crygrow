@@ -186,11 +186,11 @@ private:
 };
 
 
-template <std::size_t Dim, typename Cell>
-class cell_iterator<vector_automata_base<Dim, Cell, cell_mut_group::mutable_only>>
-    : cell_iterator_base<vector_automata_base<Dim, Cell, cell_mut_group::mutable_only>> {
+template <std::size_t Dim, typename Cell, cell_mut_group CellMutGr>
+class cell_iterator<vector_automata_base<Dim, Cell, CellMutGr>>
+    : cell_iterator_base<vector_automata_base<Dim, Cell, CellMutGr>> {
 public:
-    cell_type* to_ptr() const override {
+    cell_type* to_ptr() const {
         return m_it->get();
     }
     cell_iterator next_until(cell_iterator end) {
@@ -201,7 +201,12 @@ public:
             return end;
 
         ++m_it;
-        return *this;
+        if constexpr (std::is_same_v<CellMutGr, cell_mut_group::universal>)
+            return to_ptr()->mutability() == cell_mut::constant_cell ? adv_next_until(end) : *this;
+        else if constexpr (std::is_same_v<CellMutGr, cell_mut_group::mutable_only>)
+            return *this;
+        else
+            static_assert(false);
     }
 
     bool operator==(const cell_iterator& other) const {
@@ -209,50 +214,6 @@ public:
     }
     bool operator!=(const cell_iterator& other) const {
         return m_it != other.m_it;
-    }
-    cell_iterator& operator++() const {
-        ++m_it;
-        return *this;
-    }
-    cell_type& operator*() const {
-        return *to_ptr();
-    }
-
-    cell_iterator(from_iterator it) : m_it{it} {}
-
-
-private:
-    from_iterator m_it;
-};
-
-
-template <std::size_t Dim, typename Cell>
-class cell_iterator<vector_automata_base<Dim, Cell, cell_mut_group::universal>>
-    : cell_iterator_base<vector_automata_base<Dim, Cell, cell_mut_group::universal>> {
-public:
-    cell_type* to_ptr() const override {
-        return m_it->get();
-    }
-    cell_iterator next_until(cell_iterator end) {
-        return cell_iterator(*this).adv_next_until(end);
-    }
-    cell_iterator& adv_next_until(cell_iterator end) {
-        if (*this == end)
-            return end;
-
-        ++m_it;
-        return to_ptr()->mutability() == cell_mut::constant_cell ? adv_next_until(end) : *this;
-    }
-
-    bool operator==(const cell_iterator& other) const {
-        return m_it == other.m_it;
-    }
-    bool operator!=(const cell_iterator& other) const {
-        return m_it != other.m_it;
-    }
-    cell_iterator& operator++() const {
-        ++m_it;
-        return *this;
     }
     cell_type& operator*() const {
         return *to_ptr();

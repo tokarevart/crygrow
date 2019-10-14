@@ -65,6 +65,21 @@ private:
     }
 };
 
+template <typename T>
+struct cls {
+    int a = 1;
+    float b = 0.5;
+
+    auto f() const {
+        if constexpr (std::is_same_v<kek, T>)
+            return a;
+        else
+            return b;
+    }
+
+    cls() {}
+};
+
 
 int main() {
     //derived1* ptr = new derived1;
@@ -82,8 +97,10 @@ int main() {
     //else
     //    std::cout << "Not found\n";
 
-    auto next = nexter(2).get();
-    std::cout << next(2) << ' ' << next(next(3));
+    //auto next = nexter(2).get();
+    //std::cout << next(2) << ' ' << next(next(3));
+
+    std::cout << cls<int>().f() << ' ' << cls<float>().f();
 
     return 0;
 }

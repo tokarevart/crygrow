@@ -524,22 +524,22 @@ std::pair<vec<3, Real>, vec<3, Real>> segments_closest_points(
     if (tN < static_cast<Real>(0)) { // tc < 0 => the t=0 edge is visible
         tN = static_cast<Real>(0);
         // recompute sc for this edge
-        if (-d < static_cast<Real>(0))
+        if (-d < static_cast<Real>(0)) {
             sN = static_cast<Real>(0);
-        else if (-d > a)
+        } else if (-d > a) {
             sN = sD;
-        else {
+        } else {
             sN = -d;
             sD = a;
         }
     } else if (tN > tD) { // tc > 1  => the t=1 edge is visible
         tN = tD;
         // recompute sc for this edge
-        if (-d + b < static_cast<Real>(0))
+        if (-d + b < static_cast<Real>(0)) {
             sN = static_cast<Real>(0);
-        else if (-d + b > a)
+        } else if (-d + b > a) {
             sN = sD;
-        else {
+        } else {
             sN = -d + b;
             sD = a;
         }

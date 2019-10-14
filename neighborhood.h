@@ -87,12 +87,12 @@ public:
     auto end() const {
         return m_neighbors.cend();
     }
-    Cell* center_cell() const {
-        return m_center_cell;
+    Cell* central_cell() const {
+        return m_central_cell;
     }
 
     neighborhood(const veci& center, std::size_t range, get_cell_func getcell) {
-        m_center_cell = getcell(center);
+        m_central_cell = getcell(center);
         using nbhood_pos = neighborhood_pos_impl<NhoodType, Dim>;
         for (auto& pos : nbhood_pos::neighbors_pos(center)) {
             Cell* cell = getcell(pos);
@@ -103,7 +103,7 @@ public:
 
 
 private:
-    Cell* m_center_cell;
+    Cell* m_central_cell;
     std::vector<Cell*> m_neighbors;
 };
 

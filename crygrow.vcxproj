@@ -159,18 +159,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="automata-base.h" />
-    <ClInclude Include="nbh-cont-pos-automata-base.h" />
-    <ClInclude Include="umap-no-nbh-automata-base.h" />
     <ClInclude Include="neighborhood.h" />
-    <ClInclude Include="pos-automata-base.h" />
     <ClInclude Include="mat.h" />
     <ClInclude Include="cell-mutability.h" />
     <ClInclude Include="sptalgs.h" />
     <ClInclude Include="sptops.h" />
-    <ClInclude Include="umap-automata-base.h" />
-    <ClInclude Include="vector-automata-base.h" />
     <ClInclude Include="vec.h" />
-    <ClInclude Include="vector-no-nbh-automata-base.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

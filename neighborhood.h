@@ -10,18 +10,18 @@
 
 namespace cgr {
 
-enum class neighborhood_kind {
+enum class nbhood_kind {
     von_neumann,
     moore
 };
 
 
-template <neighborhood_kind NhoodType, std::size_t Dim>
-class neighborhood_pos_impl;
+template <nbhood_kind NbhoodKind, std::size_t Dim, typename Cell>
+class nbhood_pos_impl;
 
 
-template <std::size_t Dim>
-class neighborhood_pos_impl<neighborhood_kind::moore, Dim> {
+template <std::size_t Dim, typename Cell>
+class nbhood_pos_impl<nbhood_kind::moore, Dim, Cell> {
 public:
     using veci = spt::veci<Dim>;
     using get_cell_func = std::function<Cell*(const veci&)>;
@@ -47,11 +47,11 @@ public:
 };
 
 
-template <std::size_t Dim>
-class neighborhood_pos_impl<neighborhood_kind::von_neumann, Dim> {
+template <std::size_t Dim, typename Cell>
+class nbhood_pos_impl<nbhood_kind::von_neumann, Dim, Cell> {
 public:
     using veci = spt::veci<Dim>;
-    using get_cell_func = std::function<Cell * (const veci&)>;
+    using get_cell_func = std::function<Cell*(const veci&)>;
 
     static std::vector<veci> neighbors_pos(const veci& center, std::size_t range) {
         std::vector<veci> res;
@@ -75,8 +75,8 @@ public:
 };
 
 
-template <neighborhood_kind NhoodType, std::size_t Dim, typename Cell>
-class neighborhood {
+template <std::size_t Dim, typename Cell>
+class nbhood {
 public:
     using veci = spt::veci<Dim>;
     using get_cell_func = std::function<Cell*(const veci&)>;
@@ -91,26 +91,41 @@ public:
     Cell* central_cell() const {
         return m_central_cell;
     }
+    nbhood_kind kind() const {
+        return m_kind;
+    }
     std::size_t range() const {
         return m_range;
     }
 
-    neighborhood(const veci& center, std::size_t range, get_cell_func getcell) 
-        : m_central_cell{getcell(center)}, m_range{range} {
-        using nbhood_pos = neighborhood_pos_impl<NhoodType, Dim>;
-        for (auto& pos : nbhood_pos::neighbors_pos(center)) {
+    nbhood(const veci& center, nbhood_kind kind, std::size_t range, get_cell_func getcell)
+        : m_central_cell{getcell(center)}, m_kind{kind}, m_range{range} {
+        nbhood_pos_impl<NbhoodKind, Dim, Cell>;
+        std::vector<veci> neighbors_pos;
+        switch (kind) {
+        case nbhood_kind::von_neumann:
+            neighbors_pos = nbhood_pos_impl<nbhood_kind::von_neumann, 
+                Dim, Cell>::neighbors_pos(center);
+            break;
+        case nbhood_kind::moore:
+            neighbors_pos = nbhood_pos_impl<nbhood_kind::moore,
+                Dim, Cell>::neighbors_pos(center);
+            break;
+        }
+        for (auto& pos : neighbors_pos) {
             Cell* cell = getcell(pos);
             if (cell)
                 m_neighbors.push_back(cell);
         }
     }
-    neighborhood(const Cell* central_cell, std::size_t range, 
+    nbhood(const Cell* central_cell, nbhood_kind kind, std::size_t range,
                  get_pos_func getpos, get_cell_func getcell)
-        : neighborhood(getpos(central_cell), range, getcell) {}
+        : nbhood(getpos(central_cell), kind, range, getcell) {}
 
 
 private:
     Cell* m_central_cell;
+    nbhood_kind m_kind;
     std::size_t m_range;
     std::vector<Cell*> m_neighbors;
 };

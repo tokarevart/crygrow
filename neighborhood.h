@@ -10,18 +10,18 @@
 
 namespace cgr {
 
-enum class neighborhood_kind {
+enum class nbhood_kind {
     von_neumann,
     moore
 };
 
 
-template <neighborhood_kind NhoodType, std::size_t Dim>
-class neighborhood_pos_impl;
+template <nbhood_kind NbhoodKind, std::size_t Dim>
+class nbhood_pos_impl;
 
 
 template <std::size_t Dim>
-class neighborhood_pos_impl<neighborhood_kind::moore, Dim> {
+class nbhood_pos_impl<nbhood_kind::moore, Dim> {
 public:
     using veci = spt::veci<Dim>;
     using get_cell_func = std::function<Cell*(const veci&)>;
@@ -48,7 +48,7 @@ public:
 
 
 template <std::size_t Dim>
-class neighborhood_pos_impl<neighborhood_kind::von_neumann, Dim> {
+class nbhood_pos_impl<nbhood_kind::von_neumann, Dim> {
 public:
     using veci = spt::veci<Dim>;
     using get_cell_func = std::function<Cell * (const veci&)>;
@@ -75,8 +75,8 @@ public:
 };
 
 
-template <neighborhood_kind NhoodType, std::size_t Dim, typename Cell>
-class neighborhood {
+template <nbhood_kind NbhoodKind, std::size_t Dim, typename Cell>
+class nbhood {
 public:
     using veci = spt::veci<Dim>;
     using get_cell_func = std::function<Cell*(const veci&)>;
@@ -95,18 +95,18 @@ public:
         return m_range;
     }
 
-    neighborhood(const veci& center, std::size_t range, get_cell_func getcell) 
+    nbhood(const veci& center, std::size_t range, get_cell_func getcell) 
         : m_central_cell{getcell(center)}, m_range{range} {
-        using nbhood_pos = neighborhood_pos_impl<NhoodType, Dim>;
+        using nbhood_pos = nbhood_pos_impl<NbhoodKind, Dim>;
         for (auto& pos : nbhood_pos::neighbors_pos(center)) {
             Cell* cell = getcell(pos);
             if (cell)
                 m_neighbors.push_back(cell);
         }
     }
-    neighborhood(const Cell* central_cell, std::size_t range, 
+    nbhood(const Cell* central_cell, std::size_t range, 
                  get_pos_func getpos, get_cell_func getcell)
-        : neighborhood(getpos(central_cell), range, getcell) {}
+        : nbhood(getpos(central_cell), range, getcell) {}
 
 
 private:

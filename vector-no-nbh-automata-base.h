@@ -15,7 +15,7 @@ template <std::size_t Dim, typename Cell, cell_mut_group CellMutGr>
 class vector_no_nbh_automata_base : pos_automata_base<Dim, Cell> {
 public:
     using cells_container = std::vector<std::unique_ptr<Cell>>;
-    using iterator = cell_iterator<vector_automata_base<Dim, Cell, CellMutGr>>;
+    using iterator = cell_iterator<vector_no_nbh_automata_base<Dim, Cell, CellMutGr>>;
     static constexpr cell_mut_group cell_mut_group = CellMutGr;
 
     iterator begin() const {

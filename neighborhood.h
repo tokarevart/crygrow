@@ -80,6 +80,7 @@ class neighborhood {
 public:
     using veci = spt::veci<Dim>;
     using get_cell_func = std::function<Cell*(const veci&)>;
+    using get_pos_func = std::function<veci(const Cell*)>;
 
     auto begin() const {
         return m_neighbors.cbegin();
@@ -90,9 +91,12 @@ public:
     Cell* central_cell() const {
         return m_central_cell;
     }
+    std::size_t range() const {
+        return m_range;
+    }
 
-    neighborhood(const veci& center, std::size_t range, get_cell_func getcell) {
-        m_central_cell = getcell(center);
+    neighborhood(const veci& center, std::size_t range, get_cell_func getcell)
+        : m_central_cell{getcell(center)}, m_range{range}  {
         using nbhood_pos = neighborhood_pos_impl<NhoodType, Dim>;
         for (auto& pos : nbhood_pos::neighbors_pos(center)) {
             Cell* cell = getcell(pos);
@@ -100,10 +104,14 @@ public:
                 m_neighbors.push_back(cell);
         }
     }
+    neighborhood(const Cell* central_cell, std::size_t range, 
+                 get_pos_func getpos, get_cell_func getcell)
+        : neighborhood(getpos(central_cell), range, getcell) {}
 
 
 private:
     Cell* m_central_cell;
+    std::size_t m_range;
     std::vector<Cell*> m_neighbors;
 };
 

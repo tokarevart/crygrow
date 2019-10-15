@@ -2,104 +2,46 @@
 // Licensed under the MIT License.
 
 #pragma once
-#include <array>
-#include <numeric>
-#include <memory>
-#include <optional>
-#include "pos-automata-base.h"
-#include "cell-mutability.h"
+#include "umap-nonbh-automata-base.h"
+#include "neighborhood.h"
 
 
 namespace cgr {
 
-template <std::size_t Dim, typename Cell, cell_mut_group CellMutGr>
-class umap_automata_base : pos_automata_base<Dim, Cell> {
+template <std::size_t Dim, typename Cell, cell_mut_group CellMutGr, neighborhood_type NbhoodType>
+class umap_automata_base : umap_nonbh_automata_base<Dim, Cell, CellMutGr> {
 public:
-    // try specify hasher excplicitly if there is error
-    using cells_container = std::unordered_map<veci, std::unique_ptr<Cell>>;
-    using positons_container = std::unordered_map<Cell*, veci>;
-    using iterator = cell_iterator<umap_automata_base<Dim, Cell, CellMutGr>>;
-    static constexpr cell_mut_group cell_mut_group = CellMutGr;
+    using neighborhoods_container = std::unordered_map<Cell*, std::unique_ptr<neighborhood<NbhoodType, Dim, Cell>>>;
 
-    iterator begin() const {
-        return { m_cells.cbegin() };
+    const neighborhood* neighborhood(const Cell* cell) const {
+        auto search = m_neighborhoods.find(cell);
+        return search != m_neighborhoods.end() ? search->second.get() : nullptr;
     }
-    iterator end() const {
-        return { m_cells.cend() };
+    void neighborhood(const Cell* cell) {
+        neighborhood(cell, m_default_range);
     }
+    void neighborhood(const Cell* cell, std::size_t range) {
+        if (!cell)
+            return;
 
-    Cell* cell(const veci& pos) const override {
-        auto search = m_cells.find(pos);
-        return search != m_cells.end() ? search->second.get() : nullptr;
-    }
-    void  cell(const veci& pos, const Cell* new_cell) override {
-        if (!new_cell) {
-            auto pcell = cell(pos);
-            if (pcell)
-                erase(pos, pcell);
-        } else {
-            m_cells[pos].reset(new_cell);
-            this->pos(new_cell, pos);
-        }
-    }
-    
-    void reserve(std::size_t count) override {
-        m_cells.reserve(count);
-        pos_automata_base<Dim, Cell>::reserve(count);
+        if (range == 0)
+            m_neighborhoods.erase(cell);
+        else
+            m_neighborhoods[cell] = std::make_unique<neighborhood>(
+                cell, range,
+                [this](const Cell* cell) { return this->pos(cell); },
+                [this](const veci& pos) { return this->cell(pos); });
     }
 
+    umap_automata_base() = default;
+    umap_automata_base(std::size_t default_range) 
+        : m_default_range{default_range} {}
     virtual ~umap_automata_base() {}
 
 
 private:
-    cells_container m_cells;
-
-    void erase(const veci& pos, std::optional<const Cell*> corresp_cell) override {
-        auto pcell = corresp_cell ? corresp_cell.value() : cell(pos);
-        m_cells.erase(pos);
-        pos_automata_base<Dim, Cell>::erase(pcell);
-    }
-};
-
-
-template <std::size_t Dim, typename Cell, cell_mut_group CellMutGr>
-class cell_iterator<umap_automata_base<Dim, Cell, CellMutGr>>
-    : cell_iterator_base<umap_automata_base<Dim, Cell, CellMutGr>> {
-public:
-    cell_type* to_ptr() const {
-        return m_it->second.get();
-    }
-    cell_iterator next_until(cell_iterator end) {
-        return cell_iterator(*this).adv_next_until(end);
-    }
-    cell_iterator& adv_next_until(cell_iterator end) {
-        if (*this == end)
-            return end;
-
-        ++m_it;
-        if constexpr (std::is_same_v<CellMutGr, cell_mut_group::universal>)
-            return to_ptr()->mutability() == cell_mut::constant_cell ? adv_next_until(end) : *this;
-        else if constexpr (std::is_same_v<CellMutGr, cell_mut_group::mutable_only>)
-            return *this;
-        else
-            static_assert(false);
-    }
-
-    bool operator==(const cell_iterator& other) const {
-        return m_it == other.m_it;
-    }
-    bool operator!=(const cell_iterator& other) const {
-        return m_it != other.m_it;
-    }
-    cell_type& operator*() const {
-        return *to_ptr();
-    }
-
-    cell_iterator(from_iterator it) : m_it{it} {}
-
-
-private:
-    from_iterator m_it;
+    std::size_t m_default_range = 1;
+    neighborhoods_container m_neighborhoods;
 };
 
 } // namespace cgr

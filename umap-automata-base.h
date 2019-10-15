@@ -13,12 +13,12 @@ class umap_automata_base : umap_nonbh_automata_base<Dim, Cell, CellMutGr> {
 public:
     using neighborhoods_container = std::unordered_map<Cell*, std::unique_ptr<neighborhood<NbhoodType, Dim, Cell>>>;
 
+    std::size_t default_range() const {
+        return m_default_range;
+    }
     const neighborhood* neighborhood(const Cell* cell) const {
         auto search = m_neighborhoods.find(cell);
         return search != m_neighborhoods.end() ? search->second.get() : nullptr;
-    }
-    void neighborhood(const Cell* cell) {
-        neighborhood(cell, m_default_range);
     }
     void neighborhood(const Cell* cell, std::size_t range) {
         if (!cell)

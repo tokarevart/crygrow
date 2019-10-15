@@ -45,10 +45,6 @@ public:
     void reserve_cells(std::size_t count) {
         m_cells.reserve(count);
     }
-    void reserve_all_except_of_(std::size_t count) {
-        reserve_cells(count);
-        reserve_pos(count);
-    }
 
     virtual ~umap_no_nbh_automata_base() {}
 

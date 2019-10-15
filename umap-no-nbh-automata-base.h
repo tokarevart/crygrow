@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 #pragma once
-#include <array>
 #include <numeric>
 #include <memory>
 #include <optional>
@@ -13,7 +12,7 @@
 namespace cgr {
 
 template <std::size_t Dim, typename Cell, cell_mut_group CellMutGr>
-class umap_nonbh_automata_base : pos_automata_base<Dim, Cell> {
+class umap_no_nbh_automata_base : pos_automata_base<Dim, Cell> {
 public:
     // try specify hasher excplicitly if there is an error
     using cells_container = std::unordered_map<veci, std::unique_ptr<Cell>>;
@@ -43,12 +42,15 @@ public:
         }
     }
 
-    void reserve(std::size_t count) {
+    void reserve_cells(std::size_t count) {
         m_cells.reserve(count);
-        pos_automata_base<Dim, Cell>::reserve(count);
+    }
+    void reserve_all_except_of_(std::size_t count) {
+        reserve_cells(count);
+        reserve_pos(count);
     }
 
-    virtual ~umap_nonbh_automata_base() {}
+    virtual ~umap_no_nbh_automata_base() {}
 
 
 private:
@@ -57,14 +59,14 @@ private:
     void erase(const veci& pos, std::optional<const Cell*> corresp_cell) {
         auto pcell = corresp_cell ? corresp_cell.value() : cell(pos);
         m_cells.erase(pos);
-        pos_automata_base<Dim, Cell>::erase(pcell);
+        erase_pos(pcell);
     }
 };
 
 
 template <std::size_t Dim, typename Cell, cell_mut_group CellMutGr>
-class cell_iterator<umap_nonbh_automata_base<Dim, Cell, CellMutGr>>
-    : cell_iterator_base<umap_nonbh_automata_base<Dim, Cell, CellMutGr>> {
+class cell_iterator<umap_no_nbh_automata_base<Dim, Cell, CellMutGr>>
+    : cell_iterator_base<umap_no_nbh_automata_base<Dim, Cell, CellMutGr>> {
 public:
     cell_type* to_ptr() const {
         return m_it->second.get();

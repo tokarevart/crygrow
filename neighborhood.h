@@ -10,18 +10,18 @@
 
 namespace cgr {
 
-enum class neighborhood_type {
+enum class neighborhood_kind {
     von_neumann,
     moore
 };
 
 
-template <neighborhood_type NhoodType, std::size_t Dim>
+template <neighborhood_kind NhoodType, std::size_t Dim>
 class neighborhood_pos_impl;
 
 
 template <std::size_t Dim>
-class neighborhood_pos_impl<neighborhood_type::moore, Dim> {
+class neighborhood_pos_impl<neighborhood_kind::moore, Dim> {
 public:
     using veci = spt::veci<Dim>;
     using get_cell_func = std::function<Cell*(const veci&)>;
@@ -48,7 +48,7 @@ public:
 
 
 template <std::size_t Dim>
-class neighborhood_pos_impl<neighborhood_type::von_neumann, Dim> {
+class neighborhood_pos_impl<neighborhood_kind::von_neumann, Dim> {
 public:
     using veci = spt::veci<Dim>;
     using get_cell_func = std::function<Cell * (const veci&)>;
@@ -75,7 +75,7 @@ public:
 };
 
 
-template <neighborhood_type NhoodType, std::size_t Dim, typename Cell>
+template <neighborhood_kind NhoodType, std::size_t Dim, typename Cell>
 class neighborhood {
 public:
     using veci = spt::veci<Dim>;
@@ -95,8 +95,8 @@ public:
         return m_range;
     }
 
-    neighborhood(const veci& center, std::size_t range, get_cell_func getcell)
-        : m_central_cell{getcell(center)}, m_range{range}  {
+    neighborhood(const veci& center, std::size_t range, get_cell_func getcell) 
+        : m_central_cell{getcell(center)}, m_range{range} {
         using nbhood_pos = neighborhood_pos_impl<NhoodType, Dim>;
         for (auto& pos : nbhood_pos::neighbors_pos(center)) {
             Cell* cell = getcell(pos);

@@ -18,10 +18,10 @@ public:
     void pos(const Cell* cell, const veci& pos) {
         m_positons[cell] = pos;
     }
-    void reserve(std::size_t count) {
+    void reserve_pos(std::size_t count) {
         m_positons.reserve(count);
     }
-    void erase(const Cell* cell) {
+    void erase_pos(const Cell* cell) {
         m_positons.erase(cell);
     }
 

@@ -50,5 +50,8 @@
     <ClInclude Include="simplest-crystallite.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="simplest-material.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

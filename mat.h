@@ -42,6 +42,12 @@ struct mat<3, ValueType> {
         return { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
     }
 
+    mat& transpose() const {
+        std::swap(x[0][1], x[1][0]);
+        std::swap(x[0][2], x[2][0]);
+        std::swap(x[1][2], x[2][1]);
+        return *this;
+    }
     mat transposed() const {
         return {
             x[0][0], x[1][0], x[2][0],
@@ -119,10 +125,10 @@ struct mat<3, ValueType> {
         x[2] /= scalar;
         return *this;
     }
-    line_type& operator[](std::uint8_t i) {
+    line_type& operator[](std::size_t i) {
         return x[i];
     }
-    const line_type& operator[](std::uint8_t i) const {
+    const line_type& operator[](std::size_t i) const {
         return x[i];
     }
 
@@ -146,6 +152,106 @@ struct mat<3, ValueType> {
         value_type v3, value_type v4, value_type v5,
         value_type v6, value_type v7, value_type v8)
         : x{ line_type{ v0, v1, v2 }, line_type{ v3, v4, v5 }, line_type{ v6, v7, v8 } } {}
+};
+
+template <typename ValueType>
+struct mat<2, ValueType> {
+    static constexpr std::size_t n = 2;
+    using value_type = ValueType;
+    using line_type = spt::vec<2, value_type>;
+
+    std::array<line_type, 2> x;
+
+    static mat identity() {
+        return {{ 1, 0 }, { 0, 1 }};
+    }
+
+    mat& transpose() const {
+        std::swap(x[0][1], x[1][0]);
+        return *this;
+    }
+    mat transposed() const {
+        return {
+            x[0][0], x[1][0],
+            x[0][1], x[1][1] };
+    }
+    mat inversed() const {
+        value_type det = m[0][0] * m[1][1] - m[0][1] * m[1][0];
+        return mat{ m[1][1], -m[0][1],
+                   -m[1][0],  m[0][0] } / det;
+    }
+
+    mat& operator=(const mat& right) {
+        x = right.x;
+        return *this;
+    }
+    mat operator-() const {
+        return { -x[0], -x[1] };
+    }
+    mat operator+(const mat& right) const {
+        return {
+            x[0] + right.x[0],
+            x[1] + right.x[1] };
+    }
+    mat operator-(const mat& right) const {
+        return {
+            x[0] - right.x[0],
+            x[1] - right.x[1] };
+    }
+    mat operator*(value_type scalar) const {
+        return {
+            x[0] * scalar,
+            x[1] * scalar };
+    }
+    mat operator/(value_type scalar) const {
+        return {
+            x[0] / scalar,
+            x[1] / scalar };
+    }
+    mat& operator+=(const mat& right) {
+        x[0] += right.x[0];
+        x[1] += right.x[1];
+        return *this;
+    }
+    mat& operator-=(const mat& right) {
+        x[0] -= right.x[0];
+        x[1] -= right.x[1];
+        return *this;
+    }
+    mat& operator*=(value_type scalar) {
+        x[0] *= scalar;
+        x[1] *= scalar;
+        return *this;
+    }
+    mat& operator/=(value_type scalar) {
+        x[0] /= scalar;
+        x[1] /= scalar;
+        return *this;
+    }
+    line_type& operator[](std::size_t i) {
+        return x[i];
+    }
+    const line_type& operator[](std::size_t i) const {
+        return x[i];
+    }
+
+    mat() {}
+    mat(const mat& other) {
+        x = other.x;
+    }
+    mat(const std::array<line_type, 2>& x)
+        : x{ x } {}
+    mat(const std::array<value_type, 4>& x) {
+        this->x[0] = line_type{ x[0], x[1] };
+        this->x[1] = line_type{ x[2], x[3] };
+    }
+    mat(const line_type& x0, const line_type& x1) {
+        x[0] = x0;
+        x[1] = x1;
+    }
+    mat(value_type v0, value_type v1,
+        value_type v2, value_type v3)
+        : x{ line_type{ v0, v1 }, line_type{ v2, v3 } } {}
 };
 
 }  // namespace spt

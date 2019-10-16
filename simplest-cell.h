@@ -6,13 +6,13 @@
 
 namespace cgr {
 
-using real_type = double;
-
+template <std::size_t Dim, typename Real = default_real>
 struct simplest_cell {
-    real_type crystallinity_degree; // 0.0 to 1.0
-    real_type crystallization_rate;
-    std::vector<simplest_crystallite> contains_crystallites;
-    // ...
+    using crystallite_type = simplest_crystallite<Dim, Real>;
+
+    Real crystallinity_degree = 0; // 0.0 to 1.0
+    Real crystallization_rate = 0;
+    std::vector<crystallite_type> contains_crystallites;
 };
 
 } // namespace cgr

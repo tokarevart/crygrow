@@ -41,17 +41,8 @@ public:
 
         for (auto pcell : *this) {
             auto pdir_nbhood = get_direct_nbhood(pcell);
-            bool on_border = false;
-            for (auto pneighbor : *pdir_nbhood)
-                if (!pneighbor->contains_crystallites.empty() &&
-                    pneighbor->crystallinity_degree == static_cast<Real>(1.0)) {
-                    on_border = true;
-                }
-            if (!on_border)
-                continue;
-
             auto pcell_pos = pos(pcell);
-            auto pnbhood = get_nbhood(pcell);
+            // ...
         }
     }
 

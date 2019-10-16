@@ -175,8 +175,16 @@ public:
     bool operator!=(const cell_iterator& other) const {
         return m_it != other.m_it;
     }
-    cell_type& operator*() const {
-        return *to_ptr();
+    cell_iterator& operator++() {
+        ++m_it;
+        if constexpr (std::is_same_v<CellMutGr, cell_mut_group::universal>)
+            while(to_ptr()->mutability() == cell_mut::constant_cell)
+                ++m_it;
+        
+        return *this;
+    }
+    cell_type* operator*() const {
+        return to_ptr();
     }
 
     cell_iterator(from_iterator it) : m_it{it} {}

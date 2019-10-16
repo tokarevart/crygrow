@@ -12,7 +12,7 @@ struct simplest_cell {
 
     Real crystallinity_degree = 0.0; // 0.0 to 1.0
     Real crystallization_rate = 0.0;
-    std::vector<crystallite_type> contains_crystallites;
+    std::vector<crystallite_type*> contains_crystallites;
 };
 
 } // namespace cgr

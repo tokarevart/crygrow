@@ -8,7 +8,7 @@ namespace cgr {
 template <std::size_t Dim, typename Real = default_real>
 class simplest_crystallite {
 public:
-    // TODO: use spt::mat instead of std::array
+    using material_type = simplest_material;
     using orientation_type = spt::mat<Dim, Real>; // |each vec| == 1
 
     const simplest_material* material() const {

@@ -1,5 +1,5 @@
 #pragma once
-#include <array> // "mat.h"
+#include "mat.h"
 #include "simplest-material.h"
 
 
@@ -9,7 +9,7 @@ template <std::size_t Dim, typename Real = default_real>
 class simplest_crystallite {
 public:
     // TODO: use spt::mat instead of std::array
-    using orientation_type = std::array<spt::vec, Dim>; // |vec| == 1
+    using orientation_type = spt::mat<Dim, Real>; // |each vec| == 1
 
     const simplest_material* material() const {
         return m_material;

@@ -162,6 +162,9 @@
     <ClInclude Include="neighborhood.h" />
     <ClInclude Include="mat.h" />
     <ClInclude Include="cell-mutability.h" />
+    <ClInclude Include="simplest-automata.h" />
+    <ClInclude Include="simplest-cell.h" />
+    <ClInclude Include="simplest-crystallite.h" />
     <ClInclude Include="sptalgs.h" />
     <ClInclude Include="sptops.h" />
     <ClInclude Include="vec.h" />

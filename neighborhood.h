@@ -36,7 +36,13 @@ public:
                         res.push_back(center + veci{x, y});
 
         } else if constexpr (Dim == 3) {
-            static_assert(false);
+            std::size_t buf = 2 * range + 1;
+            res.reserve(buf * buf * buf - 1);
+            for (std::int64_t z = -range; z <= range; z++)
+                for (std::int64_t y = -range; y <= range; y++)
+                    for (std::int64_t x = -range; x <= range; x++)
+                        if (!(x == 0 && y == 0 && z == 0))
+                            res.push_back(center + veci{x, y, z});
 
         } else {
             static_assert(false);
@@ -64,7 +70,14 @@ public:
                         res.push_back(center + veci{x, y});
 
         } else if constexpr (Dim == 3) {
-            static_assert(false);
+            std::size_t buf = 2 * range + 1;
+            res.reserve(buf * buf * buf - 1);
+            for (std::int64_t z = -range; z <= range; z++)
+                for (std::int64_t y = -range; y <= range; y++)
+                    for (std::int64_t x = -range; x <= range; x++)
+                        if (!(x == 0 && y == 0 && z == 0) &&
+                            std::abs(x) + std::abs(y) + std::abs(z) <= range)
+                            res.push_back(center + veci{x, y, z});
 
         } else {
             static_assert(false);

@@ -26,7 +26,7 @@ public:
     // try specify hasher excplicitly if there is an error
     using cells_container = std::unordered_map<veci, std::unique_ptr<Cell>>;
     using positons_container = std::unordered_map<Cell*, veci>;
-    using nbhoods_container = std::unordered_map<Cell*, std::unique_ptr<nbhood<dim, cell_type>>>;
+    using nbhoods_container = std::unordered_map<Cell*, std::unique_ptr<nbhood<Dim, Cell>>>;
     using iterator = cell_iterator<automata_base>;
     static constexpr cell_mut_group cell_mut_group = CellMutGr;
     

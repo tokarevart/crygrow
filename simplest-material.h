@@ -11,7 +11,7 @@ using default_real = double;
 template <std::size_t Dim, typename Real = default_real>
 class simplest_material {
 public:
-    using grow_dir = spt::vec;
+    using grow_dir = spt::vec<Dim, Real>;
 
     const std::vector<grow_dir>& grow_dirs() const {
         return m_grow_dirs;

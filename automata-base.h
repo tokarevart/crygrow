@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <memory>
 #include <unordered_map>
+#include <optional>
 #include "neighborhood.h"
 #include "cell-mutability.h"
 #include "vec.h"
@@ -21,12 +22,13 @@ class automata_base {
 public:
     static constexpr std::size_t dim = Dim;
     using cell_type = Cell;
-    using veci = spt::veci;
+    using veci = spt::veci<Dim>;
     using vecu = spt::vec<Dim, std::uint64_t>;
+    using nbhood_type = nbhood<Dim, Cell>;
     // try specify hasher excplicitly if there is an error
     using cells_container = std::unordered_map<veci, std::unique_ptr<Cell>>;
     using positons_container = std::unordered_map<Cell*, veci>;
-    using nbhoods_container = std::unordered_map<Cell*, std::unique_ptr<nbhood<Dim, Cell>>>;
+    using nbhoods_container = std::unordered_map<Cell*, std::unique_ptr<nbhood_type>>;
     using iterator = cell_iterator<automata_base>;
     static constexpr cell_mut_group cell_mut_group = CellMutGr;
     
@@ -96,7 +98,7 @@ public:
     std::size_t default_nbhood_kind() const {
         return m_default_nbhood_kind;
     }
-    const nbhood* get_nbhood(const Cell* cell) const {
+    const nbhood_type* get_nbhood(const Cell* cell) const {
         auto search = m_nbhoods.find(cell);
         return search != m_nbhoods.end() ? search->second.get() : nullptr;
     }
@@ -141,8 +143,8 @@ private:
 template <typename Automata>
 struct cell_iterator_base {
     using iterator_category = std::forward_iterator_tag;
-    using cell_type = Automata::cell_type;
-    using from_iterator = Automata::cells_container::const_iterator;
+    using cell_type = typename Automata::cell_type;
+    using from_iterator = typename Automata::cells_container::const_iterator;
 };
 
 
@@ -150,7 +152,9 @@ template <std::size_t Dim, typename Cell, cell_mut_group CellMutGr>
 class cell_iterator<automata_base<Dim, Cell, CellMutGr>>
     : cell_iterator_base<automata_base<Dim, Cell, CellMutGr>> {
 public:
-    cell_type* to_ptr() const {
+    using base = cell_iterator_base<automata_base<Dim, Cell, CellMutGr>>;
+
+    typename base::cell_type* to_ptr() const {
         return m_it->second.get();
     }
     cell_iterator next_until(cell_iterator end) {
@@ -183,15 +187,15 @@ public:
         
         return *this;
     }
-    cell_type* operator*() const {
+    typename base::cell_type* operator*() const {
         return to_ptr();
     }
 
-    cell_iterator(from_iterator it) : m_it{it} {}
+    cell_iterator(typename base::from_iterator it) : m_it{it} {}
 
 
 private:
-    from_iterator m_it;
+    typename base::from_iterator m_it;
 };
 
 } // namespace cgr

@@ -49,7 +49,7 @@ public:
             if (pcell)
                 erase(pos, pcell);
         } else {
-            m_cells[pos].reset(new_cell);
+            m_cells[pos].reset(const_cast<Cell*>(new_cell));
             this->pos(new_cell, pos);
         }
     }
@@ -58,7 +58,7 @@ public:
         return m_positons.at(const_cast<cell_type*>(kcell));
     }
     void pos(const Cell* cell, const veci& pos) {
-        m_positons[cell] = pos;
+        m_positons[const_cast<Cell*>(cell)] = pos;
     }
 
     void reserve(std::size_t count) {
@@ -86,10 +86,10 @@ public:
         m_cells.erase(pos);
     }
     void erase_pos(const Cell* cell) {
-        m_positons.erase(cell);
+        m_positons.erase(const_cast<Cell*>(cell));
     }
     void erase_nbhood(const Cell* cell) {
-        m_nbhoods.erase(cell);
+        m_nbhoods.erase(const_cast<Cell*>(cell));
     }
     
     std::size_t default_range() const {
@@ -117,7 +117,7 @@ public:
 
         m_nbhoods[const_cast<cell_type*>(cell)] = std::make_unique<nbhood_type>(
             cell, nbhood_kind, range,
-            [this](const Cell* cell) { return this->pos(cell); },
+            [this](const cell_type* pcell) { return this->pos(pcell); },
             [this](const veci& pos) { return this->cell(pos); });
     }
     

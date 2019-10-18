@@ -140,9 +140,9 @@ struct vec {
         x = other.x;
     }
     vec(const std::array<ValueType, Dim>& x) : x{x} {}
-    template<typename ValueType1, typename... TaleValues>
-    vec(ValueType1 x0, TaleValues... xt)
-        : x{ std::forward<ValueType1>(x0), std::forward<ValueType1>(xt)... } {}
+    template<typename... ValueTypes>
+    vec(ValueTypes... xs)
+        : x{ xs... } {}
 };
 
 

@@ -39,7 +39,10 @@ struct mat<3, ValueType> {
     std::array<line_type, 3> x;
 
     static mat identity() {
-        return { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
+        return { 
+            line_type{ 1, 0, 0 }, 
+            line_type{ 0, 1, 0 }, 
+            line_type{ 0, 0, 1 } };
     }
 
     mat& transpose() const {
@@ -163,7 +166,9 @@ struct mat<2, ValueType> {
     std::array<line_type, 2> x;
 
     static mat identity() {
-        return { line_type{ 1, 0 }, line_type{ 0, 1 } };
+        return {
+            line_type{ static_cast<value_type>(1), static_cast<value_type>(0) }, 
+            line_type{ static_cast<value_type>(0), static_cast<value_type>(1) } };
     }
 
     mat& transpose() const {

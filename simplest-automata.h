@@ -8,9 +8,10 @@ namespace cgr {
 
 template <std::size_t Dim, typename Real = default_real>
 class simplest_automata
-    : automata_base<Dim, simplest_cell<Dim, Real>, cell_mut_group::mutable_only> {
+    : public automata_base<Dim, simplest_cell<Dim, Real>, cell_mut_group::mutable_only> {
 public:
     using base = automata_base<Dim, simplest_cell<Dim, Real>, cell_mut_group::mutable_only>;
+    using veci = typename base::veci;
     using cell_type = typename base::cell_type;
     using nbhood_type = typename base::nbhood_type;
     using nbhoods_container = typename base::nbhoods_container;
@@ -24,7 +25,21 @@ public:
         return search != m_direct_nbhoods.end() ? search->second.get() : nullptr;
     }
     void set_direct_nbhood(const cell_type* cell) {
-        base::set_nbhood(cell, nbhood_kind::von_neumann, 1);
+        if (!cell)
+            return;
+
+        m_direct_nbhoods[const_cast<cell_type*>(cell)] = std::make_unique<nbhood_type>(
+            cell, nbhood_kind::von_neumann, 1,
+            [this](const cell_type* pcell) { return this->pos(pcell); },
+            [this](const veci& pos) { return this->cell(pos); });
+    }
+
+    void reserve(std::size_t count) {
+        base::reserve(count);
+        reserve_direct_nbhoods(count);
+    }
+    void reserve_direct_nbhoods(std::size_t count) {
+        m_direct_nbhoods.reserve(count);
     }
 
     bool stop_condition() const override {
@@ -43,6 +58,8 @@ public:
             //    set_nbhood(pcell);
             if (!get_direct_nbhood(pcell))
                 set_direct_nbhood(pcell);
+            if (!get_direct_nbhood(pcell))
+                std::cout << "aaaa";
         }
 
         // test

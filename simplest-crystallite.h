@@ -19,7 +19,7 @@ public:
     }
 
     simplest_crystallite(const material_type* mater, const orientation_type& orien)
-        : m_material{mater}, m_orientation{orien} {}
+        : m_material{const_cast<material_type*>(mater)}, m_orientation{orien} {}
 
 
 private:

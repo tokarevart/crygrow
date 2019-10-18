@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+#include <fstream>
 #include "simplest-automata.h"
 
 
@@ -28,8 +29,20 @@ int main() {
     init_cell->crystallites.assign(1, &cryst);
     automata.cell(spt::veci<2>{ 150, 150 }, init_cell);
     
-    for (std::size_t i = 0; i < 10; i++)
+    for (std::size_t i = 0; i < 100; i++) {
         automata.iterate();
+        std::ofstream ofile("automata-image-data.txt");
+        ofile << "size " << 301 << std::endl;
+        for (auto pcell : automata) {
+            if (pcell->crystallinity == 0.0)
+                continue;
+
+            auto pos = automata.pos(pcell);
+            auto brightness = static_cast<std::int64_t>(std::abs(1.0 - pcell->crystallinity) * 255.5);
+            ofile << pos[0] << ' ' << pos[1] << ' ' 
+                << brightness << ' ' << brightness << ' ' << brightness << std::endl;
+        }
+    }
 
     return 0;
 }

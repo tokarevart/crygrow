@@ -64,14 +64,14 @@ public:
 
         // test
         for (auto pcell : *this) {
-            if (pcell->crystallinity == 1.0)
+            if (std::abs(pcell->crystallinity - 1.0) <= std::numeric_limits<Real>::epsilon() * (pcell->crystallinity + 1))
                 continue;
 
             auto pdir_nbhood = get_direct_nbhood(pcell);
             //auto pcell_pos = pos(pcell);
 
             for (auto pnb : *pdir_nbhood) {
-                if (pnb->crystallinity < 1.0 ||
+                if (pnb->crystallinity < 1.0 - std::numeric_limits<Real>::epsilon() ||
                     pnb->crystallites.size() != 1)
                     continue;
 
@@ -80,9 +80,9 @@ public:
                               pnb->crystallites.front()) == pcell->crystallites.end())
                     pcell->crystallites.push_back(pnb->crystallites.front());
 
-                pnb->crystallinity += 0.1;
+                pcell->crystallinity += 0.1;
             }
-            if (pcell->crystallinity > 1.0)
+            if (pcell->crystallinity > 1.0 + std::numeric_limits<Real>::epsilon())
                 pcell->crystallinity = 1.0;
         }
 

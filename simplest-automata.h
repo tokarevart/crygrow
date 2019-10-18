@@ -7,7 +7,7 @@
 namespace cgr {
 
 template <std::size_t Dim, typename Real = default_real>
-class simplest_automata 
+class simplest_automata
     : automata_base<Dim, simplest_cell<Dim, Real>, cell_mut_group::mutable_only> {
 public:
     using base = automata_base<Dim, simplest_cell<Dim, Real>, cell_mut_group::mutable_only>;
@@ -20,11 +20,11 @@ public:
     using grow_dir = typename material_type::grow_dir;
 
     const nbhood_type* get_direct_nbhood(const cell_type* cell) const {
-        auto search = m_direct_nbhoods.find(cell);
+        auto search = m_direct_nbhoods.find(const_cast<cell_type*>(cell));
         return search != m_direct_nbhoods.end() ? search->second.get() : nullptr;
     }
     void set_direct_nbhood(const cell_type* cell) {
-        set_nbhood(cell, nbhood_kind::von_neumann, 1);
+        base::set_nbhood(cell, nbhood_kind::von_neumann, 1);
     }
 
     bool stop_condition() const override {
@@ -52,7 +52,7 @@ public:
 
             auto pdir_nbhood = get_direct_nbhood(pcell);
             //auto pcell_pos = pos(pcell);
-            
+
             for (auto pnb : *pdir_nbhood) {
                 if (pnb->crystallinity < 1.0 ||
                     pnb->crystallites.size() != 1)
@@ -62,16 +62,18 @@ public:
                               pcell->crystallites.end(),
                               pnb->crystallites.front()) == pcell->crystallites.end())
                     pcell->crystallites.push_back(pnb->crystallites.front());
-                    
+
                 pnb->crystallinity += 0.1;
             }
-            if (pnb->crystallinity > 1.0)
-                pnb->crystallinity = 1.0;
+            if (pcell->crystallinity > 1.0)
+                pcell->crystallinity = 1.0;
         }
+
+        return true;
     }
 
-    simplest_automata() : simplest_automata(1, nbhood_kind::von_neumann) {}
-    simplest_automata(std::size_t default_range, nbhood_kind default_nbhood_kind)
+    simplest_automata(std::size_t default_range = 1, 
+                      nbhood_kind default_nbhood_kind = nbhood_kind::von_neumann)
         : base(default_range, default_nbhood_kind) {}
 
 

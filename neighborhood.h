@@ -27,20 +27,21 @@ public:
     using get_cell_func = std::function<Cell*(const veci&)>;
 
     static std::vector<veci> neighbors_pos(const veci& center, std::size_t range) {
+        std::int64_t srange = range;
         std::vector<veci> res;
         if constexpr (Dim == 2) {
             res.reserve(4 * range * (range + 1)); // (2 * range + 1)^2 - 1
-            for (std::int64_t y = -range; y <= range; y++) 
-                for (std::int64_t x = -range; x <= range; x++) 
+            for (std::int64_t y = -srange; y <= srange; y++)
+                for (std::int64_t x = -srange; x <= srange; x++)
                     if (!(x == 0 && y == 0))
                         res.push_back(center + veci{x, y});
 
         } else if constexpr (Dim == 3) {
             std::size_t buf = 2 * range + 1;
             res.reserve(buf * buf * buf - 1);
-            for (std::int64_t z = -range; z <= range; z++)
-                for (std::int64_t y = -range; y <= range; y++)
-                    for (std::int64_t x = -range; x <= range; x++)
+            for (std::int64_t z = -srange; z <= srange; z++)
+                for (std::int64_t y = -srange; y <= srange; y++)
+                    for (std::int64_t x = -srange; x <= srange; x++)
                         if (!(x == 0 && y == 0 && z == 0))
                             res.push_back(center + veci{x, y, z});
 
@@ -60,23 +61,24 @@ public:
     using get_cell_func = std::function<Cell*(const veci&)>;
 
     static std::vector<veci> neighbors_pos(const veci& center, std::size_t range) {
+        std::int64_t srange = range;
         std::vector<veci> res;
         if constexpr (Dim == 2) {
             res.reserve(4 * range);
-            for (std::int64_t y = -range; y <= range; y++)
-                for (std::int64_t x = -range; x <= range; x++)
+            for (std::int64_t y = -srange; y <= srange; y++)
+                for (std::int64_t x = -srange; x <= srange; x++)
                     if (!(x == 0 && y == 0) &&
-                        std::abs(x) + std::abs(y) <= range)
+                        std::abs(x) + std::abs(y) <= srange)
                         res.push_back(center + veci{x, y});
 
         } else if constexpr (Dim == 3) {
             std::size_t buf = 2 * range + 1;
             res.reserve(buf * buf * buf - 1);
-            for (std::int64_t z = -range; z <= range; z++)
-                for (std::int64_t y = -range; y <= range; y++)
-                    for (std::int64_t x = -range; x <= range; x++)
+            for (std::int64_t z = -srange; z <= srange; z++)
+                for (std::int64_t y = -srange; y <= srange; y++)
+                    for (std::int64_t x = -srange; x <= srange; x++)
                         if (!(x == 0 && y == 0 && z == 0) &&
-                            std::abs(x) + std::abs(y) + std::abs(z) <= range)
+                            std::abs(x) + std::abs(y) + std::abs(z) <= srange)
                             res.push_back(center + veci{x, y, z});
 
         } else {
@@ -92,8 +94,8 @@ template <std::size_t Dim, typename Cell>
 class nbhood {
 public:
     using veci = spt::veci<Dim>;
-    using get_cell_func = std::function<Cell*(const veci&)>;
     using get_pos_func = std::function<veci(const Cell*)>;
+    using get_cell_func = std::function<Cell*(const veci&)>;
 
     auto begin() const {
         return m_neighbors.cbegin();
@@ -113,16 +115,15 @@ public:
 
     nbhood(const veci& center, nbhood_kind kind, std::size_t range, get_cell_func getcell)
         : m_central_cell{getcell(center)}, m_kind{kind}, m_range{range} {
-        nbhood_pos_impl<NbhoodKind, Dim, Cell>;
         std::vector<veci> neighbors_pos;
         switch (kind) {
         case nbhood_kind::von_neumann:
             neighbors_pos = nbhood_pos_impl<nbhood_kind::von_neumann, 
-                Dim, Cell>::neighbors_pos(center);
+                Dim, Cell>::neighbors_pos(center, range);
             break;
         case nbhood_kind::moore:
             neighbors_pos = nbhood_pos_impl<nbhood_kind::moore,
-                Dim, Cell>::neighbors_pos(center);
+                Dim, Cell>::neighbors_pos(center, range);
             break;
         }
         for (auto& pos : neighbors_pos) {

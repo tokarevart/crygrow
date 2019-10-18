@@ -54,8 +54,8 @@ public:
         }
     }
     
-    veci pos(const Cell* cell) const {
-        return m_positons[cell];
+    veci pos(const Cell* kcell) const {
+        return m_positons.at(const_cast<cell_type*>(kcell));
     }
     void pos(const Cell* cell, const veci& pos) {
         m_positons[cell] = pos;
@@ -115,8 +115,8 @@ public:
         if (!cell)
             return;
 
-        m_nbhoods[cell] = std::make_unique<nbhood>(
-            cell, range,
+        m_nbhoods[const_cast<cell_type*>(cell)] = std::make_unique<nbhood_type>(
+            cell, nbhood_kind, range,
             [this](const Cell* cell) { return this->pos(cell); },
             [this](const veci& pos) { return this->cell(pos); });
     }
@@ -181,7 +181,7 @@ public:
     }
     cell_iterator& operator++() {
         ++m_it;
-        if constexpr (std::is_same_v<CellMutGr, cell_mut_group::universal>)
+        if constexpr (CellMutGr == cell_mut_group::universal)
             while(to_ptr()->mutability() == cell_mut::constant_cell)
                 ++m_it;
         

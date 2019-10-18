@@ -48,10 +48,9 @@ struct vec {
     }
 
     vec& normalize() {
-        auto inv_magn = static_cast<ValueType>(1) / magnitude();
-        //x[0] *= inv_magn;
-        //x[1] *= inv_magn;
-        //x[2] *= inv_magn;
+        ValueType inv_magn = static_cast<ValueType>(1) / magnitude();
+        for (auto& val : x)
+            val *= inv_magn;
         return *this;
     }
 
@@ -60,55 +59,65 @@ struct vec {
         return *this;
     }
     vec operator-() const {
-        //return { -x[0], -x[1], -x[2] };
+        vec res = *this;
+        for (auto& val : res.x)
+            val = -val;
+        return res;
     }
     vec operator+(const vec& right) const {
-        //return {
-        //    x[0] + right.x[0],
-        //    x[1] + right.x[1],
-        //    x[2] + right.x[2] };
+        vec res = *this;
+        for (std::size_t i = 0; i < Dim; i++)
+            res.x[i] += right.x[i];
+        return res;
     }
     vec operator-(const vec& right) const {
-        //return {
-        //    x[0] - right.x[0],
-        //    x[1] - right.x[1],
-        //    x[2] - right.x[2] };
+        vec res = *this;
+        for (std::size_t i = 0; i < Dim; i++)
+            res.x[i] -= right.x[i];
+        return res;
     }
     vec operator*(ValueType scalar) const {
-        //return {
-        //    x[0] * scalar,
-        //    x[1] * scalar,
-        //    x[2] * scalar };
+        vec res = *this;
+        for (auto& val : res.x)
+            val *= scalar;
+        return res;
     }
     vec operator/(ValueType scalar) const {
-        //return {
-        //    x[0] / scalar,
-        //    x[1] / scalar,
-        //    x[2] / scalar };
+        vec res = *this;
+        for (auto& val : res.x)
+            val /= scalar;
+        return res;
     }
     vec& operator+=(const vec& right) {
-        //x[0] += right.x[0];
-        //x[1] += right.x[1];
-        //x[2] += right.x[2];
+        for (std::size_t i = 0; i < Dim; i++)
+            x[i] += right.x[i];
         return *this;
     }
     vec& operator-=(const vec& right) {
-        //x[0] -= right.x[0];
-        //x[1] -= right.x[1];
-        //x[2] -= right.x[2];
+        for (std::size_t i = 0; i < Dim; i++)
+            x[i] -= right.x[i];
         return *this;
     }
     vec& operator*=(ValueType scalar) {
-        //x[0] *= scalar;
-        //x[1] *= scalar;
-        //x[2] *= scalar;
+        for (auto& val : x)
+            val *= scalar;
         return *this;
     }
     vec& operator/=(ValueType scalar) {
-        //x[0] /= scalar;
-        //x[1] /= scalar;
-        //x[2] /= scalar;
+        for (auto& val : x)
+            val /= scalar;
         return *this;
+    }
+    bool operator==(const vec& right) const {
+        for (std::size_t i = 0; i < Dim; i++)
+            if (std::abs(right.x[i] - x[i]) > std::numeric_limits<ValueType>::epsilon()
+                * std::abs(right.x[i] + x[i]))
+                return false;
+
+        return true;
+    }
+    bool operator!=(const vec& right) const {
+        return !(*this == right);
     }
     ValueType& operator[](std::size_t i) {
         return x[i];
@@ -117,12 +126,11 @@ struct vec {
         return x[i];
     }
     template <typename NewValueType>
-    operator vec<3, NewValueType>() const {
-        //return {
-        //    static_cast<NewValueType>(x[0]),
-        //    static_cast<NewValueType>(x[1]),
-        //    static_cast<NewValueType>(x[2])
-        //};
+    operator vec<Dim, NewValueType>() const {
+        vec<Dim, NewValueType> res;
+        for (std::size_t i = 0; i < Dim; i++)
+            res.x[i] = static_cast<NewValueType>(x[i]);
+        return res;
     }
 
     vec() {
@@ -132,9 +140,9 @@ struct vec {
         x = other.x;
     }
     vec(const std::array<ValueType, Dim>& x) : x{x} {}
-    template <typename... Values>
-    vec(Values&&... xs)
-        : x{ std::forward<ValueType>(static_cast<ValueType>(xs))... } {}
+    template<typename ValueType1, typename... TaleValues>
+    vec(ValueType1 x0, TaleValues... xt)
+        : x{ std::forward<ValueType1>(x0), std::forward<ValueType1>(xt)... } {}
 };
 
 

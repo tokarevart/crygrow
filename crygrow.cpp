@@ -5,7 +5,11 @@
 #include "simplest-automata.h"
 
 
+
+
+
 int main() {
+    cgr::simplest_automata<2> automata;
 
     return 0;
 }

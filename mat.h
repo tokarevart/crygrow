@@ -163,7 +163,7 @@ struct mat<2, ValueType> {
     std::array<line_type, 2> x;
 
     static mat identity() {
-        return {{ 1, 0 }, { 0, 1 }};
+        return { line_type{ 1, 0 }, line_type{ 0, 1 } };
     }
 
     mat& transpose() const {
@@ -240,7 +240,7 @@ struct mat<2, ValueType> {
         x = other.x;
     }
     mat(const std::array<line_type, 2>& x)
-        : x{ x } {}
+        : x{x} {}
     mat(const std::array<value_type, 4>& x) {
         this->x[0] = line_type{ x[0], x[1] };
         this->x[1] = line_type{ x[2], x[3] };

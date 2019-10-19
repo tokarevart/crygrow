@@ -32,6 +32,14 @@ public:
     using iterator = cell_iterator<automata_base>;
     static constexpr cell_mut_group cell_mut_group = CellMutGr;
     
+    using raw_iterator = typename cells_container::iterator;
+    raw_iterator raw_begin() {
+        return m_cells.begin();
+    }
+    raw_iterator raw_end() {
+        return m_cells.end();
+    }
+
     iterator begin() const {
         return {m_cells.cbegin()};
     }

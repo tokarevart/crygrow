@@ -12,7 +12,8 @@ namespace cgr {
 
 enum class nbhood_kind {
     von_neumann,
-    moore
+    moore,
+    euclid
 };
 
 
@@ -91,6 +92,39 @@ public:
 
 
 template <std::size_t Dim, typename Cell>
+class nbhood_pos_impl<nbhood_kind::euclid, Dim, Cell> {
+public:
+    using veci = spt::veci<Dim>;
+    using get_cell_func = std::function<Cell * (const veci&)>;
+
+    static std::vector<veci> neighbors_pos(const veci& center, std::size_t range) {
+        std::int64_t srange = range;
+        std::vector<veci> res;
+        if constexpr (Dim == 2) {
+            for (std::int64_t y = -srange; y <= srange; y++)
+                for (std::int64_t x = -srange; x <= srange; x++)
+                    if (!(x == 0 && y == 0) &&
+                        x * x + y * y <= srange * srange)
+                        res.push_back(center + veci{ x, y });
+
+        } else if constexpr (Dim == 3) {
+            for (std::int64_t z = -srange; z <= srange; z++)
+                for (std::int64_t y = -srange; y <= srange; y++)
+                    for (std::int64_t x = -srange; x <= srange; x++)
+                        if (!(x == 0 && y == 0 && z == 0) &&
+                            x * x + y * y + z * z <= srange * srange)
+                            res.push_back(center + veci{ x, y, z });
+
+        } else {
+            static_assert(false);
+        }
+
+        return res;
+    }
+};
+
+
+template <std::size_t Dim, typename Cell>
 class nbhood {
 public:
     using veci = spt::veci<Dim>;
@@ -123,6 +157,10 @@ public:
             break;
         case nbhood_kind::moore:
             neighbors_pos = nbhood_pos_impl<nbhood_kind::moore,
+                Dim, Cell>::neighbors_pos(center, range);
+            break;
+        case nbhood_kind::euclid:
+            neighbors_pos = nbhood_pos_impl<nbhood_kind::euclid,
                 Dim, Cell>::neighbors_pos(center, range);
             break;
         }

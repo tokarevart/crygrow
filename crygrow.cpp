@@ -14,8 +14,10 @@ void set_cells_box(cgr::simplest_automata<2>& automata, std::size_t size) {
 
 
 int main() {
+    std::size_t size = 501;
+    std::int64_t ssize2 = size / 2;
     cgr::simplest_automata<2> automata;
-    set_cells_box(automata, 301);
+    set_cells_box(automata, size);
     std::vector<spt::vec<2>> grow_dirs;
     grow_dirs.emplace_back(-1.0, 1.0);
     grow_dirs.emplace_back(1.0, 1.0);
@@ -27,21 +29,24 @@ int main() {
     auto* init_cell = new cgr::simplest_cell<2>;
     init_cell->crystallinity = 1;
     init_cell->crystallites.assign(1, &cryst);
-    automata.cell(spt::veci<2>{ 150, 150 }, init_cell);
+    automata.cell(spt::veci<2>{ ssize2, ssize2 }, init_cell);
     
     for (std::size_t i = 0; i < 100; i++) {
-        automata.iterate();
         std::ofstream ofile("automata-image-data.txt");
-        ofile << "size " << 301 << std::endl;
+        ofile << "size " << size << std::endl;
+        for (std::size_t i = 0; i < 300; i++) {
+            automata.iterate();
+        }
         for (auto pcell : automata) {
             if (pcell->crystallinity == 0.0)
                 continue;
 
             auto pos = automata.pos(pcell);
             auto brightness = static_cast<std::int64_t>(std::abs(1.0 - pcell->crystallinity) * 255.5);
-            ofile << pos[0] << ' ' << pos[1] << ' ' 
+            ofile << pos[0] << ' ' << pos[1] << ' '
                 << brightness << ' ' << brightness << ' ' << brightness << std::endl;
         }
+        std::cin.get();
     }
 
     return 0;

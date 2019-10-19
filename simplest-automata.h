@@ -1,5 +1,7 @@
 #pragma once
 #include <unordered_set>
+#include <algorithm>
+#include <execution>
 #include "automata-base.h"
 #include "simplest-cell.h"
 
@@ -29,7 +31,7 @@ public:
             return;
 
         m_direct_nbhoods[const_cast<cell_type*>(cell)] = std::make_unique<nbhood_type>(
-            cell, nbhood_kind::von_neumann, 1,
+            cell, nbhood_kind::euclid, 5,
             [this](const cell_type* pcell) { return this->pos(pcell); },
             [this](const veci& pos) { return this->cell(pos); });
     }
@@ -61,17 +63,23 @@ public:
             if (!get_direct_nbhood(pcell))
                 std::cout << "aaaa";
         }
-
+        
         // test
-        for (auto pcell : *this) {
+
+        std::for_each(std::execution::par, this->raw_begin(), this->raw_end(), 
+        [this](const std::pair<const veci, std::unique_ptr<cell_type>>& l_pair) mutable -> void {
+        //for (auto pcell : *this) {
+            cell_type* pcell = l_pair.second.get();
             if (std::abs(pcell->crystallinity - 1.0) <= std::numeric_limits<Real>::epsilon() * (pcell->crystallinity + 1))
-                continue;
+                //continue;
+                return;
 
             auto pdir_nbhood = get_direct_nbhood(pcell);
             //auto pcell_pos = pos(pcell);
 
+            std::size_t num_acc = 0;
             for (auto pnb : *pdir_nbhood) {
-                if (pnb->crystallinity < 1.0 - std::numeric_limits<Real>::epsilon() ||
+                if (pnb->crystallinity < 1.0 ||
                     pnb->crystallites.size() != 1)
                     continue;
 
@@ -80,11 +88,13 @@ public:
                               pnb->crystallites.front()) == pcell->crystallites.end())
                     pcell->crystallites.push_back(pnb->crystallites.front());
 
-                pcell->crystallinity += 0.1;
+                num_acc++;
             }
-            if (pcell->crystallinity > 1.0 + std::numeric_limits<Real>::epsilon())
+            if (num_acc > 0)
+                pcell->crystallinity += 0.005 * num_acc;
+            if (pcell->crystallinity > 1.0)
                 pcell->crystallinity = 1.0;
-        }
+        });
 
         return true;
     }

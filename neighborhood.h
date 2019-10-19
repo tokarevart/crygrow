@@ -17,24 +17,31 @@ enum class nbhood_kind {
 };
 
 
-template <nbhood_kind NbhoodKind, std::size_t Dim>
+template <nbhood_kind NbhoodKind, std::size_t Dim, 
+    typename GetCellFunc = std::function<bool(const spt::veci<Dim>&)>>
 class nbhood_pos_impl;
 
 
-template <std::size_t Dim>
-class nbhood_pos_impl<nbhood_kind::moore, Dim> {
+template <std::size_t Dim, typename GetCellFunc>
+class nbhood_pos_impl<nbhood_kind::moore, Dim, GetCellFunc> {
 public:
     using veci = spt::veci<Dim>;
-
-    static std::vector<veci> neighbors_pos(const veci& center, std::size_t range) {
+    static std::vector<veci> run(const veci& center, std::size_t range,
+                                 std::optional<GetCellFunc> getcell) {
         std::int64_t srange = range;
         std::vector<veci> res;
         if constexpr (Dim == 2) {
             res.reserve(4 * range * (range + 1)); // (2 * range + 1)^2 - 1
             for (std::int64_t y = -srange; y <= srange; y++)
                 for (std::int64_t x = -srange; x <= srange; x++)
-                    if (!(x == 0 && y == 0))
-                        res.push_back(center + veci{x, y});
+                    if (!(x == 0 && y == 0)) {
+                        auto new_pos = center + veci{x, y};
+                        if (!getcell) 
+                            res.push_back(new_pos);
+                        else
+                            if (getcell.value()(new_pos))
+                                res.push_back(new_pos);
+                    }
 
         } else if constexpr (Dim == 3) {
             std::size_t buf = 2 * range + 1;
@@ -42,8 +49,14 @@ public:
             for (std::int64_t z = -srange; z <= srange; z++)
                 for (std::int64_t y = -srange; y <= srange; y++)
                     for (std::int64_t x = -srange; x <= srange; x++)
-                        if (!(x == 0 && y == 0 && z == 0))
-                            res.push_back(center + veci{x, y, z});
+                        if (!(x == 0 && y == 0 && z == 0)) {
+                            auto new_pos = center + veci{x, y, z};
+                            if (!getcell)
+                                res.push_back(new_pos);
+                            else
+                                if (getcell.value()(new_pos))
+                                    res.push_back(new_pos);
+                        }
 
         } else {
             static_assert(false);
@@ -54,12 +67,12 @@ public:
 };
 
 
-template <std::size_t Dim>
-class nbhood_pos_impl<nbhood_kind::von_neumann, Dim> {
+template <std::size_t Dim, typename GetCellFunc>
+class nbhood_pos_impl<nbhood_kind::von_neumann, Dim, GetCellFunc> {
 public:
     using veci = spt::veci<Dim>;
-
-    static std::vector<veci> neighbors_pos(const veci& center, std::size_t range) {
+    static std::vector<veci> run(const veci& center, std::size_t range,
+                                 std::optional<GetCellFunc> getcell) {
         std::int64_t srange = range;
         std::vector<veci> res;
         if constexpr (Dim == 2) {
@@ -67,8 +80,14 @@ public:
             for (std::int64_t y = -srange; y <= srange; y++)
                 for (std::int64_t x = -srange; x <= srange; x++)
                     if (!(x == 0 && y == 0) &&
-                        std::abs(x) + std::abs(y) <= srange)
-                        res.push_back(center + veci{x, y});
+                        std::abs(x) + std::abs(y) <= srange) {
+                        auto new_pos = center + veci{x, y};
+                        if (!getcell) 
+                            res.push_back(new_pos);
+                        else 
+                            if (getcell.value()(new_pos))
+                                res.push_back(new_pos);
+                    }
 
         } else if constexpr (Dim == 3) {
             std::size_t buf = 2 * range + 1;
@@ -77,8 +96,14 @@ public:
                 for (std::int64_t y = -srange; y <= srange; y++)
                     for (std::int64_t x = -srange; x <= srange; x++)
                         if (!(x == 0 && y == 0 && z == 0) &&
-                            std::abs(x) + std::abs(y) + std::abs(z) <= srange)
-                            res.push_back(center + veci{x, y, z});
+                            std::abs(x) + std::abs(y) + std::abs(z) <= srange) {
+                            auto new_pos = center + veci{x, y, z};
+                            if (!getcell)
+                                res.push_back(new_pos);
+                            else
+                                if (getcell.value()(new_pos))
+                                    res.push_back(new_pos);
+                        }
 
         } else {
             static_assert(false);
@@ -89,28 +114,40 @@ public:
 };
 
 
-template <std::size_t Dim>
-class nbhood_pos_impl<nbhood_kind::euclid, Dim> {
+template <std::size_t Dim, typename GetCellFunc>
+class nbhood_pos_impl<nbhood_kind::euclid, Dim, GetCellFunc> {
 public:
     using veci = spt::veci<Dim>;
-
-    static std::vector<veci> neighbors_pos(const veci& center, std::size_t range) {
+    static std::vector<veci> run(const veci& center, std::size_t range, 
+                                 std::optional<GetCellFunc> getcell) {
         std::int64_t srange = range;
         std::vector<veci> res;
         if constexpr (Dim == 2) {
             for (std::int64_t y = -srange; y <= srange; y++)
                 for (std::int64_t x = -srange; x <= srange; x++)
                     if (!(x == 0 && y == 0) &&
-                        x * x + y * y <= srange * srange)
-                        res.push_back(center + veci{ x, y });
+                        x * x + y * y <= srange * srange) {
+                        auto new_pos = center + veci{x, y};
+                        if (!getcell)
+                            res.push_back(new_pos);
+                        else
+                            if (getcell.value()(new_pos))
+                                res.push_back(new_pos);
+                    }
 
         } else if constexpr (Dim == 3) {
             for (std::int64_t z = -srange; z <= srange; z++)
                 for (std::int64_t y = -srange; y <= srange; y++)
                     for (std::int64_t x = -srange; x <= srange; x++)
                         if (!(x == 0 && y == 0 && z == 0) &&
-                            x * x + y * y + z * z <= srange * srange)
-                            res.push_back(center + veci{ x, y, z });
+                            x * x + y * y + z * z <= srange * srange) {
+                            auto new_pos = center + veci{x, y, z};
+                            if (!getcell)
+                                res.push_back(new_pos);
+                            else
+                                if (getcell.value()(new_pos))
+                                    res.push_back(new_pos);
+                        }
 
         } else {
             static_assert(false);
@@ -122,70 +159,63 @@ public:
 
 
 template <std::size_t Dim>
-std::vector<spt::veci<Dim>> neighbors_pos(const spt::veci<Dim>& center, nbhood_kind kind, std::size_t range) {
+using nbhood_pos = std::vector<spt::veci<Dim>>;
+
+
+template <std::size_t Dim>
+nbhood_pos<Dim> make_nbhood_pos(const spt::veci<Dim>& center, nbhood_kind kind, std::size_t range, 
+                                std::optional<std::function<bool(const spt::veci<Dim>&)>> getcell) {
     switch (kind) {
     case nbhood_kind::von_neumann:
-        return nbhood_pos_impl<nbhood_kind::von_neumann,
-            Dim>::neighbors_pos(center, range);
+        return nbhood_pos_impl<nbhood_kind::von_neumann, Dim>
+            ::run(center, range);
 
     case nbhood_kind::moore:
-        return nbhood_pos_impl<nbhood_kind::moore,
-            Dim>::neighbors_pos(center, range);
+        return nbhood_pos_impl<nbhood_kind::moore, Dim>
+            ::run(center, range);
 
     case nbhood_kind::euclid:
-        return nbhood_pos_impl<nbhood_kind::euclid,
-            Dim>::neighbors_pos(center, range);
+        return nbhood_pos_impl<nbhood_kind::euclid, Dim>
+            ::run(center, range);
     }
 }
 
 
 template <std::size_t Dim, typename Cell>
-class nbhood {
-public:
-    using veci = spt::veci<Dim>;
-    using get_pos_func = std::function<veci(const Cell*)>;
-    using get_cell_func = std::function<Cell*(const veci&)>;
-
-    auto begin() const {
-        return m_neighbors.cbegin();
-    }
-    auto end() const {
-        return m_neighbors.cend();
-    }
-    bool empty() const {
-        return m_neighbors.empty();
-    }
-    std::size_t size() const {
-        return m_neighbors.size();
-    }
-    Cell* central_cell() const {
-        return m_central_cell;
-    }
-    nbhood_kind kind() const {
-        return m_kind;
-    }
-    std::size_t range() const {
-        return m_range;
-    }
-
-    nbhood(const veci& center, nbhood_kind kind, std::size_t range, get_cell_func getcell)
-        : m_central_cell{getcell(center)}, m_kind{kind}, m_range{range} {
-        for (auto& pos : neighbors_pos(center, kind, range)) {
-            Cell* cell = getcell(pos);
-            if (cell)
-                m_neighbors.push_back(cell);
-        }
-    }
-    nbhood(const Cell* central_cell, nbhood_kind kind, std::size_t range,
-                 get_pos_func getpos, get_cell_func getcell)
-        : nbhood(getpos(central_cell), kind, range, getcell) {}
+using nbhood = std::vector<Cell*>;
 
 
-private:
-    Cell* m_central_cell;
-    nbhood_kind m_kind;
-    std::size_t m_range;
-    std::vector<Cell*> m_neighbors;
-};
+template <std::size_t Dim, typename Cell, typename GetCellFunc = std::function<Cell*(const spt::veci<Dim>&)>>
+nbhood<Dim, Cell> make_nbhood(const spt::veci<Dim>& center, nbhood_kind kind, std::size_t range, 
+                              std::optional<GetCellFunc> getcell) {
+    nbhood<Dim, Cell> res;
+    auto nbhpos = getcell ? make_nbhood_pos(center, kind, range, 
+                                            [getcell](const spt::veci<Dim>& pos) 
+                                            -> bool { return getcell.value()(pos); }) 
+        : make_nbhood_pos(center, kind, range);
+
+    for (auto& nbpos : nbhpos) {
+        auto pcell = getcell(nbpos);
+        if (pcell)
+            res.push_back(pcell);
+    }
+
+    return res;
+}
+
+
+template <std::size_t Dim, typename Cell,
+    typename GetCellFunc = std::function<Cell*(const spt::veci<Dim>&)>>
+    nbhood<Dim, Cell> make_nbhood(const nbhood_pos<Dim>& nbhpos,
+                                  std::optional<GetCellFunc> getcell) {
+    nbhood<Dim, Cell> res;
+    for (auto& nbpos : nbhpos) {
+        auto pcell = getcell(nbpos);
+        if (pcell)
+            res.push_back(pcell);
+    }
+
+    return res;
+}
 
 } // namespace cgr

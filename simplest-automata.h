@@ -17,8 +17,9 @@ public:
     using veci = typename base::veci;
     using cell_type = typename base::cell_type;
     using nbhood_type = typename base::nbhood_type;
-    using nbhoods_container = typename base::nbhoods_container;
-    using cells_delta_container = std::unordered_map<cell_type*, Real>;
+    using nbhood_pos_type = typename base::nbhood_pos_type;
+    using nbhoods_pos_container = typename base::nbhoods_pos_container;
+    using cells_delta_container = std::vector<Real>;
     using crystallite_type = typename cell_type::crystallite_type;
     using material_type = typename crystallite_type::material_type;
     using orientation_type = typename crystallite_type::orientation_type;
@@ -35,23 +36,18 @@ public:
         if (stop_condition())
             return false;
 
-        for (auto pcell : *this) {
-            m_cells_delta[pcell] = 0.0;
-            if (!this->get_nbhood(pcell))
-                this->set_nbhood(pcell);
-        }
+        for (auto& delta : m_cells_delta)
+            delta = 0.0;
         
-        std::for_each(std::execution::par, this->raw_begin(), this->raw_end(), 
-        [this](const std::pair<const veci, std::unique_ptr<cell_type>>& l_pair) mutable -> void {
-        //for (auto pcell : *this) {
-            cell_type* pcell = l_pair.second.get();
+        for (std::size_t i = 0; i < num_cells(); i++) {
+            auto curpos = get_pos(i);
+            auto pcell = get_cell(i);
             if (std::abs(pcell->crystallinity - 1.0) <= epsilon * (pcell->crystallinity + 1))
-                //continue;
-                return;
+                continue;
             
-            auto pnbhood = this->get_nbhood(pcell);
+            auto nbhood = get_nbhood(curpos);
             std::size_t num_acc = 0;
-            for (auto pnb : *pnbhood) {
+            for (auto pnb : nbhood) {
                 if (pnb->crystallinity < 1.0 - epsilon ||
                     pnb->crystallites.size() != 1)
                     continue;
@@ -64,11 +60,12 @@ public:
                 num_acc++;
             }
             if (num_acc > 0)
-                m_cells_delta[pcell] += static_cast<Real>(num_acc) / (2 * pnbhood->size());
-        });
-        for (auto pcell : *this) {
-            pcell->crystallinity += m_cells_delta[pcell];
-            m_cells_delta[pcell] = 0.0;
+                m_cells_delta[i] += static_cast<Real>(num_acc) / 20;
+        }
+        for (std::size_t i = 0; i < num_cells(); i++) {
+            auto pcell = get_cell(i);
+            pcell->crystallinity += m_cells_delta[i];
+            m_cells_delta[i] = 0.0;
             if (pcell->crystallinity > 1.0 + epsilon)
                 pcell->crystallinity = 1.0;
         }
@@ -76,13 +73,20 @@ public:
         return true;
     }
 
-    simplest_automata(std::size_t default_range = 1, 
-                      nbhood_kind default_nbhood_kind = nbhood_kind::von_neumann)
-        : base(default_range, default_nbhood_kind) {}
+    simplest_automata(const veci& corner0, const veci& corner1, 
+                      std::size_t default_range = 1,
+                      nbhood_kind default_nbhood_kind = nbhood_kind::euclid)
+        : base(corner0, corner1, default_range, default_nbhood_kind) {
+        m_cells_delta.assign(m_cells.size(), 0.0);
+    }
 
 
 private:
     cells_delta_container m_cells_delta;
+
+    void initialize_nbhoods_pos() {
+        // set_nbhood_pos
+    }
 };
 
 } // namespace cgr

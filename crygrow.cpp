@@ -47,7 +47,7 @@ int main() {
                 << brightness << ' ' << brightness << ' ' << brightness << std::endl;
         }
         ofile.close();
-        std::system("python ./vis.py");
+        std::system("python ./visualize.py");
     }
 
     return 0;

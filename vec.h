@@ -142,7 +142,7 @@ struct vec {
     vec(const std::array<ValueType, Dim>& x) : x{x} {}
     template<typename... ValueTypes>
     vec(ValueTypes... xs)
-        : x{ xs... } {}
+        : x{ static_cast<ValueType>(xs)... } {}
 };
 
 

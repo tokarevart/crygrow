@@ -16,7 +16,7 @@ void set_cells_box(cgr::simplest_automata<2>& automata, std::size_t size) {
 int main() {
     std::size_t size = 501;
     std::int64_t ssize2 = size / 2;
-    cgr::simplest_automata<2> automata(5, cgr::nbhood_kind::euclid);
+    cgr::simplest_automata<2> automata(10, cgr::nbhood_kind::euclid);
     set_cells_box(automata, size);
     std::vector<spt::vec<2>> grow_dirs;
     grow_dirs.emplace_back(-1.0, 1.0);
@@ -26,17 +26,17 @@ int main() {
     cgr::simplest_material<2> mater(grow_dirs);
     cgr::simplest_crystallite<2> cryst(&mater, spt::mat<2>{ 
         spt::vec<2>{ 1.0, 0.0 }, spt::vec<2>{ 0.0, 1.0 }});
-    auto* init_cell = new cgr::simplest_cell<2>;
-    init_cell->crystallinity = 1;
-    init_cell->crystallites.assign(1, &cryst);
-    automata.cell(spt::veci<2>{ ssize2, ssize2 }, init_cell);
+    spt::veci<2> init_pos{ ssize2, ssize2 };
+    automata.cell(init_pos, new cgr::simplest_cell<2>(1.0, &cryst));
+    for (auto& pos : cgr::neighbors_pos(init_pos, cgr::nbhood_kind::euclid, 14))
+        automata.cell(pos, new cgr::simplest_cell<2>(1.0, &cryst));
     
-    for (std::size_t i = 0; i < 100; i++) {
+    while (true) {
         std::ofstream ofile("automata-image-data.txt");
         ofile << "size " << size << std::endl;
-        for (std::size_t i = 0; i < 400; i++) {
+        for (std::size_t i = 0; i < 40; i++)
             automata.iterate();
-        }
+
         for (auto pcell : automata) {
             if (pcell->crystallinity == 0.0)
                 continue;
@@ -46,7 +46,8 @@ int main() {
             ofile << pos[0] << ' ' << pos[1] << ' '
                 << brightness << ' ' << brightness << ' ' << brightness << std::endl;
         }
-        std::cin.get();
+        ofile.close();
+        std::system("python ./vis.py");
     }
 
     return 0;

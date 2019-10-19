@@ -18,14 +18,14 @@ def parse_img_data(filename):
 size, data = parse_img_data("automata-image-data.txt")
 # BGR palette
 img = np.zeros((size, size, 3), np.uint8)
+white = (255, 255, 255)
 for x in range(size):
     for y in range(size):
-        img[x][y] = (255, 255, 255)
+        img[x][y] = white
 
-while True:
-    size, data = parse_img_data("automata-image-data.txt")
-    for pack in data:
-        img[pack[0][0], pack[0][1]] = (pack[1][0], pack[1][1], pack[1][2])
+for pack in data:
+    img[pack[0][0], pack[0][1]] = (pack[1][0], pack[1][1], pack[1][2])
 
-    cv2.imshow("image", img)
-    cv2.waitKey()
+cv2.imshow("image", img)
+cv2.imwrite("fig.png", img)
+cv2.waitKey()

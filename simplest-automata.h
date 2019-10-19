@@ -21,29 +21,7 @@ public:
     using material_type = typename crystallite_type::material_type;
     using orientation_type = typename crystallite_type::orientation_type;
     using grow_dir = typename material_type::grow_dir;
-
-    const nbhood_type* get_direct_nbhood(const cell_type* cell) const {
-        auto search = m_direct_nbhoods.find(const_cast<cell_type*>(cell));
-        return search != m_direct_nbhoods.end() ? search->second.get() : nullptr;
-    }
-    void set_direct_nbhood(const cell_type* cell) {
-        if (!cell)
-            return;
-
-        m_direct_nbhoods[const_cast<cell_type*>(cell)] = std::make_unique<nbhood_type>(
-            cell, nbhood_kind::von_neumann, 1,
-            [this](const cell_type* pcell) { return this->pos(pcell); },
-            [this](const veci& pos) { return this->cell(pos); });
-    }
-
-    void reserve(std::size_t count) {
-        base::reserve(count);
-        reserve_direct_nbhoods(count);
-    }
-    void reserve_direct_nbhoods(std::size_t count) {
-        m_direct_nbhoods.reserve(count);
-    }
-
+    
     bool stop_condition() const override {
         for (auto pcell : *this)
             if (pcell->crystallinity < 1.0)
@@ -55,10 +33,9 @@ public:
         if (stop_condition())
             return false;
 
-        for (auto pcell : *this) {
+        for (auto pcell : *this)
             if (!this->get_nbhood(pcell))
                 this->set_nbhood(pcell);
-        }
         
         std::for_each(std::execution::par, this->raw_begin(), this->raw_end(), 
         [this](const std::pair<const veci, std::unique_ptr<cell_type>>& l_pair) mutable -> void {
@@ -95,9 +72,6 @@ public:
                       nbhood_kind default_nbhood_kind = nbhood_kind::von_neumann)
         : base(default_range, default_nbhood_kind) {}
 
-
-private:
-    nbhoods_container m_direct_nbhoods;
 };
 
 } // namespace cgr

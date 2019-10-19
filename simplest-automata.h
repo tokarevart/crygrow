@@ -31,7 +31,7 @@ public:
             return;
 
         m_direct_nbhoods[const_cast<cell_type*>(cell)] = std::make_unique<nbhood_type>(
-            cell, nbhood_kind::euclid, 5,
+            cell, nbhood_kind::von_neumann, 1,
             [this](const cell_type* pcell) { return this->pos(pcell); },
             [this](const veci& pos) { return this->cell(pos); });
     }
@@ -56,16 +56,10 @@ public:
             return false;
 
         for (auto pcell : *this) {
-            //if (!get_nbhood(pcell))
-            //    set_nbhood(pcell);
-            if (!get_direct_nbhood(pcell))
-                set_direct_nbhood(pcell);
-            if (!get_direct_nbhood(pcell))
-                std::cout << "aaaa";
+            if (!this->get_nbhood(pcell))
+                this->set_nbhood(pcell);
         }
         
-        // test
-
         std::for_each(std::execution::par, this->raw_begin(), this->raw_end(), 
         [this](const std::pair<const veci, std::unique_ptr<cell_type>>& l_pair) mutable -> void {
         //for (auto pcell : *this) {
@@ -73,12 +67,10 @@ public:
             if (std::abs(pcell->crystallinity - 1.0) <= std::numeric_limits<Real>::epsilon() * (pcell->crystallinity + 1))
                 //continue;
                 return;
-
-            auto pdir_nbhood = get_direct_nbhood(pcell);
-            //auto pcell_pos = pos(pcell);
-
+            
+            auto pnbhood = this->get_nbhood(pcell);
             std::size_t num_acc = 0;
-            for (auto pnb : *pdir_nbhood) {
+            for (auto pnb : *pnbhood) {
                 if (pnb->crystallinity < 1.0 ||
                     pnb->crystallites.size() != 1)
                     continue;

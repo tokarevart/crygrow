@@ -16,7 +16,7 @@ void set_cells_box(cgr::simplest_automata<2>& automata, std::size_t size) {
 int main() {
     std::size_t size = 501;
     std::int64_t ssize2 = size / 2;
-    cgr::simplest_automata<2> automata;
+    cgr::simplest_automata<2> automata(5, cgr::nbhood_kind::euclid);
     set_cells_box(automata, size);
     std::vector<spt::vec<2>> grow_dirs;
     grow_dirs.emplace_back(-1.0, 1.0);
@@ -34,7 +34,7 @@ int main() {
     for (std::size_t i = 0; i < 100; i++) {
         std::ofstream ofile("automata-image-data.txt");
         ofile << "size " << size << std::endl;
-        for (std::size_t i = 0; i < 300; i++) {
+        for (std::size_t i = 0; i < 400; i++) {
             automata.iterate();
         }
         for (auto pcell : automata) {

@@ -103,11 +103,11 @@ public:
     std::size_t default_range() const {
         return m_default_range;
     }
-    std::size_t default_nbhood_kind() const {
+    nbhood_kind default_nbhood_kind() const {
         return m_default_nbhood_kind;
     }
     const nbhood_type* get_nbhood(const Cell* cell) const {
-        auto search = m_nbhoods.find(cell);
+        auto search = m_nbhoods.find(const_cast<Cell*>(cell));
         return search != m_nbhoods.end() ? search->second.get() : nullptr;
     }
     void set_nbhood(const Cell* cell) {

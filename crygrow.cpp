@@ -9,10 +9,29 @@ std::vector<cgr::simplest_cell<2>> set_cells_box(cgr::simplest_automata<2>& auto
     for (std::size_t i = 0; i < size; i++)
         for (std::size_t j = 0; j < size; j++) {
             cells.emplace_back();
-            automata.set_cell({ 
-                static_cast<std::int64_t>(i), 
-                static_cast<std::int64_t>(j) }, &cells.back());
+            automata.set_cell({ i, j }, &cells.back());
         }
+}
+
+
+using pair_pos_cell = std::pair<std::vector<spt::veci<2>>, std::vector<cgr::simplest_cell<2>>>;
+
+std::vector<spt::veci<2>> make_poses_box(std::size_t size) {
+    std::vector<spt::veci<2>> res;
+    res.reserve(size * size);
+    for (std::size_t i = 0; i < size; i++)
+        for (std::size_t j = 0; j < size; j++)
+            res.emplace_back(i, j);
+
+    return res;
+}
+
+
+pair_pos_cell make_cells_box(std::size_t size, const cgr::simplest_cell<2>& cell) {
+    pair_pos_cell res;
+    res.first = make_poses_box(size);
+    res.second.assign(res.first.size(), cell);
+    return res;
 }
 
 
@@ -20,20 +39,22 @@ int main() {
     std::size_t size = 501;
     std::int64_t ssize2 = size / 2;
     cgr::simplest_automata<2> automata(10, cgr::nbhood_kind::euclid);
-    // TODO: simplify
-    auto cells = set_cells_box(automata, size); 
+    auto [default_poses, default_cells] = make_cells_box(size, cgr::simplest_cell<2>());
 
     cgr::simplest_material<2> mater;
     cgr::simplest_crystallite<2> cryst(&mater);
 
-    spt::veci<2> init_pos{ ssize2, ssize2 };
+    spt::veci<2> init_central_pos{ ssize2, ssize2 };
+    cgr::simplest_cell<2> init_central_cell(1.0, &cryst);
+    automata.set_cell(init_central_pos, &init_central_cell);
 
-    cells.emplace_back(1.0, &cryst);
-    automata.set_cell(init_pos, &cells.back());
-    for (auto& pos : cgr::make_nbhood_pos<2>(init_pos, cgr::nbhood_kind::euclid, 14)) {
-        cells.emplace_back(1.0, &cryst);
-        automata.set_cell(pos, &cells.back());
-    }
+    auto init_neighbor_poses = cgr::make_nbhood_pos<2>(
+        init_central_pos, cgr::nbhood_kind::euclid, 14);
+
+    auto init_neighbor_cells = std::vector<cgr::simplest_cell<2>>(
+        init_neighbor_poses.size(), init_central_cell);
+
+    automata.set_cells(init_neighbor_poses, init_neighbor_cells);
     
     while (true) {
         std::ofstream ofile("automata-image-data.txt");

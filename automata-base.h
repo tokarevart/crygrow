@@ -43,9 +43,13 @@ public:
         if (inside(pos))
             m_cells[offset(actual_pos(pos))] = new_cell;
     }
-    void  set_cell(const std::vector<std::pair<veci, Cell*>>& poscells) {
-        for (auto& poscell : poscells)
-            set_cell(poscell.first, poscell.second);
+    void  set_cells(const std::vector<veci>& poses, const std::vector<Cell*>& cells) {
+        for (std::size_t i = 0; i < poses.size(); i++)
+            set_cell(poses[i], cells[i]);
+    }
+    void  set_cells(const std::vector<veci>& poses, const std::vector<Cell>& cells) {
+        for (std::size_t i = 0; i < poses.size(); i++)
+            set_cell(poses[i], &cells[i]);
     }
 
     veci get_pos(std::size_t pos_offset) const {
@@ -53,21 +57,21 @@ public:
     }
 
     const nbhood_pos_type& get_nbhood_pos(std::size_t pos_offset) const {
-        return m_nbhoods_pos[pos_offset];
+        return m_nbhoods_poses[pos_offset];
     }
     const nbhood_pos_type& get_nbhood_pos(const veci& pos) const {
         return inside(pos) ? get_nbhood_pos(offset(actual_pos(pos))) : nullptr;
     }
     void  set_nbhood_pos(const veci& pos) {
         if (inside(pos)) {
-            m_nbhoods_pos[offset(actual_pos(pos))] 
+            m_nbhoods_poses[offset(actual_pos(pos))] 
                 = make_nbhood_pos(pos, default_nbhood_kind(), default_range(),
                                   [this](const veci& pos) -> bool { return get_cell(pos); });
         }
     }
     void  set_nbhood_pos(const veci& pos, nbhood_pos_type&& nbhpos) {
         if (inside(pos))
-            m_nbhoods_pos[offset(actual_pos(pos))] = std::move(nbhpos);
+            m_nbhoods_poses[offset(actual_pos(pos))] = std::move(nbhpos);
     }
     nbhood_type get_nbhood(const veci& pos) const {
         return inside(pos) ? make_nbhood(get_nbhood_pos(offset(actual_pos(pos))),
@@ -76,25 +80,25 @@ public:
     
     void reserve(std::size_t count) {
         reserve_cells(count);
-        reserve_nbhoods_pos(count);
+        reserve_nbhoods_poses(count);
     }
     void reserve_cells(std::size_t count) {
         m_cells.reserve(count);
     }
-    void reserve_nbhoods_pos(std::size_t count) {
-        m_nbhoods_pos.reserve(count);
+    void reserve_nbhoods_poses(std::size_t count) {
+        m_nbhoods_poses.reserve(count);
     }
 
     void erase(const veci& pos) {
         erase_cell(pos);
-        erase_nbhood_pos(pos);
+        erase_nbhood_poses(pos);
     }
     void erase_cell(const veci& pos) {
         set_cell(pos, nullptr);
     }
-    void erase_nbhood_pos(const veci& pos) {
+    void erase_nbhood_poses(const veci& pos) {
         if (inside(pos))
-            m_nbhoods_pos[offset(actual_pos(pos))].clear();
+            m_nbhoods_poses[offset(actual_pos(pos))].clear();
     }
     
     std::size_t default_range() const {
@@ -121,7 +125,7 @@ public:
         std::size_t new_num_cells = std::accumulate(m_dims_lens.x.begin(), m_dims_lens.x.end(), 1,
                                                     std::multiplies<std::size_t>());
         reserve(new_num_cells);
-        m_nbhoods_pos.assign(new_num_cells, nbhood_pos_type);
+        m_nbhoods_poses.assign(new_num_cells, nbhood_pos_type);
         m_cells.assign(new_num_cells, nullptr);
     }
 
@@ -136,7 +140,7 @@ private:
     vecu m_dims_lens;
 
     cells_container m_cells;
-    nbhoods_pos_container m_nbhoods_pos;
+    nbhoods_pos_container m_nbhoods_poses;
 
     veci origin() const {
         return m_origin;

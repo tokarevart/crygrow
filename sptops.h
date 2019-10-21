@@ -26,7 +26,7 @@ mat<Dim, ValueType> dot(const mat<Dim, ValueType>& mat0, const mat<Dim, ValueTyp
 template <std::size_t Dim, typename ValueType>
 vec<Dim, ValueType> dot(const mat<Dim, ValueType>& matr, const vec<Dim, ValueType>& vect) {
     vec<Dim, ValueType> res;
-    for (std::size_t i = 0; i < Dim; i++)
+    for (std::size_t i = 0; i < Dim; ++i)
         res[i] = dot(matr[i], vect);
     return res;
 }
@@ -34,7 +34,7 @@ vec<Dim, ValueType> dot(const mat<Dim, ValueType>& matr, const vec<Dim, ValueTyp
 template <std::size_t Dim, typename ValueType>
 ValueType dot(const vec<Dim, ValueType>& vect0, const vec<Dim, ValueType>& vect1) {
     ValueType res = 0;
-    for (std::size_t i = 0; i < Dim; i++)
+    for (std::size_t i = 0; i < Dim; ++i)
         res += vect0[i] * vect1[i];
     return res;
 }

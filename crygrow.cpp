@@ -6,8 +6,8 @@
 std::vector<cgr::simplest_cell<2>> set_cells_box(cgr::simplest_automata<2>& automata, std::size_t size) {
     std::vector<cgr::simplest_cell<2>> cells;
     automata.reserve(size * size);
-    for (std::size_t i = 0; i < size; i++)
-        for (std::size_t j = 0; j < size; j++) {
+    for (std::size_t i = 0; i < size; ++i)
+        for (std::size_t j = 0; j < size; ++j) {
             cells.emplace_back();
             automata.set_cell({ i, j }, &cells.back());
         }
@@ -19,8 +19,8 @@ using pair_pos_cell = std::pair<std::vector<spt::veci<2>>, std::vector<cgr::simp
 std::vector<spt::veci<2>> make_poses_box(std::size_t size) {
     std::vector<spt::veci<2>> res;
     res.reserve(size * size);
-    for (std::size_t i = 0; i < size; i++)
-        for (std::size_t j = 0; j < size; j++)
+    for (std::size_t i = 0; i < size; ++i)
+        for (std::size_t j = 0; j < size; ++j)
             res.emplace_back(i, j);
 
     return res;
@@ -59,10 +59,10 @@ int main() {
     while (true) {
         std::ofstream ofile("automata-image-data.txt");
         ofile << "size " << size << std::endl;
-        for (std::size_t i = 0; i < 40; i++)
+        for (std::size_t i = 0; i < 40; ++i)
             automata.iterate();
 
-        for (std::size_t i = 0; i < automata.num_cells(); i++) {
+        for (std::size_t i = 0; i < automata.num_cells(); ++i) {
             auto pcell = automata.get_cell(i);
             if (pcell->crystallinity == 0.0)
                 continue;

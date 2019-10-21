@@ -66,13 +66,13 @@ struct vec {
     }
     vec operator+(const vec& right) const {
         vec res = *this;
-        for (std::size_t i = 0; i < Dim; i++)
+        for (std::size_t i = 0; i < Dim; ++i)
             res.x[i] += right.x[i];
         return res;
     }
     vec operator-(const vec& right) const {
         vec res = *this;
-        for (std::size_t i = 0; i < Dim; i++)
+        for (std::size_t i = 0; i < Dim; ++i)
             res.x[i] -= right.x[i];
         return res;
     }
@@ -89,12 +89,12 @@ struct vec {
         return res;
     }
     vec& operator+=(const vec& right) {
-        for (std::size_t i = 0; i < Dim; i++)
+        for (std::size_t i = 0; i < Dim; ++i)
             x[i] += right.x[i];
         return *this;
     }
     vec& operator-=(const vec& right) {
-        for (std::size_t i = 0; i < Dim; i++)
+        for (std::size_t i = 0; i < Dim; ++i)
             x[i] -= right.x[i];
         return *this;
     }
@@ -109,7 +109,7 @@ struct vec {
         return *this;
     }
     bool operator==(const vec& right) const {
-        for (std::size_t i = 0; i < Dim; i++)
+        for (std::size_t i = 0; i < Dim; ++i)
             if (std::abs(right.x[i] - x[i]) > std::numeric_limits<ValueType>::epsilon()
                 * std::abs(right.x[i] + x[i]))
                 return false;
@@ -128,7 +128,7 @@ struct vec {
     template <typename NewValueType>
     operator vec<Dim, NewValueType>() const {
         vec<Dim, NewValueType> res;
-        for (std::size_t i = 0; i < Dim; i++)
+        for (std::size_t i = 0; i < Dim; ++i)
             res.x[i] = static_cast<NewValueType>(x[i]);
         return res;
     }

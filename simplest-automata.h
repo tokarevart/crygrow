@@ -39,7 +39,7 @@ public:
         for (auto& delta : m_cells_delta)
             delta = 0.0;
         
-        for (std::size_t i = 0; i < num_cells(); i++) {
+        for (std::size_t i = 0; i < num_cells(); ++i) {
             auto curpos = get_pos(i);
             auto pcell = get_cell(i);
             if (std::abs(pcell->crystallinity - 1.0) <= epsilon * (pcell->crystallinity + 1))
@@ -62,7 +62,7 @@ public:
             if (num_acc > 0)
                 m_cells_delta[i] += static_cast<Real>(num_acc) / 20;
         }
-        for (std::size_t i = 0; i < num_cells(); i++) {
+        for (std::size_t i = 0; i < num_cells(); ++i) {
             auto pcell = get_cell(i);
             pcell->crystallinity += m_cells_delta[i];
             m_cells_delta[i] = 0.0;

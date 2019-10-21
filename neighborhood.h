@@ -32,8 +32,8 @@ public:
         std::vector<veci> res;
         if constexpr (Dim == 2) {
             res.reserve(4 * range * (range + 1)); // (2 * range + 1)^2 - 1
-            for (std::int64_t y = -srange; y <= srange; y++)
-                for (std::int64_t x = -srange; x <= srange; x++)
+            for (std::int64_t y = -srange; y <= srange; ++y)
+                for (std::int64_t x = -srange; x <= srange; ++x)
                     if (!(x == 0 && y == 0)) {
                         auto new_pos = center + veci{x, y};
                         if (!getcell) 
@@ -46,9 +46,9 @@ public:
         } else if constexpr (Dim == 3) {
             std::size_t buf = 2 * range + 1;
             res.reserve(buf * buf * buf - 1);
-            for (std::int64_t z = -srange; z <= srange; z++)
-                for (std::int64_t y = -srange; y <= srange; y++)
-                    for (std::int64_t x = -srange; x <= srange; x++)
+            for (std::int64_t z = -srange; z <= srange; ++z)
+                for (std::int64_t y = -srange; y <= srange; ++y)
+                    for (std::int64_t x = -srange; x <= srange; ++x)
                         if (!(x == 0 && y == 0 && z == 0)) {
                             auto new_pos = center + veci{x, y, z};
                             if (!getcell)
@@ -77,8 +77,8 @@ public:
         std::vector<veci> res;
         if constexpr (Dim == 2) {
             res.reserve(4 * range);
-            for (std::int64_t y = -srange; y <= srange; y++)
-                for (std::int64_t x = -srange; x <= srange; x++)
+            for (std::int64_t y = -srange; y <= srange; ++y)
+                for (std::int64_t x = -srange; x <= srange; ++x)
                     if (!(x == 0 && y == 0) &&
                         std::abs(x) + std::abs(y) <= srange) {
                         auto new_pos = center + veci{x, y};
@@ -92,9 +92,9 @@ public:
         } else if constexpr (Dim == 3) {
             std::size_t buf = 2 * range + 1;
             res.reserve(buf * buf * buf - 1);
-            for (std::int64_t z = -srange; z <= srange; z++)
-                for (std::int64_t y = -srange; y <= srange; y++)
-                    for (std::int64_t x = -srange; x <= srange; x++)
+            for (std::int64_t z = -srange; z <= srange; ++z)
+                for (std::int64_t y = -srange; y <= srange; ++y)
+                    for (std::int64_t x = -srange; x <= srange; ++x)
                         if (!(x == 0 && y == 0 && z == 0) &&
                             std::abs(x) + std::abs(y) + std::abs(z) <= srange) {
                             auto new_pos = center + veci{x, y, z};
@@ -123,8 +123,8 @@ public:
         std::int64_t srange = range;
         std::vector<veci> res;
         if constexpr (Dim == 2) {
-            for (std::int64_t y = -srange; y <= srange; y++)
-                for (std::int64_t x = -srange; x <= srange; x++)
+            for (std::int64_t y = -srange; y <= srange; ++y)
+                for (std::int64_t x = -srange; x <= srange; ++x)
                     if (!(x == 0 && y == 0) &&
                         x * x + y * y <= srange * srange) {
                         auto new_pos = center + veci{x, y};
@@ -136,9 +136,9 @@ public:
                     }
 
         } else if constexpr (Dim == 3) {
-            for (std::int64_t z = -srange; z <= srange; z++)
-                for (std::int64_t y = -srange; y <= srange; y++)
-                    for (std::int64_t x = -srange; x <= srange; x++)
+            for (std::int64_t z = -srange; z <= srange; ++z)
+                for (std::int64_t y = -srange; y <= srange; ++y)
+                    for (std::int64_t x = -srange; x <= srange; ++x)
                         if (!(x == 0 && y == 0 && z == 0) &&
                             x * x + y * y + z * z <= srange * srange) {
                             auto new_pos = center + veci{x, y, z};

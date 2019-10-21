@@ -44,11 +44,11 @@ public:
             m_cells[offset(actual_pos(pos))] = new_cell;
     }
     void  set_cells(const std::vector<veci>& poses, const std::vector<Cell*>& cells) {
-        for (std::size_t i = 0; i < poses.size(); i++)
+        for (std::size_t i = 0; i < poses.size(); ++i)
             set_cell(poses[i], cells[i]);
     }
     void  set_cells(const std::vector<veci>& poses, const std::vector<Cell>& cells) {
-        for (std::size_t i = 0; i < poses.size(); i++)
+        for (std::size_t i = 0; i < poses.size(); ++i)
             set_cell(poses[i], &cells[i]);
     }
 
@@ -117,7 +117,7 @@ public:
         veci new_origin = corner0;
         veci far_corner = corner1;
 
-        for (std::size_t i = 0; i < Dim; i++)
+        for (std::size_t i = 0; i < Dim; ++i)
             sort2(new_origin[i], far_corner[i]);
         m_origin = new_origin;
 
@@ -155,7 +155,7 @@ private:
     std::size_t offset(const vecu& pos, const vecu& dims_lens) const {
         std::size_t res = pos.x[0];
         std::size_t mul = dims_lens[0];
-        for (std::size_t i = 1; i < Dim; i++) {
+        for (std::size_t i = 1; i < Dim; ++i) {
             res += pos.x[i] * mul;
             mul *= dims_lens[i];
         }
@@ -175,7 +175,7 @@ private:
         return inside(pos, m_dims_lens);
     }
     bool inside(const vecu& pos, const vecu& dims_lens) const {
-        for (std::size_t i = 0; i < dims_lens.dim; i++)
+        for (std::size_t i = 0; i < dims_lens.dim; ++i)
             if (pos[i] >= dims_lens[i])
                 return false;
 

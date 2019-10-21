@@ -18,7 +18,8 @@ public:
         return m_orientation;
     }
 
-    simplest_crystallite(const material_type* mater, const orientation_type& orien)
+    simplest_crystallite(const material_type* mater, 
+                         const orientation_type& orien = orientation_type::identity())
         : m_material{const_cast<material_type*>(mater)}, m_orientation{orien} {}
 
 

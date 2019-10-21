@@ -17,8 +17,9 @@ public:
         return m_grow_dirs;
     }
 
-    simplest_material(std::vector<grow_dir> gdirs) {
-        m_grow_dirs = std::move(gdirs);
+    simplest_material(std::vector<grow_dir> gdirs = {}) {
+        if (!gdirs.empty())
+            m_grow_dirs = std::move(gdirs);
     }
 
 

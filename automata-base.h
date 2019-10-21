@@ -26,7 +26,7 @@ public:
     using vecu = spt::vec<Dim, std::uint64_t>;
     using nbhood_type = nbhood<Dim, Cell>;
     using nbhood_pos_type = nbhood_pos<Dim>;
-    using cells_container = std::vector<std::unique_ptr<Cell>>;
+    using cells_container = std::vector<Cell*>;
     using nbhoods_pos_container = std::vector<nbhood_pos_type>;
     static constexpr cell_mut_group cell_mut_group = CellMutGr;
     
@@ -34,24 +34,28 @@ public:
         return m_cells.size();
     }
     Cell* get_cell(std::size_t pos_offset) const {
-        return m_cells[pos_offset].get();
+        return m_cells[pos_offset];
     }
     Cell* get_cell(const veci& pos) const {
         return inside(pos) ? get_cell(offset(actual_pos(pos))) : nullptr;
     }
     void  set_cell(const veci& pos, const Cell* new_cell) {
         if (inside(pos))
-            m_cells[offset(actual_pos(pos))].reset(new_cell);
+            m_cells[offset(actual_pos(pos))] = new_cell;
+    }
+    void  set_cell(const std::vector<std::pair<veci, Cell*>>& poscells) {
+        for (auto& poscell : poscells)
+            set_cell(poscell.first, poscell.second);
     }
 
     veci get_pos(std::size_t pos_offset) const {
         return origin() + actual_pos(i);
     }
 
-    nbhood_pos_type get_nbhood_pos(std::size_t pos_offset) const {
-        return m_nbhoods_pos[pos_offset].get();
+    const nbhood_pos_type& get_nbhood_pos(std::size_t pos_offset) const {
+        return m_nbhoods_pos[pos_offset];
     }
-    nbhood_pos_type get_nbhood_pos(const veci& pos) const {
+    const nbhood_pos_type& get_nbhood_pos(const veci& pos) const {
         return inside(pos) ? get_nbhood_pos(offset(actual_pos(pos))) : nullptr;
     }
     void  set_nbhood_pos(const veci& pos) {
@@ -86,7 +90,7 @@ public:
         erase_nbhood_pos(pos);
     }
     void erase_cell(const veci& pos) {
-        cell(pos, nullptr);
+        set_cell(pos, nullptr);
     }
     void erase_nbhood_pos(const veci& pos) {
         if (inside(pos))
@@ -106,21 +110,19 @@ public:
     automata_base(const veci& corner0, const veci& corner1, 
                   std::size_t default_range, nbhood_kind default_nbhood_kind)
         : m_default_range{default_range}, m_default_nbhood_kind{default_nbhood_kind} {
-        auto new_origin = corner0;
-        auto far_corner = corner1;
+        veci new_origin = corner0;
+        veci far_corner = corner1;
 
         for (std::size_t i = 0; i < Dim; i++)
             sort2(new_origin[i], far_corner[i]);
         m_origin = new_origin;
 
         m_dims_lens = far_corner + veci{ 1, 1, 1 } - new_origin;
-        auto new_num_cells = std::accumulate(m_dims_lens.x.begin(), m_dims_lens.x.end(), 1,
-                                             std::multiplies<std::size_t>());
+        std::size_t new_num_cells = std::accumulate(m_dims_lens.x.begin(), m_dims_lens.x.end(), 1,
+                                                    std::multiplies<std::size_t>());
         reserve(new_num_cells);
-        for (std::size_t i = 0; i < new_num_cells; i++) {
-            m_cells.emplace_back();
-            m_nbhoods_pos.emplace_back();
-        }
+        m_nbhoods_pos.assign(new_num_cells, nbhood_pos_type);
+        m_cells.assign(new_num_cells, nullptr);
     }
 
     virtual ~automata_base() {}

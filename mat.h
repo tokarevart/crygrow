@@ -40,9 +40,18 @@ struct mat<3, ValueType> {
 
     static mat identity() {
         return { 
-            line_type{ 1, 0, 0 }, 
-            line_type{ 0, 1, 0 }, 
-            line_type{ 0, 0, 1 } };
+            line_type{ 
+            static_cast<value_type>(1), 
+            static_cast<value_type>(0), 
+            static_cast<value_type>(0) },
+            line_type{ 
+            static_cast<value_type>(0), 
+            static_cast<value_type>(1), 
+            static_cast<value_type>(0) },
+            line_type{ 
+            static_cast<value_type>(0), 
+            static_cast<value_type>(0), 
+            static_cast<value_type>(1) } };
     }
 
     mat& transpose() const {

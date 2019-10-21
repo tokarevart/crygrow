@@ -3,13 +3,16 @@
 #include "simplest-automata.h"
 
 
-void set_cells_box(cgr::simplest_automata<2>& automata, std::size_t size) {
+std::vector<cgr::simplest_cell<2>> set_cells_box(cgr::simplest_automata<2>& automata, std::size_t size) {
+    std::vector<cgr::simplest_cell<2>> cells;
     automata.reserve(size * size);
     for (std::size_t i = 0; i < size; i++)
-        for (std::size_t j = 0; j < size; j++)
-            automata.set_cell({ static_cast<std::int64_t>(i), 
-                          static_cast<std::int64_t>(j) }, 
-                          new cgr::simplest_cell<2>);
+        for (std::size_t j = 0; j < size; j++) {
+            cells.emplace_back();
+            automata.set_cell({ 
+                static_cast<std::int64_t>(i), 
+                static_cast<std::int64_t>(j) }, &cells.back());
+        }
 }
 
 
@@ -17,19 +20,20 @@ int main() {
     std::size_t size = 501;
     std::int64_t ssize2 = size / 2;
     cgr::simplest_automata<2> automata(10, cgr::nbhood_kind::euclid);
-    set_cells_box(automata, size);
-    std::vector<spt::vec<2>> grow_dirs;
-    grow_dirs.emplace_back(-1.0, 1.0);
-    grow_dirs.emplace_back(1.0, 1.0);
-    grow_dirs.emplace_back(-1.0, -1.0);
-    grow_dirs.emplace_back(1.0, -1.0);
-    cgr::simplest_material<2> mater(grow_dirs);
-    cgr::simplest_crystallite<2> cryst(&mater, spt::mat<2>{ 
-        spt::vec<2>{ 1.0, 0.0 }, spt::vec<2>{ 0.0, 1.0 }});
+    // TODO: simplify
+    auto cells = set_cells_box(automata, size); 
+
+    cgr::simplest_material<2> mater;
+    cgr::simplest_crystallite<2> cryst(&mater);
+
     spt::veci<2> init_pos{ ssize2, ssize2 };
-    automata.set_cell(init_pos, new cgr::simplest_cell<2>(1.0, &cryst));
-    for (auto& pos : cgr::make_nbhood_pos<2>(init_pos, cgr::nbhood_kind::euclid, 14, std::nullopt))
-        automata.set_cell(pos, new cgr::simplest_cell<2>(1.0, &cryst));
+
+    cells.emplace_back(1.0, &cryst);
+    automata.set_cell(init_pos, &cells.back());
+    for (auto& pos : cgr::make_nbhood_pos<2>(init_pos, cgr::nbhood_kind::euclid, 14)) {
+        cells.emplace_back(1.0, &cryst);
+        automata.set_cell(pos, &cells.back());
+    }
     
     while (true) {
         std::ofstream ofile("automata-image-data.txt");

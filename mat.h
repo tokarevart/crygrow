@@ -190,9 +190,9 @@ struct mat<2, ValueType> {
             x[0][1], x[1][1] };
     }
     mat inversed() const {
-        value_type det = m[0][0] * m[1][1] - m[0][1] * m[1][0];
-        return mat{ m[1][1], -m[0][1],
-                   -m[1][0],  m[0][0] } / det;
+        value_type det = x[0][0] * x[1][1] - x[0][1] * x[1][0];
+        return mat{ x[1][1], -x[0][1],
+                   -x[1][0],  x[0][0] } / det;
     }
 
     mat& operator=(const mat& right) {

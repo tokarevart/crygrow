@@ -3,17 +3,6 @@
 #include "simplest-automata.h"
 
 
-std::vector<cgr::simplest_cell<2>> set_cells_box(cgr::simplest_automata<2>& automata, std::size_t size) {
-    std::vector<cgr::simplest_cell<2>> cells;
-    automata.reserve(size * size);
-    for (std::size_t i = 0; i < size; ++i)
-        for (std::size_t j = 0; j < size; ++j) {
-            cells.emplace_back();
-            automata.set_cell({ i, j }, &cells.back());
-        }
-}
-
-
 using pair_pos_cell = std::pair<std::vector<spt::veci<2>>, std::vector<cgr::simplest_cell<2>>>;
 
 std::vector<spt::veci<2>> make_poses_box(std::size_t size) {
@@ -36,10 +25,12 @@ pair_pos_cell make_cells_box(std::size_t size, const cgr::simplest_cell<2>& cell
 
 
 int main() {
-    std::size_t size = 501;
+    std::size_t size = 51;
+    std::int64_t ssize = size;
     std::int64_t ssize2 = size / 2;
-    cgr::simplest_automata<2> automata(10, cgr::nbhood_kind::euclid);
+    cgr::simplest_automata<2> automata({ 0, 0 }, { ssize, ssize }, 1, cgr::nbhood_kind::euclid);
     auto [default_poses, default_cells] = make_cells_box(size, cgr::simplest_cell<2>());
+    automata.set_cells(default_poses, default_cells);
 
     cgr::simplest_material<2> mater;
     cgr::simplest_crystallite<2> cryst(&mater);
@@ -67,9 +58,9 @@ int main() {
             if (pcell->crystallinity == 0.0)
                 continue;
 
-            auto pos = automata.get_pos(i);
+            auto curpos = automata.pos(i);
             auto brightness = static_cast<std::int64_t>(std::abs(1.0 - pcell->crystallinity) * 255.5);
-            ofile << pos[0] << ' ' << pos[1] << ' '
+            ofile << curpos[0] << ' ' << curpos[1] << ' '
                 << brightness << ' ' << brightness << ' ' << brightness << std::endl;
         }
         ofile.close();

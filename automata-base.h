@@ -41,19 +41,18 @@ public:
     }
     void  set_cell(const veci& pos, const Cell* new_cell) {
         if (inside(pos))
-            m_cells[offset(actual_pos(pos))] = new_cell;
+            m_cells[offset(actual_pos(pos))] = const_cast<Cell*>(new_cell);
     }
-    void  set_cells(const std::vector<veci>& poses, const std::vector<Cell*>& cells) {
-        for (std::size_t i = 0; i < poses.size(); ++i)
-            set_cell(poses[i], cells[i]);
-    }
-    void  set_cells(const std::vector<veci>& poses, const std::vector<Cell>& cells) {
-        for (std::size_t i = 0; i < poses.size(); ++i)
-            set_cell(poses[i], &cells[i]);
+    template <typename PosesContainer, typename CellsContainer>
+    void  set_cells(const PosesContainer& poses, const CellsContainer& cells) {
+        auto pos_it = poses.begin();
+        auto cell_it = cells.begin();
+        for (; pos_it != poses.end(); ++pos_it, ++cell_it)
+            set_cell(*pos_it, &(*cell_it));
     }
 
-    veci get_pos(std::size_t pos_offset) const {
-        return origin() + actual_pos(i);
+    veci pos(std::size_t pos_offset) const {
+        return origin() + actual_pos(pos_offset);
     }
 
     const nbhood_pos_type& get_nbhood_pos(std::size_t pos_offset) const {
@@ -65,8 +64,8 @@ public:
     void  set_nbhood_pos(const veci& pos) {
         if (inside(pos)) {
             m_nbhoods_poses[offset(actual_pos(pos))] 
-                = make_nbhood_pos(pos, default_nbhood_kind(), default_range(),
-                                  [this](const veci& pos) -> bool { return get_cell(pos); });
+                = make_nbhood_pos<Dim>(pos, default_nbhood_kind(), default_range(),
+                                       [this](const veci& pos) -> bool { return get_cell(pos); });
         }
     }
     void  set_nbhood_pos(const veci& pos, nbhood_pos_type&& nbhpos) {
@@ -74,8 +73,9 @@ public:
             m_nbhoods_poses[offset(actual_pos(pos))] = std::move(nbhpos);
     }
     nbhood_type get_nbhood(const veci& pos) const {
-        return inside(pos) ? make_nbhood(get_nbhood_pos(offset(actual_pos(pos))),
-                                         [this](const veci& pos) { return get_cell(pos); }) : nullptr;
+        return inside(pos) ? make_nbhood<Dim, Cell>(
+            get_nbhood_pos(offset(actual_pos(pos))),
+            [this](const veci& pos) -> Cell* { return get_cell(pos); }) : nbhood_type();
     }
     
     void reserve(std::size_t count) {
@@ -121,11 +121,12 @@ public:
             sort2(new_origin[i], far_corner[i]);
         m_origin = new_origin;
 
-        m_dims_lens = far_corner + veci{ 1, 1, 1 } - new_origin;
-        std::size_t new_num_cells = std::accumulate(m_dims_lens.x.begin(), m_dims_lens.x.end(), 1,
+        m_dims_lens = far_corner - new_origin;
+        std::size_t new_num_cells = std::accumulate(m_dims_lens.x.begin(), m_dims_lens.x.end(), 
+                                                    static_cast<std::size_t>(1),
                                                     std::multiplies<std::size_t>());
         reserve(new_num_cells);
-        m_nbhoods_poses.assign(new_num_cells, nbhood_pos_type);
+        m_nbhoods_poses.assign(new_num_cells, nbhood_pos_type());
         m_cells.assign(new_num_cells, nullptr);
     }
 
@@ -182,20 +183,39 @@ private:
         return true;
     }
 
-    veci actual_pos(const veci& pos) const {
+    vecu actual_pos(const veci& pos) const {
         return actual_pos(pos, m_origin);
     }
-    veci actual_pos(const veci& pos, const veci& origin) const {
+    vecu actual_pos(const veci& pos, const veci& origin) const {
         return pos - origin;
     }
     vecu actual_pos(std::size_t offset) const {
         return actual_pos(offset, m_dims_lens);
     }
     vecu actual_pos(std::size_t offset, const vecu& dims_lens) const {
-        // implementation
+        vecu res;
+        if constexpr (Dim == 2) {
+            auto x = dims_lens[0];
+            res[1] = offset / x;
+            res[0] = offset - x * res[1];
+
+        } else if constexpr (Dim == 3) {
+            auto x = dims_lens[0];
+            auto y = dims_lens[1];
+            auto xy = x * y;
+            res[2] = offset / xy;
+            auto t = offset - xy * res[2];
+            res[1] = t / x;
+            res[0] = t - x * res[1];
+
+        } else {
+            static_assert(false);
+        }
+
+        return res;
     }
 
-    void sort2(veci::value_type& first, veci::value_type& second) {
+    void sort2(typename veci::value_type& first, typename veci::value_type& second) {
         if (first > second)
             std::swap(first, second);
     }

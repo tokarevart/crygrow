@@ -38,7 +38,17 @@ struct vec {
     static constexpr std::size_t dim = Dim;
     using value_type = ValueType;
 
-    std::array<ValueType, Dim> x;
+    std::array<ValueType, Dim> x{};
+
+    static vec zeros() {
+        return {};
+    }
+    static vec ones() {
+        vec res;
+        for (auto& val : res.x)
+            val = static_cast<ValueType>(1);
+        return res;
+    }
 
     ValueType magnitude() const {
         return std::sqrt(magnitude2());
@@ -125,16 +135,14 @@ struct vec {
     const ValueType& operator[](std::size_t i) const {
         return x[i];
     }
-    template <typename NewValueType>
-    operator vec<Dim, NewValueType>() const {
-        vec<Dim, NewValueType> res;
-        for (std::size_t i = 0; i < Dim; ++i)
-            res.x[i] = static_cast<NewValueType>(x[i]);
-        return res;
-    }
 
     vec() {
         std::fill(x.begin(), x.end(), static_cast<ValueType>(0));
+    }
+    template <typename FromValueType>
+    vec(const vec<Dim, FromValueType>& other) {
+        for (std::size_t i = 0; i < Dim; ++i)
+            x[i] = static_cast<ValueType>(other.x[i]);
     }
     vec(const vec& other) {
         x = other.x;

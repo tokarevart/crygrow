@@ -27,7 +27,7 @@ class nbhood_pos_impl<nbhood_kind::moore, Dim, GetCellFunc> {
 public:
     using veci = spt::veci<Dim>;
     static std::vector<veci> run(const veci& center, std::size_t range,
-                                 std::optional<GetCellFunc> getcell) {
+                                 std::optional<GetCellFunc> getcell = std::nullopt) {
         std::int64_t srange = range;
         std::vector<veci> res;
         if constexpr (Dim == 2) {
@@ -72,7 +72,7 @@ class nbhood_pos_impl<nbhood_kind::von_neumann, Dim, GetCellFunc> {
 public:
     using veci = spt::veci<Dim>;
     static std::vector<veci> run(const veci& center, std::size_t range,
-                                 std::optional<GetCellFunc> getcell) {
+                                 std::optional<GetCellFunc> getcell = std::nullopt) {
         std::int64_t srange = range;
         std::vector<veci> res;
         if constexpr (Dim == 2) {
@@ -119,7 +119,7 @@ class nbhood_pos_impl<nbhood_kind::euclid, Dim, GetCellFunc> {
 public:
     using veci = spt::veci<Dim>;
     static std::vector<veci> run(const veci& center, std::size_t range, 
-                                 std::optional<GetCellFunc> getcell) {
+                                 std::optional<GetCellFunc> getcell = std::nullopt) {
         std::int64_t srange = range;
         std::vector<veci> res;
         if constexpr (Dim == 2) {
@@ -162,21 +162,24 @@ template <std::size_t Dim>
 using nbhood_pos = std::vector<spt::veci<Dim>>;
 
 
-template <std::size_t Dim, typename GetCellFunc = std::function<bool(const spt::veci<Dim>&)>>
+template <std::size_t Dim>
 nbhood_pos<Dim> make_nbhood_pos(const spt::veci<Dim>& center, nbhood_kind kind, std::size_t range, 
-                                std::optional<GetCellFunc> getcell = std::nullopt) {
+                                std::optional<std::function<bool(const spt::veci<Dim>&)>> getcell = std::nullopt) {
     switch (kind) {
     case nbhood_kind::von_neumann:
         return nbhood_pos_impl<nbhood_kind::von_neumann, Dim>
-            ::run(center, range);
+            ::run(center, range, getcell);
 
     case nbhood_kind::moore:
         return nbhood_pos_impl<nbhood_kind::moore, Dim>
-            ::run(center, range);
+            ::run(center, range, getcell);
 
     case nbhood_kind::euclid:
         return nbhood_pos_impl<nbhood_kind::euclid, Dim>
-            ::run(center, range);
+            ::run(center, range, getcell);
+
+    default:
+        return {};
     }
 }
 
@@ -185,9 +188,9 @@ template <std::size_t Dim, typename Cell>
 using nbhood = std::vector<Cell*>;
 
 
-template <std::size_t Dim, typename Cell, typename GetCellFunc = std::function<Cell*(const spt::veci<Dim>&)>>
+template <std::size_t Dim, typename Cell>
 nbhood<Dim, Cell> make_nbhood(const spt::veci<Dim>& center, nbhood_kind kind, std::size_t range, 
-                              std::optional<GetCellFunc> getcell = std::nullopt) {
+                              std::function<Cell*(const spt::veci<Dim>&)> getcell) {
     nbhood<Dim, Cell> res;
     auto nbhpos = getcell ? make_nbhood_pos(center, kind, range, 
                                             [getcell](const spt::veci<Dim>& pos) 
@@ -204,9 +207,9 @@ nbhood<Dim, Cell> make_nbhood(const spt::veci<Dim>& center, nbhood_kind kind, st
 }
 
 
-template <std::size_t Dim, typename Cell, typename GetCellFunc = std::function<Cell*(const spt::veci<Dim>&)>>
+template <std::size_t Dim, typename Cell>
     nbhood<Dim, Cell> make_nbhood(const nbhood_pos<Dim>& nbhpos,
-                                  std::optional<GetCellFunc> getcell = std::nullopt) {
+                                  std::function<Cell*(const spt::veci<Dim>&)> getcell) {
     nbhood<Dim, Cell> res;
     for (auto& nbpos : nbhpos) {
         auto pcell = getcell(nbpos);

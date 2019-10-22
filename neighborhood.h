@@ -121,12 +121,13 @@ public:
     static std::vector<veci> run(const veci& center, std::size_t range, 
                                  std::optional<GetCellFunc> getcell = std::nullopt) {
         std::int64_t srange = range;
+        std::int64_t srange2 = srange * srange;
         std::vector<veci> res;
         if constexpr (Dim == 2) {
             for (std::int64_t y = -srange; y <= srange; ++y)
                 for (std::int64_t x = -srange; x <= srange; ++x)
                     if (!(x == 0 && y == 0) &&
-                        x * x + y * y <= srange * srange) {
+                        x * x + y * y <= srange2) {
                         auto new_pos = center + veci{x, y};
                         if (!getcell)
                             res.push_back(new_pos);
@@ -140,7 +141,7 @@ public:
                 for (std::int64_t y = -srange; y <= srange; ++y)
                     for (std::int64_t x = -srange; x <= srange; ++x)
                         if (!(x == 0 && y == 0 && z == 0) &&
-                            x * x + y * y + z * z <= srange * srange) {
+                            x * x + y * y + z * z <= srange2) {
                             auto new_pos = center + veci{x, y, z};
                             if (!getcell)
                                 res.push_back(new_pos);

@@ -4,7 +4,6 @@
 #pragma once
 #include <cstddef>
 #include <memory>
-#include <unordered_map>
 #include <optional>
 #include "neighborhood.h"
 #include "cell-mutability.h"
@@ -37,11 +36,11 @@ public:
         return m_cells[pos_offset];
     }
     Cell* get_cell(const veci& pos) const {
-        return inside(pos) ? get_cell(offset(actual_pos(pos))) : nullptr;
+        return inside(pos) ? get_cell(offset(pos)) : nullptr;
     }
     void  set_cell(const veci& pos, const Cell* new_cell) {
         if (inside(pos))
-            m_cells[offset(actual_pos(pos))] = const_cast<Cell*>(new_cell);
+            m_cells[offset(pos)] = const_cast<Cell*>(new_cell);
     }
     template <typename PosesContainer, typename CellsContainer>
     void  set_cells(const PosesContainer& poses, const CellsContainer& cells) {
@@ -52,29 +51,49 @@ public:
     }
 
     veci pos(std::size_t pos_offset) const {
-        return origin() + actual_pos(pos_offset);
+        return origin() + upos(pos_offset);
+    }
+    vecu upos(std::size_t offset) const {
+        return upos(offset, m_dims_lens);
+    }
+    vecu upos(const veci& pos) const {
+        return upos(pos, m_origin);
+    }
+    std::size_t offset(const veci& pos) const {
+        return offset(upos(pos));
+    }
+    std::size_t offset(const vecu& pos) const {
+        return offset(pos, m_dims_lens);
     }
 
     const nbhood_pos_type& get_nbhood_pos(std::size_t pos_offset) const {
         return m_nbhoods_poses[pos_offset];
     }
     const nbhood_pos_type& get_nbhood_pos(const veci& pos) const {
-        return inside(pos) ? get_nbhood_pos(offset(actual_pos(pos))) : nullptr;
+        return inside(pos) ? get_nbhood_pos(offset(upos(pos))) : nullptr;
+    }
+    void  set_nbhood_pos(std::size_t pos_offset) {
+        veci pos = this->pos(pos_offset);
+        if (inside(pos)) {
+            m_nbhoods_poses[pos_offset]
+                = make_nbhood_pos<Dim>(pos, default_nbhood_kind(), default_range(),
+                                       [this](const veci& pos) -> bool { return this->get_cell(pos); });
+        }
     }
     void  set_nbhood_pos(const veci& pos) {
         if (inside(pos)) {
-            m_nbhoods_poses[offset(actual_pos(pos))] 
+            m_nbhoods_poses[offset(pos)] 
                 = make_nbhood_pos<Dim>(pos, default_nbhood_kind(), default_range(),
                                        [this](const veci& pos) -> bool { return get_cell(pos); });
         }
     }
     void  set_nbhood_pos(const veci& pos, nbhood_pos_type&& nbhpos) {
         if (inside(pos))
-            m_nbhoods_poses[offset(actual_pos(pos))] = std::move(nbhpos);
+            m_nbhoods_poses[offset(pos)] = std::move(nbhpos);
     }
     nbhood_type get_nbhood(const veci& pos) const {
         return inside(pos) ? make_nbhood<Dim, Cell>(
-            get_nbhood_pos(offset(actual_pos(pos))),
+            get_nbhood_pos(offset(pos)),
             [this](const veci& pos) -> Cell* { return get_cell(pos); }) : nbhood_type();
     }
     
@@ -98,7 +117,7 @@ public:
     }
     void erase_nbhood_poses(const veci& pos) {
         if (inside(pos))
-            m_nbhoods_poses[offset(actual_pos(pos))].clear();
+            m_nbhoods_poses[offset(pos)].clear();
     }
     
     std::size_t default_range() const {
@@ -107,13 +126,31 @@ public:
     nbhood_kind default_nbhood_kind() const {
         return m_default_nbhood_kind;
     }
-    
+    std::size_t default_nbhood_size() const {
+        return m_default_nbhood_size;
+    }
+
+    void set_defaults(std::size_t range, nbhood_kind kind) {
+        m_default_range = range;
+        m_default_nbhood_kind = kind;
+        set_default_nbhood_size();
+    }
+    void set_default_range(std::size_t range) {
+        m_default_range = range;
+        set_default_nbhood_size();
+    }
+    void set_default_nbhood_kind(nbhood_kind kind) {
+        m_default_nbhood_kind = kind;
+        set_default_nbhood_size();
+    }
+
     virtual bool stop_condition() const = 0;
     virtual bool iterate() = 0;
 
     automata_base(const veci& corner0, const veci& corner1, 
                   std::size_t default_range, nbhood_kind default_nbhood_kind)
         : m_default_range{default_range}, m_default_nbhood_kind{default_nbhood_kind} {
+        set_default_nbhood_size();
         veci new_origin = corner0;
         veci far_corner = corner1;
 
@@ -134,14 +171,19 @@ public:
 
 
 private:
-    nbhood_kind m_default_nbhood_kind;
     std::size_t m_default_range;
+    nbhood_kind m_default_nbhood_kind;
+    std::size_t m_default_nbhood_size;
 
     veci m_origin;
     vecu m_dims_lens;
 
     cells_container m_cells;
     nbhoods_pos_container m_nbhoods_poses;
+
+    void set_default_nbhood_size() {
+        m_default_nbhood_size = make_nbhood_pos<Dim>({ 0, 0 }, default_nbhood_kind(), default_range()).size();
+    }
 
     veci origin() const {
         return m_origin;
@@ -150,9 +192,6 @@ private:
         return m_dims_lens;
     }
 
-    std::size_t offset(const vecu& pos) const {
-        return offset(pos, m_dims_lens);
-    }
     std::size_t offset(const vecu& pos, const vecu& dims_lens) const {
         std::size_t res = pos.x[0];
         std::size_t mul = dims_lens[0];
@@ -170,29 +209,23 @@ private:
         return inside(pos, dims_lens, m_origin);
     }
     bool inside(const veci& pos, const vecu& dims_lens, const veci& origin) const {
-        return inside(actual_pos(pos, origin), dims_lens);
+        return inside(upos(pos, origin), dims_lens);
     }
     bool inside(const vecu& pos) const {
         return inside(pos, m_dims_lens);
     }
     bool inside(const vecu& pos, const vecu& dims_lens) const {
-        for (std::size_t i = 0; i < dims_lens.dim; ++i)
+        for (std::size_t i = 0; i < Dim; ++i)
             if (pos[i] >= dims_lens[i])
                 return false;
 
         return true;
     }
 
-    vecu actual_pos(const veci& pos) const {
-        return actual_pos(pos, m_origin);
-    }
-    vecu actual_pos(const veci& pos, const veci& origin) const {
+    vecu upos(const veci& pos, const veci& origin) const {
         return pos - origin;
     }
-    vecu actual_pos(std::size_t offset) const {
-        return actual_pos(offset, m_dims_lens);
-    }
-    vecu actual_pos(std::size_t offset, const vecu& dims_lens) const {
+    vecu upos(std::size_t offset, const vecu& dims_lens) const {
         vecu res;
         if constexpr (Dim == 2) {
             auto x = dims_lens[0];

@@ -26,8 +26,8 @@ public:
     using grow_dir = typename material_type::grow_dir;
 
     bool stop_condition() const override {
-        for (std::size_t i = 0; i < this->num_cells(); ++i)
-            if (this->get_cell(i)->crystallinity < 1.0)
+        for (std::size_t i = 0; i < base::num_cells(); ++i)
+            if (base::get_cell(i)->crystallinity < 1.0 - epsilon)
                 return false;
 
         return true;
@@ -36,20 +36,24 @@ public:
         if (stop_condition())
             return false;
 
+        if (!is_nbhoods_poses_initialized)
+            initialize_nbhoods_poses();
+
         for (auto& delta : m_cells_delta)
             delta = 0.0;
         
-        // #pragma omp parallel for
-        for (std::size_t i = 0; i < this->num_cells(); ++i) {
-            auto curpos = this->pos(i);
-            auto pcell = this->get_cell(curpos);
+        #pragma omp parallel for
+        for (std::int64_t i = 0; i < static_cast<std::int64_t>(base::num_cells()); ++i) {
+            auto pcell = base::get_cell(i);
             if (std::abs(pcell->crystallinity - 1.0) <= epsilon * (pcell->crystallinity + 1))
                 continue;
             
-            // problem!!
-            auto nbhood = this->get_nbhood(curpos);
             std::size_t num_acc = 0;
-            for (auto pnb : nbhood) {
+            for (auto nbpos : base::get_nbhood_pos(i)) {
+                auto pnb = base::get_cell(base::offset(nbpos));
+                if (!pnb)
+                    continue;
+
                 if (pnb->crystallinity < 1.0 - epsilon ||
                     pnb->crystallites.size() != 1)
                     continue;
@@ -62,10 +66,10 @@ public:
                 ++num_acc;
             }
             if (num_acc > 0)
-                m_cells_delta[i] += static_cast<Real>(num_acc) / 20;
+                m_cells_delta[i] += static_cast<Real>(num_acc) / (8 * base::default_nbhood_size());
         }
-        for (std::size_t i = 0; i < this->num_cells(); ++i) {
-            auto pcell = this->get_cell(i);
+        for (std::size_t i = 0; i < base::num_cells(); ++i) {
+            auto pcell = base::get_cell(i);
             pcell->crystallinity += m_cells_delta[i];
             m_cells_delta[i] = 0.0;
             if (pcell->crystallinity > 1.0 + epsilon)
@@ -79,18 +83,20 @@ public:
                       std::size_t default_range = 1,
                       nbhood_kind default_nbhood_kind = nbhood_kind::euclid)
         : base(corner0, corner1, default_range, default_nbhood_kind) {
-        m_cells_delta.assign(this->num_cells(), 0.0);
-        initialize_nbhoods_poses();
+        m_cells_delta.assign(base::num_cells(), 0.0);
     }
 
 
 private:
     cells_delta_container m_cells_delta;
 
+    bool is_nbhoods_poses_initialized = false;
     void initialize_nbhoods_poses() {
-        // #pragma omp parallel for
-        for (std::size_t i = 0; i < this->num_cells(); ++i)
-            this->set_nbhood_pos(this->pos(i));
+        #pragma omp parallel for
+        for (std::int64_t i = 0; i < static_cast<std::int64_t>(base::num_cells()); ++i)
+            base::set_nbhood_pos(i);
+
+        is_nbhoods_poses_initialized = true;
     }
 };
 

@@ -3,10 +3,18 @@
 #include "simplest-automata.h"
 
 
-using pair_pos_cell = std::pair<std::vector<spt::veci<2>>, std::vector<cgr::simplest_cell<2>>>;
+constexpr std::size_t dim = 2;
+using pos_t = spt::veci<dim>;
+using automata_t = cgr::simplest_automata<dim>;
+using cell_t = cgr::simplest_cell<dim>;
+using crystallite_t = cgr::simplest_crystallite<dim>;
+using material_t = cgr::simplest_material<dim>;
+using nbhood_pos_t = cgr::nbhood_pos<dim>;
 
-std::vector<spt::veci<2>> make_poses_box(std::size_t size) {
-    std::vector<spt::veci<2>> res;
+using pair_pos_cell = std::pair<std::vector<pos_t>, std::vector<cell_t>>;
+
+std::vector<pos_t> make_poses_box(std::size_t size) {
+    std::vector<pos_t> res;
     res.reserve(size * size);
     for (std::size_t i = 0; i < size; ++i)
         for (std::size_t j = 0; j < size; ++j)
@@ -16,7 +24,7 @@ std::vector<spt::veci<2>> make_poses_box(std::size_t size) {
 }
 
 
-pair_pos_cell make_cells_box(std::size_t size, const cgr::simplest_cell<2>& cell) {
+pair_pos_cell make_cells_box(std::size_t size, const cell_t& cell) {
     pair_pos_cell res;
     res.first = make_poses_box(size);
     res.second.assign(res.first.size(), cell);
@@ -29,18 +37,18 @@ int main() {
     std::int64_t ssize = size;
     std::size_t range = 7;
     cgr::nbhood_kind kind = cgr::nbhood_kind::euclid;
-    cgr::simplest_automata<2> automata({ 0, 0 }, { ssize, ssize }, range, kind);
-    auto [default_poses, default_cells] = make_cells_box(size, cgr::simplest_cell<2>());
+    automata_t automata({ 0, 0 }, { ssize, ssize }, range, kind);
+    auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
     std::size_t num_inits = 21;
-    cgr::simplest_material<2> mater;
-    std::vector<cgr::simplest_crystallite<2>> crysts;
+    material_t mater;
+    std::vector<crystallite_t> crysts;
     crysts.reserve(num_inits);
     for (std::size_t i = 0; i < num_inits; ++i)
         crysts.emplace_back(&mater);
 
-    std::vector<spt::veci<2>> init_central_poses;
+    std::vector<pos_t> init_central_poses;
     init_central_poses.reserve(num_inits);
 
     for (std::size_t i = 1; i <= 3; ++i)
@@ -56,19 +64,19 @@ int main() {
     init_central_poses.emplace_back(ssize * 1 / 8, ssize * 5 / 8);
     init_central_poses.emplace_back(ssize * 7 / 8, ssize * 5 / 8);
 
-    std::vector<cgr::simplest_cell<2>> init_central_cells;
+    std::vector<cell_t> init_central_cells;
     init_central_cells.reserve(num_inits);
     for (std::size_t i = 0; i < num_inits; ++i)
         init_central_cells.emplace_back(1.0, &crysts[i]);
     automata.set_cells(init_central_poses, init_central_cells);
 
-    std::vector<cgr::nbhood_pos<2>> init_nbhood_poses;
+    std::vector<nbhood_pos_t> init_nbhood_poses;
     init_nbhood_poses.reserve(num_inits);
     for (std::size_t i = 0; i < num_inits; ++i)
         init_nbhood_poses.emplace_back(std::move(cgr::make_nbhood_pos<2>(
             init_central_poses[i], kind, range)));
 
-    std::vector<std::vector<cgr::simplest_cell<2>>> init_nbhood_cells;
+    std::vector<std::vector<cell_t>> init_nbhood_cells;
     init_nbhood_cells.reserve(num_inits);
     for (std::size_t i = 0; i < num_inits; ++i)
         init_nbhood_cells.emplace_back(init_nbhood_poses[i].size(), init_central_cells[i]);
@@ -84,7 +92,7 @@ int main() {
 
         for (std::size_t i = 0; i < automata.num_cells(); ++i) {
             auto pcell = automata.get_cell(i);
-            if (pcell->crystallinity < 1.0 - cgr::simplest_automata<2>::epsilon ||
+            if (pcell->crystallinity < 1.0 - automata_t::epsilon ||
                 pcell->crystallites.size() > 1)
                 continue;
 

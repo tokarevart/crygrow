@@ -32,6 +32,26 @@ pair_pos_cell make_cells_box(std::size_t size, const cell_t& cell) {
 }
 
 
+std::vector<pos_t> make_init_central_poses(std::int64_t ssize) {
+    std::vector<pos_t> res;
+
+    for (std::size_t i = 1; i <= 3; ++i)
+        for (std::size_t j = 1; j <= 3; ++j)
+            res.emplace_back(ssize * i / 4, ssize * j / 4);
+
+    for (std::size_t i = 1; i <= 7; i += 2) {
+        res.emplace_back((ssize * i) / 8, (ssize * 1) / 8);
+        res.emplace_back(ssize * i / 8, ssize * 7 / 8);
+    }
+    res.emplace_back(ssize * 1 / 8, ssize * 3 / 8);
+    res.emplace_back(ssize * 7 / 8, ssize * 3 / 8);
+    res.emplace_back(ssize * 1 / 8, ssize * 5 / 8);
+    res.emplace_back(ssize * 7 / 8, ssize * 5 / 8);
+
+    return res;
+}
+
+
 int main() {
     std::size_t size = 401;
     std::int64_t ssize = size;
@@ -41,53 +61,34 @@ int main() {
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
-    std::size_t num_inits = 21;
+    auto init_central_poses = make_init_central_poses(ssize);
+
     material_t mater;
-    std::vector<crystallite_t> crysts;
-    crysts.reserve(num_inits);
-    for (std::size_t i = 0; i < num_inits; ++i)
-        crysts.emplace_back(&mater);
-
-    std::vector<pos_t> init_central_poses;
-    init_central_poses.reserve(num_inits);
-
-    for (std::size_t i = 1; i <= 3; ++i)
-        for (std::size_t j = 1; j <= 3; ++j)
-            init_central_poses.emplace_back(ssize * i / 4, ssize * j / 4);
-
-    for (std::size_t i = 1; i <= 7; i += 2) {
-        init_central_poses.emplace_back((ssize * i) / 8, (ssize * 1) / 8);
-        init_central_poses.emplace_back(ssize * i / 8, ssize * 7 / 8);
-    }
-    init_central_poses.emplace_back(ssize * 1 / 8, ssize * 3 / 8);
-    init_central_poses.emplace_back(ssize * 7 / 8, ssize * 3 / 8);
-    init_central_poses.emplace_back(ssize * 1 / 8, ssize * 5 / 8);
-    init_central_poses.emplace_back(ssize * 7 / 8, ssize * 5 / 8);
+    std::vector<crystallite_t> crysts(init_central_poses.size(), crystallite_t(&mater));
 
     std::vector<cell_t> init_central_cells;
-    init_central_cells.reserve(num_inits);
-    for (std::size_t i = 0; i < num_inits; ++i)
-        init_central_cells.emplace_back(1.0, &crysts[i]);
+    init_central_cells.reserve(crysts.size());
+    for (auto& cryst : crysts)
+        init_central_cells.emplace_back(1.0, &cryst);
     automata.set_cells(init_central_poses, init_central_cells);
 
     std::vector<nbhood_pos_t> init_nbhood_poses;
-    init_nbhood_poses.reserve(num_inits);
-    for (std::size_t i = 0; i < num_inits; ++i)
-        init_nbhood_poses.emplace_back(std::move(cgr::make_nbhood_pos<2>(
-            init_central_poses[i], kind, range)));
+    init_nbhood_poses.reserve(init_central_poses.size());
+    for (auto& pos : init_central_poses)
+        init_nbhood_poses.emplace_back(cgr::make_nbhood_pos<2>(pos, kind, range));
 
     std::vector<std::vector<cell_t>> init_nbhood_cells;
-    init_nbhood_cells.reserve(num_inits);
-    for (std::size_t i = 0; i < num_inits; ++i)
+    init_nbhood_cells.reserve(init_nbhood_poses.size());
+    for (std::size_t i = 0; i < init_nbhood_poses.size(); ++i)
         init_nbhood_cells.emplace_back(init_nbhood_poses[i].size(), init_central_cells[i]);
 
-    for (std::size_t i = 0; i < num_inits; ++i)
+    for (std::size_t i = 0; i < init_nbhood_poses.size(); ++i)
         automata.set_cells(init_nbhood_poses[i], init_nbhood_cells[i]);
     
     while (!automata.stop_condition()) {
         std::ofstream ofile("automata-image-data.txt");
         ofile << "size " << size << std::endl;
-        for (std::size_t i = 0; i < 130; ++i)
+        for (std::size_t i = 0; i < 100; ++i)
             automata.iterate();
 
         for (std::size_t i = 0; i < automata.num_cells(); ++i) {

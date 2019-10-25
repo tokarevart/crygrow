@@ -24,7 +24,7 @@ for x in range(size):
         img[x][y] = white
 
 for pack in data:
-    img[pack[0][0], pack[0][1]] = (pack[1][0], pack[1][1], pack[1][2])
+    img[pack[0][0], pack[0][1]] = (pack[1][2], pack[1][1], pack[1][0])
 
 cv2.imshow("image", img)
 cv2.imwrite("fig.png", img)

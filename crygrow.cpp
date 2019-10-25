@@ -53,7 +53,7 @@ std::vector<pos_t> make_init_central_poses(std::int64_t ssize) {
 
 
 int main() {
-    std::size_t size = 401;
+    std::size_t size = 400;
     std::int64_t ssize = size;
     std::size_t range = 7;
     cgr::nbhood_kind kind = cgr::nbhood_kind::euclid;
@@ -94,13 +94,25 @@ int main() {
         for (std::size_t i = 0; i < automata.num_cells(); ++i) {
             auto pcell = automata.get_cell(i);
             if (pcell->crystallinity < 1.0 - automata_t::epsilon ||
-                pcell->crystallites.size() > 1)
+                pcell->crystallites.empty())
                 continue;
 
             auto curpos = automata.pos(i);
-            auto brightness = static_cast<std::int64_t>(std::abs(1.0 - pcell->crystallinity) * 255.5);
-            ofile << curpos[0] << ' ' << curpos[1] << ' '
-                << brightness << ' ' << brightness << ' ' << brightness << std::endl;
+            std::array<std::uint8_t, 3> color;
+            if (pcell->crystallites.size() == 1) {
+                color = { 0, 0, 0 };
+            } else if (pcell->crystallites.size() == 2) {
+                color = { 0, 0, 255 };
+            } else {
+                color = { 255, 0, 0 };
+            }
+            
+            ofile 
+                << curpos[0] << ' ' 
+                << curpos[1] << ' '
+                << static_cast<int>(color[0]) << ' ' 
+                << static_cast<int>(color[1]) << ' ' 
+                << static_cast<int>(color[2]) << std::endl;
         }
         ofile.close();
         std::system("python ./visualize.py");

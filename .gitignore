@@ -6,6 +6,7 @@
 *.txt
 *.png
 *.jpg
+*.geo
 
 # User-specific files
 *.rsuser

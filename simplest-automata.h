@@ -45,7 +45,7 @@ public:
         #pragma omp parallel for
         for (std::int64_t i = 0; i < static_cast<std::int64_t>(base::num_cells()); ++i) {
             auto pcell = base::get_cell(i);
-            if (std::abs(pcell->crystallinity - 1.0) <= epsilon * (pcell->crystallinity + 1))
+            if (std::abs(pcell->crystallinity - 1.0) <= epsilon * (1.0 + pcell->crystallinity))
                 continue;
             
             std::size_t num_acc = 0;
@@ -54,7 +54,7 @@ public:
                 if (!pnb)
                     continue;
 
-                if (pnb->crystallinity < 1.0 - epsilon ||
+                if (pnb->crystallinity < 1.0 - epsilon * (1.0 + pcell->crystallinity) ||
                     pnb->crystallites.size() != 1)
                     continue;
 
@@ -72,7 +72,7 @@ public:
             auto pcell = base::get_cell(i);
             pcell->crystallinity += m_cells_delta[i];
             m_cells_delta[i] = 0.0;
-            if (pcell->crystallinity > 1.0 + epsilon)
+            if (pcell->crystallinity > 1.0 + epsilon * (1.0 + pcell->crystallinity))
                 pcell->crystallinity = 1.0;
         }
 

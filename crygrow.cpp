@@ -93,7 +93,7 @@ int main() {
 
         for (std::size_t i = 0; i < automata.num_cells(); ++i) {
             auto pcell = automata.get_cell(i);
-            if (pcell->crystallinity < 1.0 - automata_t::epsilon ||
+            if (pcell->crystallinity < 1.0 - automata_t::epsilon * (1.0 + pcell->crystallinity) ||
                 pcell->crystallites.empty())
                 continue;
 

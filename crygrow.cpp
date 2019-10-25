@@ -32,36 +32,38 @@ pair_pos_cell make_cells_box(std::size_t size, const cell_t& cell) {
 }
 
 
-std::vector<pos_t> make_init_central_poses(std::int64_t ssize) {
+std::vector<pos_t> make_init_central_poses(std::size_t size) {
+    std::int64_t ssize = size;
+
     std::vector<pos_t> res;
 
-    for (std::size_t i = 1; i <= 3; ++i)
-        for (std::size_t j = 1; j <= 3; ++j)
-            res.emplace_back(ssize * i / 4, ssize * j / 4);
+    //for (std::size_t i = 1; i <= 3; ++i)
+    //    for (std::size_t j = 1; j <= 3; ++j)
+    //        res.emplace_back(ssize * i / 4, ssize * j / 4);
 
-    for (std::size_t i = 1; i <= 7; i += 2) {
-        res.emplace_back((ssize * i) / 8, (ssize * 1) / 8);
-        res.emplace_back(ssize * i / 8, ssize * 7 / 8);
-    }
-    res.emplace_back(ssize * 1 / 8, ssize * 3 / 8);
-    res.emplace_back(ssize * 7 / 8, ssize * 3 / 8);
-    res.emplace_back(ssize * 1 / 8, ssize * 5 / 8);
-    res.emplace_back(ssize * 7 / 8, ssize * 5 / 8);
+    //for (std::size_t i = 1; i <= 7; i += 2) {
+    //    res.emplace_back((ssize * i) / 8, (ssize * 1) / 8);
+    //    res.emplace_back(ssize * i / 8, ssize * 7 / 8);
+    //}
+    //res.emplace_back(ssize * 1 / 8, ssize * 3 / 8);
+    //res.emplace_back(ssize * 7 / 8, ssize * 3 / 8);
+    //res.emplace_back(ssize * 1 / 8, ssize * 5 / 8);
+    //res.emplace_back(ssize * 7 / 8, ssize * 5 / 8);
 
+    res.emplace_back(ssize * 1 / 2, ssize * 1 / 2);
     return res;
 }
 
 
 int main() {
     std::size_t size = 400;
-    std::int64_t ssize = size;
     std::size_t range = 7;
     cgr::nbhood_kind kind = cgr::nbhood_kind::euclid;
-    automata_t automata({ 0, 0 }, { ssize, ssize }, range, kind);
+    automata_t automata(size, range, kind);
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
-    auto init_central_poses = make_init_central_poses(ssize);
+    auto init_central_poses = make_init_central_poses(size);
 
     material_t mater;
     std::vector<crystallite_t> crysts(init_central_poses.size(), crystallite_t(&mater));
@@ -93,13 +95,13 @@ int main() {
 
         for (std::size_t i = 0; i < automata.num_cells(); ++i) {
             auto pcell = automata.get_cell(i);
-            if (pcell->crystallinity < 1.0 - automata_t::epsilon * (1.0 + pcell->crystallinity) ||
-                pcell->crystallites.empty())
-                continue;
-
             auto curpos = automata.pos(i);
+
             std::array<std::uint8_t, 3> color;
-            if (pcell->crystallites.size() == 1) {
+            if (pcell->crystallinity < 1.0 - automata_t::epsilon * (1.0 + pcell->crystallinity) ||
+                pcell->crystallites.empty()) {
+                color = { 255, 255, 255 };
+            } else if (pcell->crystallites.size() == 1) {
                 color = { 0, 0, 0 };
             } else if (pcell->crystallites.size() == 2) {
                 color = { 0, 0, 255 };

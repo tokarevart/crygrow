@@ -64,4 +64,11 @@ Real cos(const vec<Dim, Real>& vect0, const vec<Dim, Real>& vect1) {
     return dot(vect0, vect1) / std::sqrt(vect0.magnitude2() * vect1.magnitude2());
 }
 
+template <std::size_t Dim, typename ValueType>
+void sort_elementwise(vec<Dim, ValueType>& vect0, vec<Dim, ValueType>& vect1) {
+    for (std::size_t i = 0; i < Dim; ++i)
+        if (vect0[i] > vect1[i])
+            std::swap(vect0[i], vect1[i]);
+}
+
 } // namespace spt

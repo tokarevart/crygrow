@@ -44,9 +44,11 @@ struct vec {
         return {};
     }
     static vec ones() {
+        return filled_with(static_cast<ValueType>(1));
+    }
+    static vec filled_with(ValueType val) {
         vec res;
-        for (auto& val : res.x)
-            val = static_cast<ValueType>(1);
+        std::fill(res.x.begin(), res.x.end(), val);
         return res;
     }
 

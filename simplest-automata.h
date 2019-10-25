@@ -15,6 +15,7 @@ public:
     static constexpr Real epsilon = std::numeric_limits<Real>::epsilon();
     using base = automata_base<Dim, simplest_cell<Dim, Real>, cell_mut_group::mutable_only>;
     using veci = typename base::veci;
+    using vecu = typename base::vecu;
     using cell_type = typename base::cell_type;
     using nbhood_type = typename base::nbhood_type;
     using nbhood_pos_type = typename base::nbhood_pos_type;
@@ -78,6 +79,16 @@ public:
 
         return true;
     }
+
+    simplest_automata(std::size_t dim_len,
+                      std::size_t default_range = 1,
+                      nbhood_kind default_nbhood_kind = nbhood_kind::euclid)
+        : simplest_automata(veci::zeros(), vecu::filled_with(dim_len), default_range, default_nbhood_kind) {}
+
+    simplest_automata(const vecu& dim_lens,
+                      std::size_t default_range = 1,
+                      nbhood_kind default_nbhood_kind = nbhood_kind::euclid)
+        : simplest_automata(veci::zeros(), dim_lens, default_range, default_nbhood_kind) {}
 
     simplest_automata(const veci& corner0, const veci& corner1, 
                       std::size_t default_range = 1,

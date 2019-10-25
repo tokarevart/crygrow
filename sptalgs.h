@@ -6,8 +6,8 @@
 #pragma once
 #include "sptops.h"
 
-// TODO: try pass by classes-containers instead of reference and make benchmark
-// TODO: try vectorization (SIMD) and make benchmark
+// todo: try pass by classes-containers instead of reference and make benchmark
+// todo: try vectorization (SIMD) and make benchmark
 namespace spt {
 
 template <typename ValueType>
@@ -22,10 +22,11 @@ template <std::size_t Dim, typename ValueType>
 bool weak_in_cuboid(const vec<Dim, ValueType>& corner0,
                     const vec<Dim, ValueType>& corner1,
                     const vec<Dim, ValueType>& point) {
-    //return
-    //    weak_between(corner0.x[0], corner1.x[0], point.x[0]) &&
-    //    weak_between(corner0.x[1], corner1.x[1], point.x[1]) &&
-    //    weak_between(corner0.x[2], corner1.x[2], point.x[2]);
+    for (std::size_t i = 0; i < Dim; ++i)
+        if (!weak_between(corner0.x[i], corner1.x[i], point.x[i]))
+            return false;
+
+    return true;
 }
 
 // NOTE: using with vec of integers needs different implementation
@@ -42,7 +43,7 @@ vec<Dim, Real> project_on_line(
     return line_p0 + project_on_vec(point - line_p0, line_p1 - line_p0);
 }
 
-// TODO: return std::optional<vec<3>>
+// todo: return std::optional<vec<Dim, Real>>
 template <std::size_t Dim, typename Real>
 bool project_on_segm(
     vec<Dim, Real>& out,
@@ -86,7 +87,7 @@ bool does_ray_intersect_plane(
     return std::abs(det) > std::numeric_limits<Real>::epsilon();
 }
 
-// TODO: return std::optional<vec<3>>
+// todo: return std::optional<vec<3, Real>>
 template <typename Real>
 bool ray_intersect_plane(
     vec<3, Real>& out_intersect_point,
@@ -136,7 +137,7 @@ bool does_ray_intersect_triangle(
     return t >= static_cast<Real>(0);
 }
 
-// TODO: return std::optional<vec<3>>
+// todo: return std::optional<vec<3>>
 template <typename Real>
 bool line_intersect_plane(
     vec<3, Real>& out_intersect_point,
@@ -203,7 +204,7 @@ bool does_segment_intersect_triangle(
     return t <= static_cast<Real>(1) && t >= static_cast<Real>(0);
 }
 
-// TODO: return std::optional<vec<3>>
+// todo: return std::optional<vec<3>>
 template <typename Real>
 bool segment_intersect_plane(
     vec<3, Real>& out_intersect_point,
@@ -368,15 +369,17 @@ vec<3, Real> closest_triangle_point_to_point_on_plane(
 
     std::size_t min_i;
     if (sqrs[0] < sqrs[1]) {
-        if (sqrs[0] < sqrs[2])
+        if (sqrs[0] < sqrs[2]) {
             min_i = 0;
-        else
+        } else {
             min_i = 2;
+        }
     } else {
-        if (sqrs[1] < sqrs[2])
+        if (sqrs[1] < sqrs[2]) {
             min_i = 1;
-        else
+        } else {
             min_i = 2;
+        }
     }
 
     return closest_points[min_i];
@@ -550,7 +553,7 @@ std::pair<vec<3, Real>, vec<3, Real>> segments_closest_points(
 
     return {
         (static_cast<Real>(1) - sc) * segm0_p0 + sc * segm0_p1,
-        (static_cast<Real>(1) - tc) * segm1_p0 + tc * segm1_p1
+        (static_cast<Real>(1) - tc) * segm1_p0 + tc * segm1_p1 
     };
 }
 

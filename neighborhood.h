@@ -18,16 +18,16 @@ enum class nbhood_kind {
 
 
 template <nbhood_kind NbhoodKind, std::size_t Dim, 
-    typename GetCellFunc = std::function<bool(const spt::veci<Dim>&)>>
+    typename TryGetCell = std::function<bool(const spt::veci<Dim>&)>>
 class nbhood_pos_impl;
 
 
-template <std::size_t Dim, typename GetCellFunc>
-class nbhood_pos_impl<nbhood_kind::moore, Dim, GetCellFunc> {
+template <std::size_t Dim, typename TryGetCell>
+class nbhood_pos_impl<nbhood_kind::moore, Dim, TryGetCell> {
 public:
     using veci = spt::veci<Dim>;
     static std::vector<veci> run(const veci& center, std::size_t range,
-                                 std::optional<GetCellFunc> getcell = std::nullopt) {
+                                 std::optional<TryGetCell> getcell = std::nullopt) {
         std::int64_t srange = range;
         std::vector<veci> res;
         if constexpr (Dim == 2) {
@@ -67,12 +67,12 @@ public:
 };
 
 
-template <std::size_t Dim, typename GetCellFunc>
-class nbhood_pos_impl<nbhood_kind::von_neumann, Dim, GetCellFunc> {
+template <std::size_t Dim, typename TryGetCell>
+class nbhood_pos_impl<nbhood_kind::von_neumann, Dim, TryGetCell> {
 public:
     using veci = spt::veci<Dim>;
     static std::vector<veci> run(const veci& center, std::size_t range,
-                                 std::optional<GetCellFunc> getcell = std::nullopt) {
+                                 std::optional<TryGetCell> getcell = std::nullopt) {
         std::int64_t srange = range;
         std::vector<veci> res;
         if constexpr (Dim == 2) {
@@ -114,12 +114,12 @@ public:
 };
 
 
-template <std::size_t Dim, typename GetCellFunc>
-class nbhood_pos_impl<nbhood_kind::euclid, Dim, GetCellFunc> {
+template <std::size_t Dim, typename TryGetCell>
+class nbhood_pos_impl<nbhood_kind::euclid, Dim, TryGetCell> {
 public:
     using veci = spt::veci<Dim>;
     static std::vector<veci> run(const veci& center, std::size_t range, 
-                                 std::optional<GetCellFunc> getcell = std::nullopt) {
+                                 std::optional<TryGetCell> getcell = std::nullopt) {
         std::int64_t srange = range;
         std::int64_t srange2 = srange * srange;
         std::vector<veci> res;

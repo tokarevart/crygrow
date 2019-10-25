@@ -162,6 +162,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="automata-base.h" />
+    <ClInclude Include="cgralgs.h" />
     <ClInclude Include="neighborhood.h" />
     <ClInclude Include="mat.h" />
     <ClInclude Include="cell-mutability.h" />

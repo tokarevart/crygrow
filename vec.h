@@ -14,21 +14,25 @@ template <std::size_t Dim, typename ValueType = default_value_type>
 struct vec;
 
 template <std::size_t Dim> using veci = vec<Dim, std::int64_t>;
+template <std::size_t Dim> using vecu = vec<Dim, std::uint64_t>;
 template <std::size_t Dim> using vecf = vec<Dim, float>;
 template <std::size_t Dim> using vecd = vec<Dim, double>;
 template <typename ValueType> 
 using vec2 = vec<2, ValueType>;
 using vec2i = vec2<std::int64_t>;
+using vec2u = vec2<std::uint64_t>;
 using vec2f = vec2<float>;
 using vec2d = vec2<double>;
 template <typename ValueType> 
 using vec3 = vec<3, ValueType>;
 using vec3i = vec3<std::int64_t>;
+using vec3u = vec3<std::uint64_t>;
 using vec3f = vec3<float>;
 using vec3d = vec3<double>;
 template <typename ValueType> 
 using vec4 = vec<4, ValueType>;
 using vec4i = vec4<std::int64_t>;
+using vec4u = vec4<std::uint64_t>;
 using vec4f = vec4<float>;
 using vec4d = vec4<double>;
 

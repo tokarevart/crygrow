@@ -6,7 +6,7 @@
 #include <algorithm>
 #include "mat.h"
 
-// TODO: try vectorization (SIMD) and make benchmark
+// todo: try vectorization (SIMD) and make benchmark
 namespace spt {
 
 template <std::size_t Dim, typename ValueType>

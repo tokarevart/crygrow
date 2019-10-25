@@ -56,6 +56,7 @@ std::vector<pos_t> make_init_central_poses(std::size_t size) {
 
 
 int main() {
+    // todo: implement nbhood_offset
     std::size_t size = 400;
     std::size_t range = 7;
     cgr::nbhood_kind kind = cgr::nbhood_kind::euclid;

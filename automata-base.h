@@ -26,7 +26,7 @@ public:
     using veci = spt::veci<Dim>;
     using vecu = spt::vecu<Dim>;
     using nbhood_type = nbhood<Dim, Cell>;
-    // todo: using nbhood_offset_type = nbhood_offset<Dim>;
+    // using nbhood_offset_type = nbhood_offset<Dim>;
     using nbhood_pos_type = nbhood_pos<Dim>;
     using cells_container = std::vector<Cell*>;
     using nbhoods_pos_container = std::vector<nbhood_pos_type>;

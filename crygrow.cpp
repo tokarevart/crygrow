@@ -37,20 +37,20 @@ std::vector<pos_t> make_init_central_poses(std::size_t size) {
 
     std::vector<pos_t> res;
 
-    //for (std::size_t i = 1; i <= 3; ++i)
-    //    for (std::size_t j = 1; j <= 3; ++j)
-    //        res.emplace_back(ssize * i / 4, ssize * j / 4);
+    for (std::size_t i = 1; i <= 3; ++i)
+        for (std::size_t j = 1; j <= 3; ++j)
+            res.emplace_back(ssize * i / 4, ssize * j / 4);
 
-    //for (std::size_t i = 1; i <= 7; i += 2) {
-    //    res.emplace_back((ssize * i) / 8, (ssize * 1) / 8);
-    //    res.emplace_back(ssize * i / 8, ssize * 7 / 8);
-    //}
-    //res.emplace_back(ssize * 1 / 8, ssize * 3 / 8);
-    //res.emplace_back(ssize * 7 / 8, ssize * 3 / 8);
-    //res.emplace_back(ssize * 1 / 8, ssize * 5 / 8);
-    //res.emplace_back(ssize * 7 / 8, ssize * 5 / 8);
+    for (std::size_t i = 1; i <= 7; i += 2) {
+        res.emplace_back((ssize * i) / 8, (ssize * 1) / 8);
+        res.emplace_back(ssize * i / 8, ssize * 7 / 8);
+    }
+    res.emplace_back(ssize * 1 / 8, ssize * 3 / 8);
+    res.emplace_back(ssize * 7 / 8, ssize * 3 / 8);
+    res.emplace_back(ssize * 1 / 8, ssize * 5 / 8);
+    res.emplace_back(ssize * 7 / 8, ssize * 5 / 8);
 
-    res.emplace_back(ssize * 1 / 2, ssize * 1 / 2);
+    //res.emplace_back(ssize * 1 / 2, ssize * 1 / 2);
     return res;
 }
 

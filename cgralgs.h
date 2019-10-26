@@ -5,9 +5,9 @@
 namespace cgr {
 
 template <std::size_t Dim>
-std::size_t offset(const spt::vecu<Dim>& pos, const spt::vecu<Dim>& dim_lens) {
-    std::size_t res = pos.x[0];
-    std::size_t mul = dim_lens[0];
+std::int64_t offset(const spt::veci<Dim>& pos, const spt::vecu<Dim>& dim_lens) {
+    std::int64_t res = pos.x[0];
+    std::int64_t mul = dim_lens[0];
     for (std::size_t i = 1; i < Dim; ++i) {
         res += pos.x[i] * mul;
         mul *= dim_lens[i];

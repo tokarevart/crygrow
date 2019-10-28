@@ -28,7 +28,7 @@ public:
 
     bool stop_condition() const override {
         for (std::size_t i = 0; i < base::num_cells(); ++i)
-            if (base::get_cell(i)->crystallinity < 1.0 - epsilon)
+            if (base::get_cell(i)->crystallinity < 1.0 - epsilon * (1.0 + base::get_cell(i)->crystallinity))
                 return false;
 
         return true;

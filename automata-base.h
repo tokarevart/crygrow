@@ -36,11 +36,14 @@ public:
         return m_cells.size();
     }
     
-    Cell* get_cell(std::size_t pos_offset) const {
-        return m_cells[pos_offset];
+    Cell* get_cell(std::size_t offset) const {
+        return m_cells[offset];
     }
     Cell* get_cell(const veci& pos) const {
         return get_cell(offset(pos));
+    }
+    void  set_cell(std::size_t offset, const Cell* new_cell) {
+        m_cells[offset] = const_cast<Cell*>(new_cell);
     }
     void  set_cell(const veci& pos, const Cell* new_cell) {
         m_cells[offset(pos)] = const_cast<Cell*>(new_cell);
@@ -75,8 +78,8 @@ public:
     bool inside(const veci& pos) const {
         return cgr::inside(static_cast<vecu>(pos - m_origin), m_dim_lens);
     }
-    veci pos(std::size_t pos_offset) const {
-        return m_origin + upos(pos_offset);
+    veci pos(std::size_t offset) const {
+        return m_origin + upos(offset);
     }
     vecu upos(std::size_t offset) const {
         return cgr::upos(offset, m_dim_lens);

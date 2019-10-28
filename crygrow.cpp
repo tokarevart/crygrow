@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include <fstream>
+#include <cstdlib>
 #include "simplest-automata.h"
 
 
@@ -32,7 +33,7 @@ pair_pos_cell make_cells_box(std::size_t size, const cell_t& cell) {
 }
 
 
-std::vector<pos_t> make_init_central_poses(std::size_t size) {
+std::vector<pos_t> make_central_poses(std::size_t size) {
     std::int64_t ssize = size;
 
     std::vector<pos_t> res;
@@ -42,7 +43,7 @@ std::vector<pos_t> make_init_central_poses(std::size_t size) {
             res.emplace_back(ssize * i / 4, ssize * j / 4);
 
     for (std::size_t i = 1; i <= 7; i += 2) {
-        res.emplace_back((ssize * i) / 8, (ssize * 1) / 8);
+        res.emplace_back(ssize * i / 8, ssize * 1 / 8);
         res.emplace_back(ssize * i / 8, ssize * 7 / 8);
     }
     res.emplace_back(ssize * 1 / 8, ssize * 3 / 8);
@@ -55,8 +56,58 @@ std::vector<pos_t> make_init_central_poses(std::size_t size) {
 }
 
 
+std::uint64_t min_distance2(pos_t pos, std::vector<pos_t> others) {
+    std::uint64_t res = std::numeric_limits<std::uint64_t>::max();
+    for (auto& other : others) {
+        std::uint64_t dist = (other - pos).magnitude2();
+        if (dist < res)
+            res = dist;
+    }
+    return res;
+}
+
+
+unsigned short sqrti(unsigned long a) {
+    unsigned long rem = 0;
+    int root = 0;
+    int i;
+
+    for (i = 0; i < 16; i++) {
+        root <<= 1;
+        rem <<= 2;
+        rem += a >> 30;
+        a <<= 2;
+
+        if (root < rem) {
+            root++;
+            rem -= root;
+            root++;
+        }
+    }
+
+    return static_cast<unsigned short>(root >> 1);
+}
+
+
+std::vector<pos_t> make_random_central_poses(std::size_t size, std::size_t num, std::uint64_t min_dist2 = 0) {
+    std::vector<pos_t> res;
+    std::srand(2);
+    for (std::size_t i = 0; i < num;) {
+        pos_t curpos{ std::rand() % (size - 1), std::rand() % (size - 1) };
+        if (min_distance2(curpos, res) >= min_dist2 &&
+            curpos[0] * curpos[0] >= min_dist2 && 
+            curpos[0] < size - static_cast<std::size_t>(std::sqrt(min_dist2)) &&
+            curpos[1] * curpos[1] >= min_dist2 && 
+            curpos[1] < size - static_cast<std::size_t>(std::sqrt(min_dist2))) {
+            res.push_back(curpos);
+            ++i;
+        }
+    }
+    return res;
+}
+
+
 int main() {
-    // todo: implement nbhood_offset
     std::size_t size = 400;
     std::size_t range = 7;
     cgr::nbhood_kind kind = cgr::nbhood_kind::euclid;
@@ -64,7 +115,7 @@ int main() {
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
-    auto init_central_poses = make_init_central_poses(size);
+    auto init_central_poses = make_random_central_poses(size, 20, (range * 4) * (range * 4));
 
     material_t mater;
     std::vector<crystallite_t> crysts(init_central_poses.size(), crystallite_t(&mater));

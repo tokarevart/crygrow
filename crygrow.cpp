@@ -34,6 +34,14 @@ pair_pos_cell make_cells_box(std::size_t size, const cell_t& cell) {
 }
 
 
+std::vector<pos_t> make_central_pos(std::size_t size) {
+    std::int64_t ssize = size;
+    std::vector<pos_t> res;
+    res.emplace_back(ssize * 1 / 2, ssize * 1 / 2);
+    return res;
+}
+
+
 std::vector<pos_t> make_central_poses(std::size_t size) {
     std::int64_t ssize = size;
 
@@ -52,7 +60,6 @@ std::vector<pos_t> make_central_poses(std::size_t size) {
     res.emplace_back(ssize * 1 / 8, ssize * 5 / 8);
     res.emplace_back(ssize * 7 / 8, ssize * 5 / 8);
 
-    //res.emplace_back(ssize * 1 / 2, ssize * 1 / 2);
     return res;
 }
 

@@ -67,38 +67,16 @@ std::uint64_t min_distance2(pos_t pos, std::vector<pos_t> others) {
 }
 
 
-unsigned short sqrti(unsigned long a) {
-    unsigned long rem = 0;
-    int root = 0;
-    int i;
-
-    for (i = 0; i < 16; i++) {
-        root <<= 1;
-        rem <<= 2;
-        rem += a >> 30;
-        a <<= 2;
-
-        if (root < rem) {
-            root++;
-            rem -= root;
-            root++;
-        }
-    }
-
-    return static_cast<unsigned short>(root >> 1);
-}
-
-
 std::vector<pos_t> make_random_central_poses(std::size_t size, std::size_t num, std::uint64_t min_dist2 = 0) {
     std::vector<pos_t> res;
     std::srand(2);
     for (std::size_t i = 0; i < num;) {
         pos_t curpos{ std::rand() % (size - 1), std::rand() % (size - 1) };
         if (min_distance2(curpos, res) >= min_dist2 &&
-            curpos[0] * curpos[0] >= min_dist2 && 
-            curpos[0] < size - static_cast<std::size_t>(std::sqrt(min_dist2)) &&
-            curpos[1] * curpos[1] >= min_dist2 && 
-            curpos[1] < size - static_cast<std::size_t>(std::sqrt(min_dist2))) {
+            static_cast<std::size_t>(curpos[0] * curpos[0]) >= min_dist2 &&
+            static_cast<std::size_t>(curpos[0]) < size - static_cast<std::size_t>(std::sqrt(min_dist2)) &&
+            static_cast<std::size_t>(curpos[1] * curpos[1]) >= min_dist2 &&
+            static_cast<std::size_t>(curpos[1]) < size - static_cast<std::size_t>(std::sqrt(min_dist2))) {
             res.push_back(curpos);
             ++i;
         }

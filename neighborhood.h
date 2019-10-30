@@ -30,7 +30,7 @@ bool inside_nbhood(const spt::veci<Dim>& pos, std::size_t range) {
         return true;
 
     } else if constexpr (NbhoodKind == nbhood_kind::euclid) {
-        return pos.magnitude2() <= range * range;
+        return static_cast<std::size_t>(pos.magnitude2()) <= range * range;
     }
 }
 
@@ -41,181 +41,6 @@ template <std::size_t Dim, typename Cell>
 using try_get_cell_t = std::function<Cell*(const spt::veci<Dim>&)>;
 template <std::size_t Dim>
 using try_get_bcell_t = std::function<bool(const spt::veci<Dim>&)>;
-
-template <nbhood_kind NbhoodKind, std::size_t Dim>
-class nbhood_offset_impl;
-
-
-template <std::size_t Dim>
-class nbhood_offset_impl<nbhood_kind::moore, Dim> {
-public:
-    static nbhood_offset run(std::size_t center, const spt::vecu<Dim>& dim_lens, std::size_t range,
-                             std::optional<try_get_bcell_t<Dim>> trygetcell) {
-        spt::veci<Dim> center_upos = cgr::upos(center, dim_lens);
-        std::int64_t srange = range;
-        nbhood_offset res;
-        if constexpr (Dim == 2) {
-            res.reserve(4 * range * (range + 1)); // (2 * range + 1)^2 - 1
-            for (std::int64_t y = -srange; y <= srange; ++y)
-                for (std::int64_t x = -srange; x <= srange; ++x)
-                    if (!(x == 0 && y == 0)) {
-                        auto new_pos = center_upos + spt::veci<Dim>{ x, y };
-                        if (!trygetcell)
-                            res.push_back(cgr::offset(new_pos, dim_lens));
-                        else
-                            if (trygetcell.value()(new_pos))
-                                res.push_back(cgr::offset(new_pos, dim_lens));
-                    }
-
-        } else if constexpr (Dim == 3) {
-            std::size_t buf = 2 * range + 1;
-            res.reserve(buf * buf * buf - 1);
-            for (std::int64_t z = -srange; z <= srange; ++z)
-                for (std::int64_t y = -srange; y <= srange; ++y)
-                    for (std::int64_t x = -srange; x <= srange; ++x)
-                        if (!(x == 0 && y == 0 && z == 0)) {
-                            auto new_pos = center_upos + spt::veci<Dim>{ x, y, z };
-                            if (!trygetcell)
-                                res.push_back(cgr::offset(new_pos, dim_lens));
-                            else
-                                if (trygetcell.value()(new_pos))
-                                    res.push_back(cgr::offset(new_pos, dim_lens));
-                        }
-
-        } else {
-            static_assert(false);
-        }
-
-        return res;
-    }
-};
-
-
-template <std::size_t Dim>
-class nbhood_offset_impl<nbhood_kind::von_neumann, Dim> {
-public:
-    static nbhood_offset run(std::size_t center, const spt::vecu<Dim>& dim_lens, std::size_t range,
-                             std::optional<try_get_bcell_t<Dim>> trygetcell) {
-        spt::veci<Dim> center_upos = cgr::upos(center, dim_lens);
-        std::int64_t srange = range;
-        nbhood_offset res;
-        if constexpr (Dim == 2) {
-            res.reserve(4 * range * (range + 1)); // (2 * range + 1)^2 - 1
-            for (std::int64_t y = -srange; y <= srange; ++y)
-                for (std::int64_t x = -srange; x <= srange; ++x)
-                    if (!(x == 0 && y == 0) &&
-                        std::abs(x) + std::abs(y) <= srange) {
-                        auto new_pos = center_upos + spt::veci<Dim>{ x, y };
-                        if (!trygetcell)
-                            res.push_back(cgr::offset(new_pos, dim_lens));
-                        else
-                            if (trygetcell.value()(new_pos))
-                                res.push_back(cgr::offset(new_pos, dim_lens));
-                    }
-            res.shrink_to_fit();
-
-        } else if constexpr (Dim == 3) {
-            std::size_t buf = 2 * range + 1;
-            res.reserve(buf * buf * buf - 1);
-            for (std::int64_t z = -srange; z <= srange; ++z)
-                for (std::int64_t y = -srange; y <= srange; ++y)
-                    for (std::int64_t x = -srange; x <= srange; ++x)
-                        if (!(x == 0 && y == 0 && z == 0) &&
-                            std::abs(x) + std::abs(y) + std::abs(z) <= srange) {
-                            auto new_pos = center_upos + spt::veci<Dim>{ x, y, z };
-                            if (!trygetcell)
-                                res.push_back(cgr::offset(new_pos, dim_lens));
-                            else
-                                if (trygetcell.value()(new_pos))
-                                    res.push_back(cgr::offset(new_pos, dim_lens));
-                        }
-            res.shrink_to_fit();
-
-        } else {
-            static_assert(false);
-        }
-
-        return res;
-    }
-};
-
-
-template <std::size_t Dim>
-class nbhood_offset_impl<nbhood_kind::euclid, Dim> {
-public:
-    static nbhood_offset run(std::size_t center, const spt::vecu<Dim>& dim_lens, std::size_t range,
-                             std::optional<try_get_bcell_t<Dim>> trygetcell) {
-        spt::veci<Dim> center_upos = cgr::upos(center, dim_lens);
-        std::int64_t srange = range;
-        nbhood_offset res;
-        
-        if constexpr (Dim == 2) {
-            res.reserve(4 * range * (range + 1)); // (2 * range + 1)^2 - 1
-            for (std::int64_t y = -srange; y <= srange; ++y)
-                for (std::int64_t x = -srange; x <= srange; ++x) {
-                    if (x == 0 && y == 0)
-                        continue;
-
-                    spt::veci<Dim> relpos{ x, y };
-                    if (inside_nbhood<nbhood_kind::euclid, Dim>(relpos, range)) {
-                        auto new_pos = center_upos + relpos;
-                        if (!trygetcell)
-                            res.push_back(cgr::offset(new_pos, dim_lens));
-                        else
-                            if (trygetcell.value()(new_pos))
-                                res.push_back(cgr::offset(new_pos, dim_lens));
-                    }
-                }
-            res.shrink_to_fit();
-
-        } else if constexpr (Dim == 3) {
-            std::size_t buf = 2 * range + 1;
-            res.reserve(buf * buf * buf - 1);
-            for (std::int64_t z = -srange; z <= srange; ++z)
-                for (std::int64_t y = -srange; y <= srange; ++y)
-                    for (std::int64_t x = -srange; x <= srange; ++x) {
-                        if (x == 0 && y == 0 && z == 0)
-                            continue;
-
-                        spt::veci<Dim> relpos{ x, y, z };
-                        if (inside_nbhood<nbhood_kind::euclid, Dim>(relpos, range)) {
-                            auto new_pos = center_upos + relpos;
-                            if (!trygetcell)
-                                res.push_back(cgr::offset(new_pos, dim_lens));
-                            else
-                                if (trygetcell.value()(new_pos))
-                                    res.push_back(cgr::offset(new_pos, dim_lens));
-                        }
-                    }
-            res.shrink_to_fit();
-
-        } else {
-            auto nbdimlens = spt::vecu<Dim>::filled_with(2 * range + 1);
-            std::size_t num_nboffsets = std::accumulate(nbdimlens.x.begin(), nbdimlens.x.end(),
-                                                        static_cast<std::size_t>(1),
-                                                        std::multiplies<std::size_t>());
-            auto nbcenter = nbdimlens / 2;
-            res.reserve(num_nboffsets - 1);
-            for (std::size_t i = 0; i < num_nboffsets; ++i) {
-                if (i == num_nboffsets / 2)
-                    continue;
-
-                auto relpos = static_cast<spt::veci<Dim>>(cgr::upos(i, nbdimlens)) - nbcenter;
-                if (inside_nbhood<nbhood_kind::euclid, Dim>(relpos, range)) {
-                    auto new_pos = center_upos + relpos;
-                    if (!trygetcell)
-                        res.push_back(cgr::offset(new_pos, dim_lens));
-                    else
-                        if (trygetcell.value()(new_pos))
-                            res.push_back(cgr::offset(new_pos, dim_lens));
-                }
-            }
-            res.shrink_to_fit();
-        }
-
-        return res;
-    }
-};
 
 
 template <std::size_t Dim>
@@ -373,7 +198,32 @@ public:
 template <nbhood_kind NbhoodKind, std::size_t Dim>
 nbhood_offset make_nbhood_offset(std::size_t center, const spt::vecu<Dim>& dim_lens, std::size_t range,
                                  std::optional<try_get_bcell_t<Dim>> trygetcell = std::nullopt) {
-    return nbhood_offset_impl<NbhoodKind, Dim>::run(center, dim_lens, range, trygetcell);
+    spt::veci<Dim> center_upos = cgr::upos(center, dim_lens);
+    nbhood_offset res;
+
+    auto nbdimlens = spt::vecu<Dim>::filled_with(2 * range + 1);
+    std::size_t num_nboffsets = std::accumulate(nbdimlens.x.begin(), nbdimlens.x.end(),
+                                                static_cast<std::size_t>(1),
+                                                std::multiplies<std::size_t>());
+    auto nbcenter = nbdimlens / 2;
+    res.reserve(num_nboffsets - 1);
+    for (std::size_t i = 0; i < num_nboffsets; ++i) {
+        if (i == num_nboffsets / 2)
+            continue;
+
+        auto relpos = static_cast<spt::veci<Dim>>(cgr::upos(i, nbdimlens)) - nbcenter;
+        if (inside_nbhood<NbhoodKind, Dim>(relpos, range)) {
+            auto new_pos = center_upos + relpos;
+            if (!trygetcell)
+                res.push_back(cgr::offset(new_pos, dim_lens));
+            else
+                if (trygetcell.value()(new_pos))
+                    res.push_back(cgr::offset(new_pos, dim_lens));
+        }
+    }
+    res.shrink_to_fit();
+
+    return res;
 }
 
 

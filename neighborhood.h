@@ -6,6 +6,7 @@
 #include <vector>
 #include <functional>
 #include "vec.h"
+#include "cgralgs.h"
 
 
 namespace cgr {
@@ -132,41 +133,60 @@ public:
         std::int64_t srange = range;
         std::int64_t srange2 = srange * srange;
         nbhood_offset res;
-        if constexpr (Dim == 2) {
-            res.reserve(4 * range * (range + 1)); // (2 * range + 1)^2 - 1
-            for (std::int64_t y = -srange; y <= srange; ++y)
-                for (std::int64_t x = -srange; x <= srange; ++x)
-                    if (!(x == 0 && y == 0) &&
-                        x * x + y * y <= srange2) {
-                        auto new_pos = center_upos + spt::veci<Dim>{ x, y };
-                        if (!trygetcell)
-                            res.push_back(cgr::offset(new_pos, dim_lens));
-                        else
-                            if (trygetcell.value()(new_pos))
-                                res.push_back(cgr::offset(new_pos, dim_lens));
-                    }
-            res.shrink_to_fit();
-
-        } else if constexpr (Dim == 3) {
-            std::size_t buf = 2 * range + 1;
-            res.reserve(buf * buf * buf - 1);
-            for (std::int64_t z = -srange; z <= srange; ++z)
-                for (std::int64_t y = -srange; y <= srange; ++y)
-                    for (std::int64_t x = -srange; x <= srange; ++x)
-                        if (!(x == 0 && y == 0 && z == 0) &&
-                            x * x + y * y + z * z <= srange2) {
-                            auto new_pos = center_upos + spt::veci<Dim>{ x, y, z };
-                            if (!trygetcell)
-                                res.push_back(cgr::offset(new_pos, dim_lens));
-                            else
-                                if (trygetcell.value()(new_pos))
-                                    res.push_back(cgr::offset(new_pos, dim_lens));
-                        }
-            res.shrink_to_fit();
-
-        } else {
-            static_assert(false);
+        ///
+        auto nbdimlens = spt::vecu<Dim>::filled_with(2 * range + 1);
+        std::size_t num_nboffsets = std::accumulate(nbdimlens.x.begin(), nbdimlens.x.end(), 
+                                                    static_cast<std::size_t>(1), 
+                                                    std::multiplies<std::size_t>());
+        auto nbcenter = nbdimlens / 2;
+        for (std::size_t i = 0; i < num_nboffsets; ++i) {
+            auto relpos = static_cast<spt::veci<Dim>>(cgr::upos(i, nbdimlens)) - nbcenter;
+            if (relpos != spt::veci<Dim>::zeros() &&
+                relpos.magnitude2() <= srange2) {
+                auto new_pos = center_upos + relpos;
+                if (!trygetcell)
+                    res.push_back(cgr::offset(new_pos, dim_lens));
+                else
+                    if (trygetcell.value()(new_pos))
+                        res.push_back(cgr::offset(new_pos, dim_lens));
+            }
         }
+        ///
+        //if constexpr (Dim == 2) {
+        //    res.reserve(4 * range * (range + 1)); // (2 * range + 1)^2 - 1
+        //    for (std::int64_t y = -srange; y <= srange; ++y)
+        //        for (std::int64_t x = -srange; x <= srange; ++x)
+        //            if (!(x == 0 && y == 0) &&
+        //                x * x + y * y <= srange2) {
+        //                auto new_pos = center_upos + spt::veci<Dim>{ x, y };
+        //                if (!trygetcell)
+        //                    res.push_back(cgr::offset(new_pos, dim_lens));
+        //                else
+        //                    if (trygetcell.value()(new_pos))
+        //                        res.push_back(cgr::offset(new_pos, dim_lens));
+        //            }
+        //    res.shrink_to_fit();
+
+        //} else if constexpr (Dim == 3) {
+        //    std::size_t buf = 2 * range + 1;
+        //    res.reserve(buf * buf * buf - 1);
+        //    for (std::int64_t z = -srange; z <= srange; ++z)
+        //        for (std::int64_t y = -srange; y <= srange; ++y)
+        //            for (std::int64_t x = -srange; x <= srange; ++x)
+        //                if (!(x == 0 && y == 0 && z == 0) &&
+        //                    x * x + y * y + z * z <= srange2) {
+        //                    auto new_pos = center_upos + spt::veci<Dim>{ x, y, z };
+        //                    if (!trygetcell)
+        //                        res.push_back(cgr::offset(new_pos, dim_lens));
+        //                    else
+        //                        if (trygetcell.value()(new_pos))
+        //                            res.push_back(cgr::offset(new_pos, dim_lens));
+        //                }
+        //    res.shrink_to_fit();
+
+        //} else {
+        //    static_assert(false);
+        //}
 
         return res;
     }

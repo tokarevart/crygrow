@@ -18,7 +18,7 @@ template <typename Automata>
 class cell_iterator;
 
 
-template <std::size_t Dim, typename Cell, cell_mut_group CellMutGr>
+template <std::size_t Dim, nbhood_kind NbhoodKind, typename Cell, cell_mut_group CellMutGr>
 class automata_base {
 public:
     static constexpr std::size_t dim = Dim;
@@ -30,7 +30,8 @@ public:
     using nbhood_pos_type = nbhood_pos<Dim>;
     using cells_container = std::vector<Cell*>;
     using nbhood_offsets_container = std::vector<nbhood_offset_type>;
-    static constexpr cell_mut_group cell_mut_group = CellMutGr;
+    static constexpr cgr::nbhood_kind nbhood_kind = NbhoodKind;
+    static constexpr cgr::cell_mut_group cell_mut_group = CellMutGr;
     
     std::size_t num_cells() const {
         return m_cells.size();
@@ -99,8 +100,9 @@ public:
     }
     void  set_nbhood_offset(std::size_t pos_offset) {
         m_nbhood_offsets[pos_offset]
-            = cgr::make_nbhood_offset<Dim>(pos_offset, m_dim_lens, m_default_nbhood_kind, m_default_range,
-                                           [this](const veci& pos) -> bool { return try_get_cell(pos); });
+            = cgr::make_nbhood_offset<NbhoodKind, Dim>(
+                pos_offset, m_dim_lens, m_default_range,
+                [this](const veci& pos) -> bool { return try_get_cell(pos); });
     }
     void  set_nbhood_offset(std::size_t pos_offset, nbhood_offset_type&& nbh_offset) {
         m_nbhood_offsets[pos_offset] = std::move(nbh_offset);
@@ -132,24 +134,12 @@ public:
     std::size_t default_range() const {
         return m_default_range;
     }
-    nbhood_kind default_nbhood_kind() const {
-        return m_default_nbhood_kind;
-    }
     std::size_t default_nbhood_size() const {
         return m_default_nbhood_size;
     }
 
-    void set_defaults(std::size_t range, nbhood_kind kind) {
-        m_default_range = range;
-        m_default_nbhood_kind = kind;
-        set_default_nbhood_size();
-    }
     void set_default_range(std::size_t range) {
         m_default_range = range;
-        set_default_nbhood_size();
-    }
-    void set_default_nbhood_kind(nbhood_kind kind) {
-        m_default_nbhood_kind = kind;
         set_default_nbhood_size();
     }
 
@@ -157,9 +147,9 @@ public:
     virtual bool iterate() = 0;
 
     automata_base(const veci& corner0, const veci& corner1, 
-                  std::size_t default_range, nbhood_kind default_nbhood_kind) {
+                  std::size_t default_range) {
         set_origin_and_dim_lens(corner0, corner1);
-        set_defaults(default_range, default_nbhood_kind);
+        set_default_range(default_range);
         std::size_t new_num_cells = std::accumulate(m_dim_lens.x.begin(), m_dim_lens.x.end(), 
                                                     static_cast<std::size_t>(1),
                                                     std::multiplies<std::size_t>());
@@ -173,7 +163,6 @@ public:
 
 private:
     std::size_t m_default_range;
-    nbhood_kind m_default_nbhood_kind;
     std::size_t m_default_nbhood_size;
 
     veci m_origin;
@@ -183,8 +172,8 @@ private:
     nbhood_offsets_container m_nbhood_offsets;
 
     void set_default_nbhood_size() {
-        m_default_nbhood_size = cgr::make_nbhood_offset<Dim>(
-            0, m_dim_lens, m_default_nbhood_kind, m_default_range).size();
+        m_default_nbhood_size = cgr::make_nbhood_offset<NbhoodKind, Dim>(
+            0, m_dim_lens, m_default_range).size();
     }
     
     bool inside(const vecu& pos) const {

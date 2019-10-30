@@ -5,8 +5,9 @@
 
 
 constexpr std::size_t dim = 2;
+constexpr auto kind = cgr::nbhood_kind::euclid;
 using pos_t = spt::veci<dim>;
-using automata_t = cgr::simplest_automata<dim>;
+using automata_t = cgr::simplest_automata<dim, kind>;
 using cell_t = cgr::simplest_cell<dim>;
 using crystallite_t = cgr::simplest_crystallite<dim>;
 using material_t = cgr::simplest_material<dim>;
@@ -88,8 +89,7 @@ std::vector<pos_t> make_random_central_poses(std::size_t size, std::size_t num, 
 int main() {
     std::size_t size = 400;
     std::size_t range = 7;
-    cgr::nbhood_kind kind = cgr::nbhood_kind::euclid;
-    automata_t automata(size, range, kind);
+    automata_t automata(size, range);
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
@@ -107,7 +107,7 @@ int main() {
     std::vector<nbhood_pos_t> init_nbhood_poses;
     init_nbhood_poses.reserve(init_central_poses.size());
     for (auto& pos : init_central_poses)
-        init_nbhood_poses.emplace_back(cgr::make_nbhood_pos<2>(pos, kind, range));
+        init_nbhood_poses.emplace_back(cgr::make_nbhood_pos<kind, 2>(pos, range));
 
     std::vector<std::vector<cell_t>> init_nbhood_cells;
     init_nbhood_cells.reserve(init_nbhood_poses.size());

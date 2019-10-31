@@ -1,6 +1,6 @@
 ﻿#include <iostream>
 #include <fstream>
-#include <cstdlib>
+#include <random>
 #include "simplest-automata.h"
 
 
@@ -77,9 +77,10 @@ std::uint64_t min_distance2(pos_t pos, std::vector<pos_t> others) {
 
 std::vector<pos_t> make_random_central_poses(std::size_t size, std::size_t num, std::uint64_t min_dist2 = 0) {
     std::vector<pos_t> res;
-    std::srand(2);
+    std::mt19937_64 gen;
+    std::uniform_int_distribution<std::size_t> dis(0, size - 1);
     for (std::size_t i = 0; i < num;) {
-        pos_t curpos{ std::rand() % (size - 1), std::rand() % (size - 1) };
+        pos_t curpos{ dis(gen), dis(gen) };
         if (min_distance2(curpos, res) >= min_dist2 &&
             static_cast<std::size_t>(curpos[0] * curpos[0]) >= min_dist2 &&
             static_cast<std::size_t>(curpos[0]) < size - static_cast<std::size_t>(std::sqrt(min_dist2)) &&

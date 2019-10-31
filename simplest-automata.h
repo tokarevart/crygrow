@@ -60,8 +60,8 @@ public:
                         continue;
 
                     if (std::find(pcell->crystallites.begin(),
-                                    pcell->crystallites.end(),
-                                    pnb->crystallites.front()) == pcell->crystallites.end())
+                                  pcell->crystallites.end(),
+                                  pnb->crystallites.front()) == pcell->crystallites.end())
                         pcell->crystallites.push_back(pnb->crystallites.front());
 
                     ++num_acc;
@@ -79,15 +79,7 @@ public:
 
                 if (pcell->crystallinity > 1.0 + epsilon * (1.0 + pcell->crystallinity)) {
                     pcell->crystallinity = 1.0;
-
-                    for (auto nboff : base::get_nbhood_offset(i)) {
-                        if (base::get_cell(nboff)->crystallinity <= epsilon &&
-                            base::get_nbhood_offset(nboff).empty())
-                            base::set_nbhood_offset(nboff);
-                    }
-
-                    if (!base::get_nbhood_offset(i).empty())
-                        base::clear_nbhood_offset(i);
+                    update_nbhood_offsets_after_crystallization(i);
                 }
             }
         }
@@ -127,6 +119,16 @@ private:
             }
 
         is_nbhood_offsets_initialized = true;
+    }
+    void update_nbhood_offsets_after_crystallization(std::size_t offset) {
+        for (auto nboff : base::get_nbhood_offset(offset)) {
+            if (base::get_cell(nboff)->crystallinity <= epsilon &&
+                base::get_nbhood_offset(nboff).empty())
+                base::set_nbhood_offset(nboff);
+        }
+
+        if (!base::get_nbhood_offset(offset).empty())
+            base::clear_nbhood_offset(offset);
     }
 };
 

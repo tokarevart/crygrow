@@ -29,7 +29,6 @@ public:
     using nbhood_offset_type = nbhood_offset;
     using nbhood_pos_type = nbhood_pos<Dim>;
     using cells_container = std::vector<Cell*>;
-    using nbhood_offsets_container = std::vector<nbhood_offset_type>;
     static constexpr cgr::nbhood_kind nbhood_kind = NbhoodKind;
     static constexpr cgr::cell_mut_group cell_mut_group = CellMutGr;
     
@@ -39,6 +38,9 @@ public:
     
     Cell* get_cell(std::size_t offset) const {
         return m_cells[offset];
+    }
+    Cell* get_cell(const vecu& pos) const {
+        return get_cell(offset(pos));
     }
     Cell* get_cell(const veci& pos) const {
         return get_cell(offset(pos));
@@ -57,8 +59,11 @@ public:
             set_cell(*pos_it, &(*cell_it));
     }
     
+    Cell* try_get_cell(const vecu& pos) const {
+        return inside(pos) ? get_cell(pos) : nullptr;
+    }
     Cell* try_get_cell(const veci& pos) const {
-        return inside(pos) ? get_cell(offset(pos)) : nullptr;
+        return inside(pos) ? get_cell(pos) : nullptr;
     }
     bool  try_set_cell(const veci& pos, const Cell* new_cell) {
         if (inside(pos)) {
@@ -76,8 +81,22 @@ public:
             try_set_cell(*pos_it, &(*cell_it));
     }
 
+    bool inside_with_shift(const vecu& pos, const veci& shift) const {
+        bool res = false;
+        for (std::size_t i = 0; i < Dim; ++i)
+            if (shift[i] < -static_cast<std::int64_t>(pos[i]))
+                return false;
+
+        return inside(pos + shift);
+    }
+    bool inside_with_shift(const veci& pos, const veci& shift) const {
+        return inside(pos + shift);
+    }
+    bool inside(const vecu& pos) const {
+        return cgr::inside(pos, m_dim_lens);
+    }
     bool inside(const veci& pos) const {
-        return cgr::inside(static_cast<vecu>(pos - m_origin), m_dim_lens);
+        return inside(static_cast<vecu>(pos - m_origin));
     }
     veci pos(std::size_t offset) const {
         return m_origin + upos(offset);
@@ -95,28 +114,12 @@ public:
         return cgr::offset(static_cast<veci>(pos), m_dim_lens);
     }
 
-    const nbhood_offset_type& get_nbhood_offset(std::size_t pos_offset) const {
-        return m_nbhood_offsets[pos_offset];
-    }
-    void  set_nbhood_offset(std::size_t pos_offset) {
-        m_nbhood_offsets[pos_offset]
-            = cgr::make_nbhood_offset<NbhoodKind, Dim>(
-                pos_offset, m_dim_lens, m_default_range,
-                [this](const veci& pos) -> bool { return try_get_cell(pos); });
-    }
-    void  set_nbhood_offset(std::size_t pos_offset, nbhood_offset_type&& nbh_offset) {
-        m_nbhood_offsets[pos_offset] = std::move(nbh_offset);
+    const cgr::nbhood_pos<Dim>& get_nbhood_pos_shifts() const {
+        return m_nbhood_pos_shifts;
     }
     
-    void reserve(std::size_t count) {
-        reserve_cells(count);
-        reserve_nbhood_offsets(count);
-    }
     void reserve_cells(std::size_t count) {
         m_cells.reserve(count);
-    }
-    void reserve_nbhood_offsets(std::size_t count) {
-        m_nbhood_offsets.reserve(count);
     }
 
     void erase(const veci& pos) {
@@ -141,6 +144,7 @@ public:
     void set_default_range(std::size_t range) {
         m_default_range = range;
         set_default_nbhood_size();
+        set_nbhood_pos_shifts();
     }
 
     virtual bool stop_condition() const = 0;
@@ -153,8 +157,7 @@ public:
         std::size_t new_num_cells = std::accumulate(m_dim_lens.x.begin(), m_dim_lens.x.end(), 
                                                     static_cast<std::size_t>(1),
                                                     std::multiplies<std::size_t>());
-        reserve(new_num_cells);
-        m_nbhood_offsets.assign(new_num_cells, nbhood_offset_type());
+        reserve_cells(new_num_cells);
         m_cells.assign(new_num_cells, nullptr);
     }
 
@@ -169,17 +172,15 @@ private:
     vecu m_dim_lens;
 
     cells_container m_cells;
-    nbhood_offsets_container m_nbhood_offsets;
+    nbhood_pos_type m_nbhood_pos_shifts;
 
     void set_default_nbhood_size() {
         m_default_nbhood_size = cgr::make_nbhood_offset<NbhoodKind, Dim>(
             0, m_dim_lens, m_default_range).size();
     }
-    
-    bool inside(const vecu& pos) const {
-        return inside(pos, m_dim_lens);
+    void set_nbhood_pos_shifts() {
+        m_nbhood_pos_shifts = cgr::make_nbhood_pos<NbhoodKind, Dim>(veci::zeros(), m_default_range);
     }
-    
     void set_origin_and_dim_lens(const veci& corner0, const veci& corner1) {
         veci new_origin = corner0;
         veci far_corner = corner1;

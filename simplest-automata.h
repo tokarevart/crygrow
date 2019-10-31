@@ -19,7 +19,6 @@ public:
     using cell_type = typename base::cell_type;
     using nbhood_type = typename base::nbhood_type;
     using nbhood_offset_type = typename base::nbhood_offset_type;
-    using nbhood_offsets_container = typename base::nbhood_offsets_container;
     using cells_delta_container = std::vector<Real>;
     using crystallite_type = typename cell_type::crystallite_type;
     using material_type = typename crystallite_type::material_type;
@@ -37,9 +36,6 @@ public:
         if (stop_condition())
             return false;
 
-        if (!is_nbhood_offsets_initialized)
-            initialize_nbhood_offsets();
-
         for (auto& delta : m_cells_delta)
             delta = 0.0;
         
@@ -47,21 +43,24 @@ public:
         {
             #pragma omp for
             for (std::int64_t i = 0; i < static_cast<std::int64_t>(base::num_cells()); ++i) {
+                auto curpos = base::pos(i);
                 auto pcell = base::get_cell(i);
                 if (std::abs(pcell->crystallinity - 1.0) <= epsilon * (1.0 + pcell->crystallinity))
                     continue;
             
                 std::size_t num_acc = 0;
-                for (auto nboff : base::get_nbhood_offset(i)) {
-                    auto pnb = base::get_cell(nboff);
+                for (auto& nbshift : base::get_nbhood_pos_shifts()) {
+                    auto pnb = base::try_get_cell(curpos + nbshift);
+                    if (!pnb)
+                        continue;
 
                     if (pnb->crystallinity < 1.0 - epsilon * (1.0 + pcell->crystallinity) ||
                         pnb->crystallites.size() != 1)
                         continue;
 
                     if (std::find(pcell->crystallites.begin(),
-                                    pcell->crystallites.end(),
-                                    pnb->crystallites.front()) == pcell->crystallites.end())
+                                  pcell->crystallites.end(),
+                                  pnb->crystallites.front()) == pcell->crystallites.end())
                         pcell->crystallites.push_back(pnb->crystallites.front());
 
                     ++num_acc;
@@ -101,15 +100,6 @@ public:
 
 private:
     cells_delta_container m_cells_delta;
-
-    bool is_nbhood_offsets_initialized = false;
-    void initialize_nbhood_offsets() {
-        #pragma omp parallel for
-        for (std::int64_t i = 0; i < static_cast<std::int64_t>(base::num_cells()); ++i)
-            base::set_nbhood_offset(i);
-
-        is_nbhood_offsets_initialized = true;
-    }
 };
 
 } // namespace cgr

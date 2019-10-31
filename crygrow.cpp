@@ -125,12 +125,16 @@ int main() {
     for (std::size_t i = 0; i < init_nbhood_poses.size(); ++i)
         automata.set_cells(init_nbhood_poses[i], init_nbhood_cells[i]);
     
+    automata.iterate();
+    std::cout << "ready?" << std::endl;
+    std::cin.get();
+
     while (!automata.stop_condition()) {
-        std::ofstream ofile("automata-image-data.txt");
-        ofile << "size " << size << std::endl;
         for (std::size_t i = 0; i < 100; ++i)
             automata.iterate();
 
+        std::ofstream ofile("automata-image-data.txt");
+        ofile << "size " << size << std::endl;
         for (std::size_t i = 0; i < automata.num_cells(); ++i) {
             auto pcell = automata.get_cell(i);
             auto curpos = automata.pos(i);

@@ -76,8 +76,19 @@ public:
                 auto pcell = base::get_cell(i);
                 pcell->crystallinity += m_cells_delta[i];
                 m_cells_delta[i] = 0.0;
-                if (pcell->crystallinity > 1.0 + epsilon * (1.0 + pcell->crystallinity))
+
+                if (pcell->crystallinity > 1.0 + epsilon * (1.0 + pcell->crystallinity)) {
                     pcell->crystallinity = 1.0;
+
+                    for (auto nboff : base::get_nbhood_offset(i)) {
+                        if (base::get_cell(nboff)->crystallinity <= epsilon &&
+                            base::get_nbhood_offset(nboff).empty())
+                            base::set_nbhood_offset(nboff);
+                    }
+
+                    if (!base::get_nbhood_offset(i).empty())
+                        base::clear_nbhood_offset(i);
+                }
             }
         }
 
@@ -106,7 +117,14 @@ private:
     void initialize_nbhood_offsets() {
         #pragma omp parallel for
         for (std::int64_t i = 0; i < static_cast<std::int64_t>(base::num_cells()); ++i)
-            base::set_nbhood_offset(i);
+            if (std::abs(base::get_cell(i)->crystallinity - 1.0)
+                <= epsilon * (1.0 + base::get_cell(i)->crystallinity)) {
+                for (auto nboff : base::make_nbhood_offset(i)) {
+                    if (base::get_cell(nboff)->crystallinity <= epsilon &&
+                        base::get_nbhood_offset(nboff).empty())
+                        base::set_nbhood_offset(nboff);
+                }
+            }
 
         is_nbhood_offsets_initialized = true;
     }

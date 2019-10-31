@@ -32,11 +32,11 @@ public:
     using nbhood_offsets_container = std::vector<nbhood_offset_type>;
     static constexpr cgr::nbhood_kind nbhood_kind = NbhoodKind;
     static constexpr cgr::cell_mut_group cell_mut_group = CellMutGr;
-    
+
     std::size_t num_cells() const {
         return m_cells.size();
     }
-    
+
     Cell* get_cell(std::size_t offset) const {
         return m_cells[offset];
     }
@@ -56,7 +56,7 @@ public:
         for (; pos_it != poses.end(); ++pos_it, ++cell_it)
             set_cell(*pos_it, &(*cell_it));
     }
-    
+
     Cell* try_get_cell(const veci& pos) const {
         return inside(pos) ? get_cell(offset(pos)) : nullptr;
     }
@@ -76,6 +76,9 @@ public:
             try_set_cell(*pos_it, &(*cell_it));
     }
 
+    bool inside(const vecu& pos) const {
+        return inside(pos, m_dim_lens);
+    }
     bool inside(const veci& pos) const {
         return cgr::inside(static_cast<vecu>(pos - m_origin), m_dim_lens);
     }
@@ -95,19 +98,25 @@ public:
         return cgr::offset(static_cast<veci>(pos), m_dim_lens);
     }
 
+    nbhood_offset_type make_nbhood_offset(std::size_t pos_offset) const {
+        return cgr::make_nbhood_offset<NbhoodKind, Dim>(
+            pos_offset, m_dim_lens, m_default_range,
+            [this](const veci& pos) -> bool { return try_get_cell(pos); });
+    }
     const nbhood_offset_type& get_nbhood_offset(std::size_t pos_offset) const {
         return m_nbhood_offsets[pos_offset];
     }
-    void  set_nbhood_offset(std::size_t pos_offset) {
-        m_nbhood_offsets[pos_offset]
-            = cgr::make_nbhood_offset<NbhoodKind, Dim>(
-                pos_offset, m_dim_lens, m_default_range,
-                [this](const veci& pos) -> bool { return try_get_cell(pos); });
+    void set_nbhood_offset(std::size_t pos_offset) {
+        m_nbhood_offsets[pos_offset] = make_nbhood_offset(pos_offset);
     }
-    void  set_nbhood_offset(std::size_t pos_offset, nbhood_offset_type&& nbh_offset) {
+    void set_nbhood_offset(std::size_t pos_offset, nbhood_offset_type&& nbh_offset) {
         m_nbhood_offsets[pos_offset] = std::move(nbh_offset);
     }
-    
+    void clear_nbhood_offset(std::size_t pos_offset) {
+        m_nbhood_offsets[pos_offset].clear();
+        m_nbhood_offsets[pos_offset].shrink_to_fit();
+    }
+
     void reserve(std::size_t count) {
         reserve_cells(count);
         reserve_nbhood_offsets(count);
@@ -174,12 +183,7 @@ private:
     void set_default_nbhood_size() {
         m_default_nbhood_size = cgr::make_nbhood_offset<NbhoodKind, Dim>(
             0, m_dim_lens, m_default_range).size();
-    }
-    
-    bool inside(const vecu& pos) const {
-        return inside(pos, m_dim_lens);
-    }
-    
+    }    
     void set_origin_and_dim_lens(const veci& corner0, const veci& corner1) {
         veci new_origin = corner0;
         veci far_corner = corner1;

@@ -128,7 +128,7 @@ int main() {
     while (!automata.stop_condition()) {
         std::ofstream ofile("automata-image-data.txt");
         ofile << "size " << size << std::endl;
-        for (std::size_t i = 0; i < 500; ++i)
+        for (std::size_t i = 0; i < 100; ++i)
             automata.iterate();
 
         for (std::size_t i = 0; i < automata.num_cells(); ++i) {

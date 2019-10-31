@@ -40,6 +40,9 @@ public:
     Cell* get_cell(std::size_t offset) const {
         return m_cells[offset];
     }
+    Cell* get_cell(const vecu& pos) const {
+        return get_cell(offset(pos));
+    }
     Cell* get_cell(const veci& pos) const {
         return get_cell(offset(pos));
     }
@@ -57,8 +60,11 @@ public:
             set_cell(*pos_it, &(*cell_it));
     }
 
+    Cell* try_get_cell(const vecu& pos) const {
+        return inside(pos) ? get_cell(pos) : nullptr;
+    }
     Cell* try_get_cell(const veci& pos) const {
-        return inside(pos) ? get_cell(offset(pos)) : nullptr;
+        return inside(pos) ? get_cell(pos) : nullptr;
     }
     bool  try_set_cell(const veci& pos, const Cell* new_cell) {
         if (inside(pos)) {

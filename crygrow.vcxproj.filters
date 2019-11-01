@@ -41,19 +41,19 @@
     <ClInclude Include="neighborhood.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="simplest-automata.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="simplest-cell.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="simplest-crystallite.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="simplest-material.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
     <ClInclude Include="cgralgs.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="simple-automata.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="simple-cell.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="simple-crystallite.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="simple-material.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

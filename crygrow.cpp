@@ -1,16 +1,16 @@
 ﻿#include <iostream>
 #include <fstream>
 #include <random>
-#include "simplest-automata.h"
+#include "simple-automata.h"
 
 
 constexpr std::size_t dim = 2;
 constexpr auto kind = cgr::nbhood_kind::euclid;
 using pos_t = spt::veci<dim>;
-using automata_t = cgr::simplest_automata<dim, kind>;
-using cell_t = cgr::simplest_cell<dim>;
-using crystallite_t = cgr::simplest_crystallite<dim>;
-using material_t = cgr::simplest_material<dim>;
+using automata_t = cgr::simple_automata<dim, kind>;
+using cell_t = cgr::simple_cell<dim>;
+using crystallite_t = cgr::simple_crystallite<dim>;
+using material_t = cgr::simple_material<dim>;
 using nbhood_pos_t = cgr::nbhood_pos<dim>;
 
 using pair_pos_cell = std::pair<std::vector<pos_t>, std::vector<cell_t>>;
@@ -95,7 +95,7 @@ std::vector<pos_t> make_random_central_poses(std::size_t size, std::size_t num, 
 
 
 int main() {
-    std::size_t size = 400;
+    std::size_t size = 500;
     std::size_t range = 7;
     automata_t automata(size, range);
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());

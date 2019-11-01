@@ -9,7 +9,7 @@ namespace cgr {
 using default_real = double;
 
 template <std::size_t Dim, typename Real = default_real>
-class simplest_material {
+class simple_material {
 public:
     using grow_dir = spt::vec<Dim, Real>;
 
@@ -17,7 +17,7 @@ public:
         return m_grow_dirs;
     }
 
-    simplest_material(std::vector<grow_dir> gdirs = {}) {
+    simple_material(std::vector<grow_dir> gdirs = {}) {
         if (!gdirs.empty())
             m_grow_dirs = std::move(gdirs);
     }

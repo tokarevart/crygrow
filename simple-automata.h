@@ -1,19 +1,18 @@
 #pragma once
-#include <unordered_set>
 #include <algorithm>
 #include <execution>
 #include "automata-base.h"
-#include "simplest-cell.h"
+#include "simple-cell.h"
 
 
 namespace cgr {
 
 template <std::size_t Dim, nbhood_kind NbhoodKind = nbhood_kind::euclid, typename Real = default_real>
-class simplest_automata
-    : public automata_base<Dim, NbhoodKind, simplest_cell<Dim, Real>, cell_mut_group::mutable_only> {
+class simple_automata
+    : public automata_base<Dim, NbhoodKind, simple_cell<Dim, Real>, cell_mut_group::mutable_only> {
 public:
     static constexpr Real epsilon = std::numeric_limits<Real>::epsilon();
-    using base = automata_base<Dim, NbhoodKind, simplest_cell<Dim, Real>, cell_mut_group::mutable_only>;
+    using base = automata_base<Dim, NbhoodKind, simple_cell<Dim, Real>, cell_mut_group::mutable_only>;
     using veci = typename base::veci;
     using vecu = typename base::vecu;
     using cell_type = typename base::cell_type;
@@ -87,15 +86,15 @@ public:
         return true;
     }
 
-    simplest_automata(std::size_t dim_len,
+    simple_automata(std::size_t dim_len,
                       std::size_t default_range = 1)
-        : simplest_automata(veci::zeros(), vecu::filled_with(dim_len), default_range) {}
+        : simple_automata(veci::zeros(), vecu::filled_with(dim_len), default_range) {}
 
-    simplest_automata(const vecu& dim_lens,
+    simple_automata(const vecu& dim_lens,
                       std::size_t default_range = 1)
-        : simplest_automata(veci::zeros(), dim_lens, default_range) {}
+        : simple_automata(veci::zeros(), dim_lens, default_range) {}
 
-    simplest_automata(const veci& corner0, const veci& corner1, 
+    simple_automata(const veci& corner0, const veci& corner1, 
                       std::size_t default_range = 1)
         : base(corner0, corner1, default_range) {
         m_cells_delta.assign(base::num_cells(), 0.0);
@@ -104,6 +103,7 @@ public:
 
 private:
     cells_delta_container m_cells_delta;
+    // todo: store common cells, such as empty cell and crystallized cell for each crystallite
 
     bool is_nbhood_offsets_initialized = false;
     void initialize_nbhood_offsets() {

@@ -166,10 +166,10 @@
     <ClInclude Include="neighborhood.h" />
     <ClInclude Include="mat.h" />
     <ClInclude Include="cell-mutability.h" />
-    <ClInclude Include="simplest-automata.h" />
-    <ClInclude Include="simplest-cell.h" />
-    <ClInclude Include="simplest-crystallite.h" />
-    <ClInclude Include="simplest-material.h" />
+    <ClInclude Include="simple-automata.h" />
+    <ClInclude Include="simple-cell.h" />
+    <ClInclude Include="simple-crystallite.h" />
+    <ClInclude Include="simple-material.h" />
     <ClInclude Include="sptalgs.h" />
     <ClInclude Include="sptops.h" />
     <ClInclude Include="vec.h" />

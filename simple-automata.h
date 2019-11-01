@@ -53,36 +53,46 @@ public:
                 
                 Real curdelta = 0.0;
                 std::set<grow_dir*> gds;
-                std::vector<std::unique_ptr<grow_dir>> gdtodel;
+                std::vector<std::unique_ptr<grow_dir>> todel;
                 grow_dir accdp;
+                std::size_t actual_nbh_size = base::get_nbhood_offset(i).size();
                 for (auto nboff : base::get_nbhood_offset(i)) {
                     auto pnb = base::get_cell(nboff);
-
+                    
                     if (pnb->crystallinity < 1.0 - epsilon * (1.0 + pcell->crystallinity) ||
-                        pnb->crystallites.size() != 1)
+                        pnb->crystallites.size() != 1) {
+                        --actual_nbh_size;
                         continue;
+                    }
 
                     if (std::find(pcell->crystallites.begin(),
                                   pcell->crystallites.end(),
                                   pnb->crystallites.front()) == pcell->crystallites.end())
                         pcell->crystallites.push_back(pnb->crystallites.front());
+                    
+                    grow_dir deltapos = curpos - base::pos(nboff);
+                    accdp += deltapos;
 
-                    // do for each crystallite
-                    accdp += (curpos - base::pos(nboff)).normalize();
-                    if (pnb->crystallites[0]->material()->matproperty() == material_property::anisotropic) {
-                        for (auto& dir : pnb->crystallites[0]->material()->grow_dirs()) 
-                            gds.insert(const_cast<grow_dir*>(&dir));
+                    if (pnb->crystallites.front()->material()->matproperty() == material_property::anisotropic) {
+                        std::vector<grow_dir> growdirs(pnb->crystallites.front()->material()->grow_dirs());
+                        auto tranorient = pnb->crystallites.front()->orientation().transposed();
+                        for (auto& gd : growdirs)
+                            gd = spt::dot(tranorient, gd);
+                        for (auto& gd : growdirs)
+                            if (gds.find(const_cast<grow_dir*>(&gd)) == gds.end())
+                                gds.insert(const_cast<grow_dir*>(&gd));
                     } else {
-                        gdtodel.emplace_back(std::make_unique<grow_dir>((curpos - base::pos(nboff)).normalize()));
-                        gds.insert(gdtodel.back().get());
+                        todel.emplace_back(std::make_unique<grow_dir>((deltapos).normalize()));
+                        gds.insert(todel.back().get());
                     }
                 }
-                for (auto& gd : gds)
+                for (auto& gd : gds) 
                     curdelta += std::abs(spt::dot(accdp, *gd));
-                if (curdelta > epsilon && !gds.empty())
-                    curdelta *= 2.0 / gds.size();
-                //if (curdelta > 0.0)
-                //    std::cout << "kek";
+                
+                if (curdelta > epsilon && !gds.empty()) {
+                    curdelta /= gds.size() * 10;
+                    curdelta *= static_cast<Real>(base::default_nbhood_size() - actual_nbh_size) / base::default_nbhood_size();
+                }
 
                 if (curdelta > epsilon)
                     m_cells_delta[i] += curdelta / base::default_nbhood_size();

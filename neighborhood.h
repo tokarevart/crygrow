@@ -27,7 +27,7 @@ bool inside_nbhood(const spt::veci<Dim>& pos, std::size_t range) {
 
     } else if constexpr (NbhoodKind == nbhood_kind::moore) {
         for (auto e : pos.x)
-            if (e > range)
+            if (e > static_cast<std::int64_t>(range))
                 return false;
         return true;
 

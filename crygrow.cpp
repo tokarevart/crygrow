@@ -105,9 +105,18 @@ int main() {
     auto init_central_poses = make_random_central_poses(size, 30, (range * 4) * (range * 4));
 
     material_t mater(cgr::material_property::anisotropic, { 
-        spt::vec2d{ 1.0, 0.0 }.normalize(), 
-        spt::vec2d{ 0.0, 1.0 }.normalize() });
-    std::vector<crystallite_t> crysts(init_central_poses.size(), crystallite_t(&mater));
+        spt::vec2d{ 4.0, 1.0 }.normalize(), 
+        spt::vec2d{ -1.0, 4.0 }.normalize() });
+    //std::vector<crystallite_t> crysts(init_central_poses.size(), crystallite_t(&mater));
+    std::vector<crystallite_t> crysts;
+    crysts.reserve(init_central_poses.size());
+    std::mt19937_64 gen;
+    std::uniform_real_distribution<double> dis(0, 10);
+    for (std::size_t i = 0; i < init_central_poses.size(); ++i) {
+        spt::vec2d first = spt::vec2d{ dis(gen), dis(gen) }.normalize();
+        spt::vec2d second{ -first[1], first[0] };
+        crysts.emplace_back(&mater, spt::mat2d{ first, second });
+    }
 
     std::vector<cell_t> init_central_cells;
     init_central_cells.reserve(crysts.size());
@@ -131,7 +140,7 @@ int main() {
     while (!automata.stop_condition()) {
         std::ofstream ofile("automata-image-data.txt");
         ofile << "size " << size << std::endl;
-        for (std::size_t i = 0; i < 1000; ++i)
+        for (std::size_t i = 0; i < 100; ++i)
             automata.iterate();
 
         for (std::size_t i = 0; i < automata.num_cells(); ++i) {
@@ -140,15 +149,15 @@ int main() {
 
             std::array<std::uint8_t, 3> color;
             if (pcell->crystallinity < 1.0 - automata_t::epsilon * (1.0 + pcell->crystallinity) ||
-                pcell->crystallites.empty()) {
+                pcell->crystallites.size() != 1) {
                 color = { 255, 255, 255 };
             } else if (pcell->crystallites.size() == 1) {
                 color = { 0, 0, 0 };
-            } else if (pcell->crystallites.size() == 2) {
+            } /*else if (pcell->crystallites.size() == 2) {
                 color = { 0, 0, 255 };
             } else {
                 color = { 255, 0, 0 };
-            }
+            }*/
             
             ofile 
                 << curpos[0] << ' ' 

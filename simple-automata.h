@@ -7,7 +7,7 @@
 
 namespace cgr {
 
-template <std::size_t Dim, nbhood_kind NbhoodKind = nbhood_kind::euclid, typename Real = default_real>
+template <std::size_t Dim, nbhood_kind NbhoodKind = nbhood_kind::euclid, typename Real = double>
 class simple_automata
     : public automata_base<Dim, NbhoodKind, simple_cell<Dim, Real>, cell_mut_group::mutable_only> {
 public:
@@ -46,11 +46,12 @@ public:
         {
             #pragma omp for
             for (std::int64_t i = 0; i < static_cast<std::int64_t>(base::num_cells()); ++i) {
+                auto curpos = base::pos(i);
                 auto pcell = base::get_cell(i);
                 if (std::abs(pcell->crystallinity - 1.0) <= epsilon * (1.0 + pcell->crystallinity))
                     continue;
-            
-                std::size_t num_acc = 0;
+                
+                Real curdelta = 0.0;
                 for (auto nboff : base::get_nbhood_offset(i)) {
                     auto pnb = base::get_cell(nboff);
 
@@ -63,10 +64,21 @@ public:
                                   pnb->crystallites.front()) == pcell->crystallites.end())
                         pcell->crystallites.push_back(pnb->crystallites.front());
 
-                    ++num_acc;
+                    if (pnb->crystallites[0]->material()->matproperty() == material_property::anisotropic) {
+                        Real maxabs = 0.0;
+                        typename material_type::grow_dir curdeltapos = curpos - base::pos(nboff);
+                        for (auto& dir : pnb->crystallites[0]->material()->grow_dirs()) {
+                            Real curabs = std::abs(spt::dot(curdeltapos, dir));
+                            if (curabs > maxabs)
+                                maxabs = curabs;
+                        }
+                        curdelta += maxabs;
+                    } else {
+                        curdelta += 1.0;
+                    }
                 }
-                if (num_acc > 0)
-                    m_cells_delta[i] += static_cast<Real>(num_acc) / (6 * base::default_nbhood_size());
+                if (curdelta > epsilon)
+                    m_cells_delta[i] += curdelta / (6 * base::default_nbhood_size());
             }
 
             #pragma omp barrier

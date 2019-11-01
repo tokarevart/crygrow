@@ -17,7 +17,6 @@ enum class nbhood_kind {
     euclid
 };
 
-// pos must be inside the box with 2*r+1 side length, that is moore neighborhood
 template <nbhood_kind NbhoodKind, std::size_t Dim>
 bool inside_nbhood(const spt::veci<Dim>& pos, std::size_t range) {
     if constexpr (NbhoodKind == nbhood_kind::von_neumann) {
@@ -27,6 +26,9 @@ bool inside_nbhood(const spt::veci<Dim>& pos, std::size_t range) {
         return static_cast<std::size_t>(sum_abs) <= range;
 
     } else if constexpr (NbhoodKind == nbhood_kind::moore) {
+        for (auto e : pos.x)
+            if (e > range)
+                return false;
         return true;
 
     } else if constexpr (NbhoodKind == nbhood_kind::euclid) {

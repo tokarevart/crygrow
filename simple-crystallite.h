@@ -5,7 +5,7 @@
 
 namespace cgr {
 
-template <std::size_t Dim, typename Real = default_real>
+template <std::size_t Dim, typename Real = double>
 class simple_crystallite {
 public:
     using material_type = simple_material<Dim, Real>;
@@ -19,7 +19,7 @@ public:
     }
 
     simple_crystallite(const material_type* mater, 
-                         const orientation_type& orien = orientation_type::identity())
+                       const orientation_type& orien = orientation_type::identity())
         : m_material{const_cast<material_type*>(mater)}, m_orientation{orien} {}
 
 

@@ -101,9 +101,9 @@ int main() {
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
-    auto init_central_poses = make_random_central_poses(size, 20, (range * 4) * (range * 4));
+    auto init_central_poses = make_random_central_poses(size, 30, (range * 4) * (range * 4));
 
-    material_t mater;
+    material_t mater(cgr::material_property::isotropic);
     std::vector<crystallite_t> crysts(init_central_poses.size(), crystallite_t(&mater));
 
     std::vector<cell_t> init_central_cells;

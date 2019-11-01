@@ -7,7 +7,7 @@
 
 namespace cgr {
 
-template <std::size_t Dim, typename Real = default_real>
+template <std::size_t Dim, typename Real = double>
 struct simple_cell {
     using crystallite_type = simple_crystallite<Dim, Real>;
 

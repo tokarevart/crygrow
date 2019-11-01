@@ -52,7 +52,7 @@ public:
                     continue;
                 
                 Real curdelta = 0.0;
-                std::set<grow_dir*> gds;
+                std::set<std::unique_ptr<grow_dir>> gds;
                 std::vector<std::unique_ptr<grow_dir>> todel;
                 grow_dir accdp;
                 std::size_t actual_nbh_size = base::get_nbhood_offset(i).size();
@@ -74,16 +74,15 @@ public:
                     accdp += deltapos;
 
                     if (pnb->crystallites.front()->material()->matproperty() == material_property::anisotropic) {
-                        std::vector<grow_dir> growdirs(pnb->crystallites.front()->material()->grow_dirs());
                         auto tranorient = pnb->crystallites.front()->orientation().transposed();
+                        std::vector<std::unique_ptr<grow_dir>> growdirs;
+                        growdirs.reserve(pnb->crystallites.front()->material()->grow_dirs().size());
+                        for (auto& gd : pnb->crystallites.front()->material()->grow_dirs())
+                            growdirs.emplace_back(std::make_unique<grow_dir>(spt::dot(tranorient, gd)));
                         for (auto& gd : growdirs)
-                            gd = spt::dot(tranorient, gd);
-                        for (auto& gd : growdirs)
-                            if (gds.find(const_cast<grow_dir*>(&gd)) == gds.end())
-                                gds.insert(const_cast<grow_dir*>(&gd));
+                            gds.insert(std::move(gd));
                     } else {
-                        todel.emplace_back(std::make_unique<grow_dir>((deltapos).normalize()));
-                        gds.insert(todel.back().get());
+                        gds.insert(std::make_unique<grow_dir>((deltapos).normalize()));
                     }
                 }
                 for (auto& gd : gds) 

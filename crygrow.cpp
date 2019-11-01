@@ -111,7 +111,7 @@ int main() {
     std::vector<crystallite_t> crysts;
     crysts.reserve(init_central_poses.size());
     std::mt19937_64 gen;
-    std::uniform_real_distribution<double> dis(0, 10);
+    std::uniform_real_distribution<double> dis(-1.0, 1.0);
     for (std::size_t i = 0; i < init_central_poses.size(); ++i) {
         spt::vec2d first = spt::vec2d{ dis(gen), dis(gen) }.normalize();
         spt::vec2d second{ -first[1], first[0] };

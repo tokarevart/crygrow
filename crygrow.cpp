@@ -101,9 +101,12 @@ int main() {
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
+    //auto init_central_poses = make_central_pos(size);
     auto init_central_poses = make_random_central_poses(size, 30, (range * 4) * (range * 4));
 
-    material_t mater(cgr::material_property::isotropic);
+    material_t mater(cgr::material_property::anisotropic, { 
+        spt::vec2d{ 1.0, 0.0 }.normalize(), 
+        spt::vec2d{ 0.0, 1.0 }.normalize() });
     std::vector<crystallite_t> crysts(init_central_poses.size(), crystallite_t(&mater));
 
     std::vector<cell_t> init_central_cells;
@@ -128,7 +131,7 @@ int main() {
     while (!automata.stop_condition()) {
         std::ofstream ofile("automata-image-data.txt");
         ofile << "size " << size << std::endl;
-        for (std::size_t i = 0; i < 100; ++i)
+        for (std::size_t i = 0; i < 1000; ++i)
             automata.iterate();
 
         for (std::size_t i = 0; i < automata.num_cells(); ++i) {

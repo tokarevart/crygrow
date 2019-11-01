@@ -1,6 +1,6 @@
 #pragma once
 #include <algorithm>
-#include <execution>
+#include <set>
 #include "automata-base.h"
 #include "simple-cell.h"
 
@@ -52,6 +52,9 @@ public:
                     continue;
                 
                 Real curdelta = 0.0;
+                std::set<grow_dir*> gds;
+                std::vector<std::unique_ptr<grow_dir>> gdtodel;
+                grow_dir accdp;
                 for (auto nboff : base::get_nbhood_offset(i)) {
                     auto pnb = base::get_cell(nboff);
 
@@ -64,21 +67,25 @@ public:
                                   pnb->crystallites.front()) == pcell->crystallites.end())
                         pcell->crystallites.push_back(pnb->crystallites.front());
 
+                    // do for each crystallite
+                    accdp += (curpos - base::pos(nboff)).normalize();
                     if (pnb->crystallites[0]->material()->matproperty() == material_property::anisotropic) {
-                        Real maxabs = 0.0;
-                        typename material_type::grow_dir curdeltapos = curpos - base::pos(nboff);
-                        for (auto& dir : pnb->crystallites[0]->material()->grow_dirs()) {
-                            Real curabs = std::abs(spt::dot(curdeltapos, dir));
-                            if (curabs > maxabs)
-                                maxabs = curabs;
-                        }
-                        curdelta += maxabs;
+                        for (auto& dir : pnb->crystallites[0]->material()->grow_dirs()) 
+                            gds.insert(const_cast<grow_dir*>(&dir));
                     } else {
-                        curdelta += 1.0;
+                        gdtodel.emplace_back(std::make_unique<grow_dir>((curpos - base::pos(nboff)).normalize()));
+                        gds.insert(gdtodel.back().get());
                     }
                 }
+                for (auto& gd : gds)
+                    curdelta += std::abs(spt::dot(accdp, *gd));
+                if (curdelta > epsilon && !gds.empty())
+                    curdelta *= 2.0 / gds.size();
+                //if (curdelta > 0.0)
+                //    std::cout << "kek";
+
                 if (curdelta > epsilon)
-                    m_cells_delta[i] += curdelta / (6 * base::default_nbhood_size());
+                    m_cells_delta[i] += curdelta / base::default_nbhood_size();
             }
 
             #pragma omp barrier

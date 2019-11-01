@@ -135,6 +135,9 @@ struct vec {
     bool operator!=(const vec& right) const {
         return !(*this == right);
     }
+    bool operator<(const vec& right) const {
+        return x < right.x;
+    }
     ValueType& operator[](std::size_t i) {
         return x[i];
     }
@@ -178,7 +181,7 @@ spt::vec<Dim, ValueType> operator*(ValueType scalar, const spt::vec<Dim, ValueTy
 // taken from boost
 template<std::size_t Dim, typename ValueType>
 struct std::hash<spt::vec<Dim, ValueType>> {
-    std::size_t operator() (const spt::vec<Dim, ValueType>& key) const {
+    std::size_t operator()(const spt::vec<Dim, ValueType>& key) const {
         std::hash<ValueType> hasher;
         std::size_t h = 0;
         for (auto e : key.x)

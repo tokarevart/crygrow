@@ -106,7 +106,8 @@ public:
 
     nbhood_offset_type make_nbhood_offset() const {
         return cgr::make_nbhood_offset<NbhoodKind, Dim>(
-            0, m_dim_lens, m_default_range);
+            cgr::offset(veci::filled_with(m_default_range), vecu::filled_with(2 * m_default_range + 1)), 
+            vecu::filled_with(2 * m_default_range + 1), m_default_range);
     }
     nbhood_offset_type make_nbhood_offset(std::size_t pos_offset) const {
         return cgr::make_nbhood_offset<NbhoodKind, Dim>(

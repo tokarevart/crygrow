@@ -101,8 +101,8 @@ int main() {
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
-    auto init_central_poses = make_central_pos(size);
-    //auto init_central_poses = make_random_central_poses(size, 30, (range * 4) * (range * 4));
+    //auto init_central_poses = make_central_pos(size);
+    auto init_central_poses = make_random_central_poses(size, 30, (range * 4) * (range * 4));
 
     material_t mater(cgr::material_property::anisotropic, { 
         spt::vec2d{ 4.0, 1.0 }.normalize(), 

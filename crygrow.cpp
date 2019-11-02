@@ -101,8 +101,8 @@ int main() {
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
-    //auto init_central_poses = make_central_pos(size);
-    auto init_central_poses = make_random_central_poses(size, 30, (range * 4) * (range * 4));
+    auto init_central_poses = make_central_pos(size);
+    //auto init_central_poses = make_random_central_poses(size, 30, (range * 4) * (range * 4));
 
     material_t mater(cgr::material_property::anisotropic, { 
         spt::vec2d{ 4.0, 1.0 }.normalize(), 
@@ -148,16 +148,19 @@ int main() {
             auto curpos = automata.pos(i);
 
             std::array<std::uint8_t, 3> color;
-            if (pcell->crystallinity < 1.0 - automata_t::epsilon * (1.0 + pcell->crystallinity) ||
-                pcell->crystallites.size() != 1) {
+            if (pcell->crystallinity < 1.0 - automata_t::epsilon * (1.0 + pcell->crystallinity) &&
+                !pcell->crystallites.empty()) {
+                color = { 0, 255, 0 };
+            } else if (pcell->crystallinity < 1.0 - automata_t::epsilon * (1.0 + pcell->crystallinity) ||
+                pcell->crystallites.empty()) {
                 color = { 255, 255, 255 };
             } else if (pcell->crystallites.size() == 1) {
                 color = { 0, 0, 0 };
-            } /*else if (pcell->crystallites.size() == 2) {
+            } else if (pcell->crystallites.size() == 2) {
                 color = { 0, 0, 255 };
             } else {
                 color = { 255, 0, 0 };
-            }*/
+            }
             
             ofile 
                 << curpos[0] << ' ' 

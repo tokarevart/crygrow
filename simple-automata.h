@@ -98,7 +98,7 @@ public:
 
                         bufgds.clear();
                     } else {
-                        gds.insert(std::make_unique<grow_dir>((deltapos).normalize()));
+                        gds.insert(std::make_unique<grow_dir>((deltapos)));
                         accabsdot += std::abs(spt::dot(deltapos, deltapos));
                     }
                 }
@@ -110,7 +110,7 @@ public:
                 }
                 
                 if (curdelta > epsilon && !gds.empty()) 
-                    curdelta /= gds.size() * 8;
+                    curdelta /= gds.size() * 10;
 
                 if (curdelta > epsilon)
                     m_cells_delta[i] += curdelta / base::default_nbhood_size();

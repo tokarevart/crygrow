@@ -62,17 +62,15 @@ public:
                 Real curdelta = 0.0;
                 std::set<std::unique_ptr<grow_dir>> gds;
                 grow_dir accgd;
-                //std::vector<std::unique_ptr<grow_dir>> todel;
-                //std::vector<grow_dir> dps;
                 grow_dir accdp;
                 Real accdpmagn = 0.0;
                 Real accabsdot = 0.0;
+                std::vector<grow_dir*> bufgds;
                 for (auto nboff : base::get_nbhood_offset(i)) {
                     auto pnb = base::get_cell(nboff);
                     
                     if (pnb->crystallinity < 1.0 - epsilon * (1.0 + pcell->crystallinity) ||
                         pnb->crystallites.size() != 1) {
-                        //--actual_nbh_size;
                         continue;
                     }
 
@@ -84,90 +82,32 @@ public:
                     grow_dir deltapos = curpos - base::pos(nboff);
                     accdp += deltapos;
                     accdpmagn += deltapos.magnitude();
-                    //dps.push_back(deltapos);
 
                     if (pnb->crystallites.front()->material()->matproperty() == material_property::anisotropic) {
                         auto tranorient = pnb->crystallites.front()->orientation().transposed();
 
-                        std::vector<grow_dir*> growdirs;
-                        growdirs.reserve(pnb->crystallites.front()->material()->grow_dirs().size());
-                        
                         for (auto& gd : pnb->crystallites.front()->material()->grow_dirs()) {
-                            growdirs.emplace_back(new grow_dir(spt::dot(tranorient, gd)));
-                            accabsdot += std::abs(spt::dot(deltapos, *growdirs.back()));
+                            bufgds.emplace_back(new grow_dir(spt::dot(tranorient, gd)));
+                            accabsdot += std::abs(spt::dot(deltapos, *bufgds.back()));
                         }
-                        for (auto& gd : growdirs)
+                        for (auto& gd : bufgds)
                             gds.insert(std::move(std::unique_ptr<grow_dir>(gd)));
 
-                        for (auto& gd : growdirs)
+                        for (auto& gd : bufgds)
                             accabsdot += std::abs(spt::dot(deltapos, *gd));
+
+                        bufgds.clear();
                     } else {
                         gds.insert(std::make_unique<grow_dir>((deltapos).normalize()));
                         accabsdot += std::abs(spt::dot(deltapos, deltapos));
                     }
                 }
                 for (auto& gd : gds) {
-                    
-                    //for (auto& dp : dps)
-                    //    accdp += dp;
-
-                    //std::int64_t defnbhsize_2 = base::default_nbhood_size() / 2;
-                    
-                    //for (auto& dp : dps)
-                    //    accdpmagn += dp.magnitude();
-
-                    curdelta += std::abs(spt::dot(accdp, *gd)) * accdp.magnitude() / accdpmagn; /**
-                        std::abs(static_cast<Real>(defnbhsize_2 
-                            + 4 * (defnbhsize_2 - static_cast<std::int64_t>(dps.size()))))
-                        / (defnbhsize_2)*/
-
-                    //std::size_t nbhsize_with_inter = 0;
-                    //for (auto nboff : base::get_nbhood_offset(i)) {
-                    //    auto pnb = base::get_cell(nboff);
-                    //    if (std::abs(pnb->crystallinity - 1.0) <= epsilon * (1.0 + pnb->crystallinity))
-                    //        ++nbhsize_with_inter;
-                    //}
-
-                    //grow_dir halfdefaccdp;
-                    //veci somedir = veci::filled_with(1);
-                    //for (auto off : defnbhoffset) {
-                    //    veci defdp = base::pos(off);
-                    //    if (spt::dot(somedir, defdp) >= 0)
-                    //        halfdefaccdp += defdp;
-                    //}
-                    
-                    
-                    //for (auto& dp : dps)
-                    //    accabsdot += std::abs(spt::dot(dp, *gd));
-
-                    //Real factor0 = (halfdefaccdp.magnitude() - accdp.magnitude()) / halfdefaccdp.magnitude();
-                    //Real factor1 = accdpmagn / accdefdpmagn;
+                    curdelta += std::abs(spt::dot(accdp, *gd)) * accdp.magnitude() / accdpmagn;
                     Real f2_coef = pcell->crystallites.size() > 1 ? 3 : 1;
                     Real factor2 = std::clamp((f2_coef * accdpmagn - accdefdpmagn / 2) / (accdefdpmagn / 2), 0.0, 1.0);
-                    curdelta += accabsdot * factor2; /*std::clamp(factor0, 0.0, 1.0)*/ /** std::clamp(
-                        static_cast<Real>(static_cast<std::int64_t>(dps.size()) - defnbhsize_2) / defnbhsize_2,
-                        0.0, std::numeric_limits<Real>::max()) std::abs(static_cast<Real>(defnbhsize_2 + 4 * (defnbhsize_2 - static_cast<std::int64_t>(dps.size()))))
-                        / (defnbhsize_2)*/
-                    
-                    /*else {
-                        Real acc = 0.0;
-                        for (auto& dp : dps) {
-                            accdp += dp;
-                            Real absdot = std::abs(spt::dot(dp, *gd));
-                            acc += absdot;
-                        }
-                        curdelta += acc * static_cast<Real>(base::default_nbhood_size() / 2 - dps.size())
-                            / (base::default_nbhood_size() / 2);
-                    }*/
+                    curdelta += accabsdot * factor2;
                 }
-                //for (auto& gd : gds) {
-                //    Real acc = 0.0;
-                //    for (auto& accdp : accdps) {
-                //        Real absdot = std::abs(spt::dot(accdp, *gd));
-                //        acc += std::pow(absdot, 20.0);
-                //    }
-                //    curdelta += std::pow(acc, 1.0/20.0);
-                //}
                 
                 if (curdelta > epsilon && !gds.empty()) 
                     curdelta /= gds.size() * 8;

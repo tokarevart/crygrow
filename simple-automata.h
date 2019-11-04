@@ -59,27 +59,10 @@ public:
                 if (std::abs(pcell->crystallinity - 1.0) <= epsilon * (1.0 + pcell->crystallinity))
                     continue;
                 
-                //if (pcell->crystallites.size() > 1) {
-                //    Real meancrysty = 0.0;
-                //    std::size_t numactnbs = 0;
-                //    for (auto nboff : base::get_nbhood_offset(i)) {
-                //        auto buf = base::get_cell(nboff)->crystallinity;
-                //        meancrysty += buf * buf;
-                //        ++numactnbs;
-                //    }
-                //    meancrysty = std::sqrt(meancrysty) / numactnbs;
-                //    m_cells_delta[i] += meancrysty / 100;
-                //    continue;
-                //}
-
                 Real curdelta = 0.0;
-                //std::set<std::unique_ptr<grow_dir>> gds;
-                //std::vector<grow_dir*> bufgds;
                 std::map<crystallite_type*, grow_dir> nbhpcrysts_accdps;
                 Real accdpmagn = 0.0;
                 Real accabsdot = 0.0;
-                //grow_dir accdp;
-                //std::vector<grow_dir> accdps;
                 for (auto nboff : base::get_nbhood_offset(i)) {
                     auto pnb = base::get_cell(nboff);
                     
@@ -96,17 +79,10 @@ public:
                     grow_dir deltapos = curpos - base::pos(nboff);
                     accdpmagn += deltapos.magnitude();
 
-                    if (nbhpcrysts_accdps.find(pnb->crystallites.front()) == nbhpcrysts_accdps.end())
-                        nbhpcrysts_accdps[pnb->crystallites.front()] = grow_dir();
-                    else
-                        nbhpcrysts_accdps[pnb->crystallites.front()] += deltapos;
-                    //accdp += deltapos;
+                    nbhpcrysts_accdps[pnb->crystallites.front()] += deltapos;
                     
-                    //if (std::find(nbhpcrysts.begin(), nbhpcrysts.end(), pnb->crystallites.front()) == nbhpcrysts.end())
-                    //    nbhpcrysts.push_back(pnb->crystallites.front());
-
                     if (pnb->crystallites.front()->material()->matproperty() == material_property::anisotropic) {
-                        // use map cache of spt::dot(orientt, gd)
+                        // todo: use map cache of spt::dot(orientt, gd) 
                         auto orientt = pnb->crystallites.front()->orientation().transposed();
                         for (auto& gd : pnb->crystallites.front()->material()->grow_dirs())
                             accabsdot += std::abs(spt::dot(deltapos, spt::dot(orientt, gd)));
@@ -114,29 +90,12 @@ public:
                     } else {
                         accabsdot += std::abs(spt::dot(deltapos, deltapos));
                     }
-
-                    //if (pnb->crystallites.front()->material()->matproperty() == material_property::anisotropic) {
-                        //auto tranorient = pnb->crystallites.front()->orientation().transposed();
-
-                        //for (auto& gd : pnb->crystallites.front()->material()->grow_dirs())
-                        //    bufgds.emplace_back(new grow_dir(spt::dot(tranorient, gd)));
-
-                        //for (auto& gd : bufgds) {
-                        //    gds.insert(std::move(std::unique_ptr<grow_dir>(gd)));
-                        //    accabsdot += std::abs(spt::dot(deltapos, *gd));
-                        //}
-                        //bufgds.clear();
-
-                    //} else {
-                        //gds.insert(std::make_unique<grow_dir>((deltapos)));
-                        //accabsdot += std::abs(spt::dot(deltapos, deltapos));
-                    //}
                 }
 
                 for (auto& [pcryst, accdp] : nbhpcrysts_accdps) {
                     if (pcryst->material()->matproperty() == material_property::anisotropic) {
-                        for (auto& matgd : pcryst->material()->grow_dirs()) {
-                            auto oriengd = spt::dot(pcryst->orientation().transposed(), matgd);
+                        for (auto& matergd : pcryst->material()->grow_dirs()) {
+                            auto oriengd = spt::dot(pcryst->orientation().transposed(), matergd);
                             curdelta += std::abs(spt::dot(accdp, oriengd)) * accdp.magnitude() / accdpmagn;
                         }
                     } else {
@@ -144,18 +103,12 @@ public:
                     }
                     
                     Real factor2 = std::clamp((accdpmagn - accdefdpmagn / 2) / (accdefdpmagn / 2), 0.0, 1.0);
-                    // maybe replace accabsdot with number of crystallized neighbors
+                    // todo: maybe replace accabsdot with number of crystallized neighbors
                     curdelta += accabsdot * factor2;
                 }
-
-                //for (auto& gd : gds) {
-                //    curdelta += std::abs(spt::dot(accdp, *gd)) * accdp.magnitude() / accdpmagn;
-                //    Real factor2 = std::clamp((accdpmagn - accdefdpmagn / 2) / (accdefdpmagn / 2), 0.0, 1.0);
-                //    curdelta += accabsdot * factor2;
-                //}
-
+                
                 if (curdelta > epsilon)
-                    m_cells_delta[i] += curdelta / base::default_nbhood_size() / nbhpcrysts_accdps.size() / 30;
+                    m_cells_delta[i] += curdelta / base::default_nbhood_size() / 30;
             }
 
             #pragma omp barrier

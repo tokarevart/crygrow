@@ -90,6 +90,10 @@ public:
                         for (auto& matergd : pcryst->material()->grow_dirs()) {
                             auto oriengd = spt::dot(pcryst->orientation().transposed(), matergd);
                             delta += std::abs(spt::dot(accdp, oriengd)) * accdp.magnitude() / accdpmagn;
+                            // this will lead to alternative growth
+                            //auto absdot = std::abs(spt::dot(accdp, oriengd)) * accdp.magnitude() / accdpmagn;
+                            //if (absdot > delta)
+                            //    delta = absdot;
                         }
                     } else {
                         delta += spt::dot(accdp, accdp) / accdpmagn;

@@ -175,7 +175,9 @@ int main() {
         
         for (std::size_t i = 0; i < size * size; ++i) {
             auto curpos = automata.pos(i);
+            #ifdef DIM3
             curpos[2] = static_cast<std::int64_t>(size) / 2;
+            #endif
             auto pcell = automata.get_cell(curpos);
 
             std::array<std::uint8_t, 3> color;

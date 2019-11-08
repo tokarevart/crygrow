@@ -10,6 +10,18 @@
 // todo: try vectorization (SIMD) and make benchmark
 namespace spt {
 
+template <typename Real>
+mat3<Real> rotation(const vec3<Real>& v, Real angle) {
+    const Real si = std::sin(angle);
+    const Real co = std::cos(angle);
+    const Real ic = 1.0 - co;
+
+    return {
+        v[0] * v[0] * ic + co, v[1] * v[0] * ic - si * v[2], v[2] * v[0] * ic + si * v[1],
+        v[0] * v[1] * ic + si * v[2], v[1] * v[1] * ic + co, v[2] * v[1] * ic - si * v[0],
+        v[0] * v[2] * ic - si * v[1], v[1] * v[2] * ic + si * v[0], v[2] * v[2] * ic + co };
+}
+
 template <typename ValueType>
 bool weak_between(ValueType boundary0, ValueType boundary1, ValueType value) {
     auto l_eps = std::numeric_limits<ValueType>::epsilon() * std::abs(value);

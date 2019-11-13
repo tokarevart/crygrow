@@ -87,16 +87,18 @@ public:
                 Real auxdelta = 0.0;
                 for (auto& [pcryst, accdp] : nbhpcrysts_accdps) {
                     if (pcryst->material()->matproperty() == material_property::anisotropic) {
+                        auto edge_growth_factor = accdp.magnitude() / accdpmagn;
                         for (auto& matergd : pcryst->material()->grow_dirs()) {
                             auto oriengd = spt::dot(pcryst->orientation().transposed(), matergd);
-                            delta += std::abs(spt::dot(accdp, oriengd)) * accdp.magnitude() / accdpmagn;
+                            
+                            delta += std::abs(spt::dot(accdp, oriengd)) * edge_growth_factor;
                             // this will lead to alternative growth
                             //auto absdot = std::abs(spt::dot(accdp, oriengd)) * accdp.magnitude() / accdpmagn;
                             //if (absdot > delta)
                             //    delta = absdot;
                         }
                     } else {
-                        delta += spt::dot(accdp, accdp) / accdpmagn;
+                        delta += accdp.magnitude();
                     }
                     
                     Real factor = std::clamp((accdpmagn - accdefdpmagn / 2) / (accdefdpmagn / 2), 0.0, 1.0);

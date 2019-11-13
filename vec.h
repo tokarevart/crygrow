@@ -65,8 +65,8 @@ struct vec {
 
     vec& normalize() {
         ValueType inv_magn = static_cast<ValueType>(1) / magnitude();
-        for (auto& val : x)
-            val *= inv_magn;
+        for (std::size_t i = 0; i < Dim; ++i)
+            x[i] *= inv_magn;
         return *this;
     }
 
@@ -76,8 +76,8 @@ struct vec {
     }
     vec operator-() const {
         vec res = *this;
-        for (auto& val : res.x)
-            val = -val;
+        for (std::size_t i = 0; i < Dim; ++i)
+            res.x[i] = -res.x[i];
         return res;
     }
     vec operator+(const vec& right) const {
@@ -94,14 +94,14 @@ struct vec {
     }
     vec operator*(ValueType scalar) const {
         vec res = *this;
-        for (auto& val : res.x)
-            val *= scalar;
+        for (std::size_t i = 0; i < Dim; ++i)
+            res.x[i] *= scalar;
         return res;
     }
     vec operator/(ValueType scalar) const {
         vec res = *this;
-        for (auto& val : res.x)
-            val /= scalar;
+        for (std::size_t i = 0; i < Dim; ++i)
+            res.x[i] /= scalar;
         return res;
     }
     vec& operator+=(const vec& right) {
@@ -115,13 +115,13 @@ struct vec {
         return *this;
     }
     vec& operator*=(ValueType scalar) {
-        for (auto& val : x)
-            val *= scalar;
+        for (std::size_t i = 0; i < Dim; ++i)
+            x[i] *= scalar;
         return *this;
     }
     vec& operator/=(ValueType scalar) {
-        for (auto& val : x)
-            val /= scalar;
+        for (std::size_t i = 0; i < Dim; ++i)
+            x[i] /= scalar;
         return *this;
     }
     bool operator==(const vec& right) const {

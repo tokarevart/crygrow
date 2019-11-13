@@ -149,6 +149,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableLanguageExtensions>true</DisableLanguageExtensions>
       <OpenMPSupport>true</OpenMPSupport>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

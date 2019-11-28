@@ -62,7 +62,6 @@ public:
                 Real delta = 0.0;
                 std::map<crystallite_type*, grow_dir> nbhpcrysts_accdps;
                 Real accdpmagn = 0.0;
-                //Real accabsdot = 0.0;
                 std::size_t numcrystednb = 0;
                 for (auto nboff : base::get_nbhood_offset(i)) {
                     auto pnb = base::get_cell(nboff);
@@ -87,13 +86,13 @@ public:
                 Real auxdelta = 0.0;
                 for (auto& [pcryst, accdp] : nbhpcrysts_accdps) {
                     if (pcryst->material()->matproperty() == material_property::anisotropic) {
-                        auto edge_growth_factor = accdp.magnitude() / accdpmagn;
+                        Real growth_factor = accdp.magnitude() / accdpmagn;
                         for (auto& matergd : pcryst->material()->grow_dirs()) {
                             auto oriengd = spt::dot(pcryst->orientation().transposed(), matergd);
                             
-                            delta += std::abs(spt::dot(accdp, oriengd)) * edge_growth_factor;
+                            delta += std::abs(spt::dot(accdp, oriengd)) * growth_factor;
                             // this will lead to alternative growth
-                            //auto absdot = std::abs(spt::dot(accdp, oriengd)) * accdp.magnitude() / accdpmagn;
+                            //auto absdot = std::abs(spt::dot(accdp, oriengd)) * growth_factor;
                             //if (absdot > delta)
                             //    delta = absdot;
                         }

@@ -83,7 +83,6 @@ public:
                     ++numcrystednb;
                 }
 
-                Real auxdelta = 0.0;
                 for (auto& [pcryst, accdp] : nbhpcrysts_accdps) {
                     if (pcryst->material()->matproperty() == material_property::anisotropic) {
                         Real growth_factor = accdp.magnitude() / accdpmagn;
@@ -99,10 +98,9 @@ public:
                     } else {
                         delta += accdp.magnitude();
                     }
-                    
-                    Real factor = std::clamp((accdpmagn - accdefdpmagn / 2) / (accdefdpmagn / 2), 0.0, 1.0);
-                    auxdelta += numcrystednb * factor;
                 }
+                Real factor = std::clamp((2 * accdpmagn - accdefdpmagn) / accdefdpmagn, 0.0, 1.0);
+                Real auxdelta = numcrystednb * factor;
                 auxdelta /= nbhpcrysts_accdps.size();
                 delta += auxdelta;
                 

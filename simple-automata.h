@@ -100,9 +100,7 @@ public:
                     }
                 }
                 Real factor = std::clamp((2 * accdpmagn - accdefdpmagn) / accdefdpmagn, 0.0, 1.0);
-                Real auxdelta = numcrystednb * factor;
-                auxdelta /= nbhpcrysts_accdps.size();
-                delta += auxdelta;
+                delta += numcrystednb * factor;
                 
                 if (delta > epsilon)
                     m_cells_delta[i] += delta / base::default_nbhood_size() / 30;

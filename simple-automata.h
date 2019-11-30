@@ -43,12 +43,12 @@ public:
             delta = 0.0;
 
         auto defnbhoffset = base::make_nbhood_offset();
-        Real accdefdpmagn = 0.0;
-        for (auto nboff : defnbhoffset) 
-            accdefdpmagn += static_cast<Real>((
-                veci::filled_with(base::default_range()) 
+        std::int64_t accdefdpmagn2 = 0;
+        for (auto nboff : defnbhoffset)
+            accdefdpmagn2 += static_cast<Real>((
+                veci::filled_with(base::default_range())
                 - cgr::upos(nboff, vecu::filled_with(2 * base::default_range() + 1))
-                ).magnitude());
+                ).magnitude2());
         
         #pragma omp parallel 
         {
@@ -61,7 +61,7 @@ public:
                 
                 Real delta = 0.0;
                 std::map<crystallite_type*, grow_dir> nbhpcrysts_accdps;
-                Real accdpmagn = 0.0;
+                std::int64_t accdpmagn2 = 0;
                 std::size_t numcrystednb = 0;
                 for (auto nboff : base::get_nbhood_offset(i)) {
                     auto pnb = base::get_cell(nboff);
@@ -77,7 +77,7 @@ public:
                         pcell->crystallites.push_back(pnb->crystallites.front());
                     
                     grow_dir deltapos = curpos - base::pos(nboff);
-                    accdpmagn += deltapos.magnitude();
+                    accdpmagn2 += deltapos.magnitude2();
 
                     nbhpcrysts_accdps[pnb->crystallites.front()] += deltapos;
                     ++numcrystednb;
@@ -85,7 +85,7 @@ public:
 
                 for (auto& [pcryst, accdp] : nbhpcrysts_accdps) {
                     if (pcryst->material()->matproperty() == material_property::anisotropic) {
-                        Real growth_factor = accdp.magnitude() / accdpmagn;
+                        Real growth_factor = accdp.magnitude() / accdpmagn2;
                         for (auto& matergd : pcryst->material()->grow_dirs()) {
                             auto oriengd = spt::dot(pcryst->orientation().transposed(), matergd);
                             
@@ -99,11 +99,13 @@ public:
                         delta += accdp.magnitude();
                     }
                 }
-                Real factor = std::clamp((2 * accdpmagn - accdefdpmagn) / accdefdpmagn, 0.0, 1.0);
+                Real factor = static_cast<Real>(std::clamp<std::int64_t>(
+                    2 * accdpmagn2 - accdefdpmagn2, 0, accdefdpmagn2)) / accdefdpmagn2;
                 delta += numcrystednb * factor;
                 
                 if (delta > epsilon)
-                    m_cells_delta[i] += delta / base::default_nbhood_size() / 30;
+                    m_cells_delta[i] += delta / base::default_nbhood_size() / 5;
+                    //m_cells_delta[i] += delta / base::default_nbhood_size() / 30;
             }
 
             #pragma omp barrier

@@ -56,7 +56,7 @@ struct vec {
         return res;
     }
 
-    ValueType magnitude() const {
+    auto magnitude() const {
         return std::sqrt(magnitude2());
     }
     ValueType magnitude2() const {

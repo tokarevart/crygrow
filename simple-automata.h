@@ -105,7 +105,6 @@ public:
                 
                 if (delta > epsilon)
                     m_cells_delta[i] += delta / base::default_nbhood_size() / 5;
-                    //m_cells_delta[i] += delta / base::default_nbhood_size() / 30;
             }
 
             #pragma omp barrier

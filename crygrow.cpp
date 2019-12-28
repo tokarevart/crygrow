@@ -184,20 +184,20 @@ int main() {
             constexpr bool blackwhite = false;
             if constexpr (!blackwhite) {
                 if (pcell->crystallinity < 1.0 - automata_t::epsilon * (1.0 + pcell->crystallinity) &&
-                    !pcell->crystallites.empty()) {
+                    !pcell->grains.empty()) {
                     color = { 0, 255, 0 };
                 } else if (pcell->crystallinity < 1.0 - automata_t::epsilon * (1.0 + pcell->crystallinity) ||
-                           pcell->crystallites.empty()) {
+                           pcell->grains.empty()) {
                     color = { 255, 255, 255 };
-                } else if (pcell->crystallites.size() == 1) {
+                } else if (pcell->grains.size() == 1) {
                     color = { 0, 0, 0 };
-                } else if (pcell->crystallites.size() == 2) {
+                } else if (pcell->grains.size() == 2) {
                     color = { 0, 0, 255 };
                 } else {
                     color = { 255, 0, 0 };
                 }
             } else {
-                if (pcell->crystallites.size() == 1 &&
+                if (pcell->grains.size() == 1 &&
                     std::abs(pcell->crystallinity - 1.0) <= automata_t::epsilon * (1.0 + pcell->crystallinity)) {
                     color = { 0, 0, 0 };
                 } else {

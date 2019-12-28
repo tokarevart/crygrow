@@ -50,5 +50,8 @@
     <ClInclude Include="simple-material.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="simple-geometry.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

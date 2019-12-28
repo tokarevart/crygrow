@@ -206,19 +206,19 @@ public:
                     auto pnb = get_cell(nboff);
                     
                     if (pnb->crystallinity < 1.0 - epsilon * (1.0 + pcell->crystallinity) ||
-                        pnb->crystallites.size() != 1) {
+                        pnb->grains.size() != 1) {
                         continue;
                     }
 
-                    if (std::find(pcell->crystallites.begin(),
-                                  pcell->crystallites.end(),
-                                  pnb->crystallites.front()) == pcell->crystallites.end())
-                        pcell->crystallites.push_back(pnb->crystallites.front());
+                    if (std::find(pcell->grains.begin(),
+                                  pcell->grains.end(),
+                                  pnb->grains.front()) == pcell->grains.end())
+                        pcell->grains.push_back(pnb->grains.front());
                     
                     grow_dir deltapos = curpos - static_cast<veci>(upos(nboff));
                     accdpmagn2 += deltapos.magnitude2();
 
-                    nbhpcrysts_accdps[pnb->crystallites.front()] += deltapos;
+                    nbhpcrysts_accdps[pnb->grains.front()] += deltapos;
                     ++numcrystednb;
                 }
 

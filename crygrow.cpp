@@ -174,7 +174,7 @@ int main() {
             automata.iterate();
         
         for (std::size_t i = 0; i < size * size; ++i) {
-            auto curpos = automata.pos(i);
+            auto curpos = automata.upos(i);
             #ifdef DIM3
             curpos[2] = static_cast<std::int64_t>(size) / 2;
             #endif

@@ -54,7 +54,7 @@ public:
         {
             #pragma omp for
             for (std::int64_t i = 0; i < static_cast<std::int64_t>(base::num_cells()); ++i) {
-                auto curpos = base::pos(i);
+                auto curpos = static_cast<veci>(base::upos(i));
                 auto pcell = base::get_cell(i);
                 if (std::abs(pcell->crystallinity - 1.0) <= epsilon * (1.0 + pcell->crystallinity))
                     continue;
@@ -76,7 +76,7 @@ public:
                                   pnb->crystallites.front()) == pcell->crystallites.end())
                         pcell->crystallites.push_back(pnb->crystallites.front());
                     
-                    grow_dir deltapos = curpos - base::pos(nboff);
+                    grow_dir deltapos = curpos - static_cast<veci>(base::upos(nboff));
                     accdpmagn2 += deltapos.magnitude2();
 
                     nbhpcrysts_accdps[pnb->crystallites.front()] += deltapos;
@@ -124,17 +124,11 @@ public:
         return true;
     }
 
-    simple_automata(std::size_t dim_len,
-                      std::size_t default_range = 1)
-        : simple_automata(veci::zeros(), vecu::filled_with(dim_len), default_range) {}
+    simple_automata(std::size_t dim_len, std::size_t default_range = 1)
+        : simple_automata(vecu::filled_with(dim_len), default_range) {}
 
-    simple_automata(const vecu& dim_lens,
-                      std::size_t default_range = 1)
-        : simple_automata(veci::zeros(), dim_lens, default_range) {}
-
-    simple_automata(const veci& corner0, const veci& corner1, 
-                      std::size_t default_range = 1)
-        : base(corner0, corner1, default_range) {
+    simple_automata(const vecu& dim_lens, std::size_t default_range = 1)
+        : base(dim_lens, default_range) {
         m_cells_delta.assign(base::num_cells(), 0.0);
     }
 

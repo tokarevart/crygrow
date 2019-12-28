@@ -36,6 +36,9 @@ public:
     std::size_t num_cells() const {
         return m_cells.size();
     }
+    const cells_container& cells() const {
+        return m_cells;
+    }
 
     Cell* get_cell(std::size_t offset) const {
         return m_cells[offset];
@@ -86,19 +89,13 @@ public:
         return inside(pos, m_dim_lens);
     }
     bool inside(const veci& pos) const {
-        return cgr::inside(static_cast<vecu>(pos - m_origin), m_dim_lens);
-    }
-    veci pos(std::size_t offset) const {
-        return m_origin + upos(offset);
+        for (auto& e : pos.x)
+            if (e < 0)
+                return false;
+        return cgr::inside(static_cast<vecu>(pos), m_dim_lens);
     }
     vecu upos(std::size_t offset) const {
         return cgr::upos(offset, m_dim_lens);
-    }
-    vecu upos(const veci& pos) const {
-        return pos - m_origin;
-    }
-    std::size_t offset(const veci& pos) const {
-        return offset(upos(pos));
     }
     std::size_t offset(const vecu& pos) const {
         return cgr::offset(static_cast<veci>(pos), m_dim_lens);
@@ -151,6 +148,10 @@ public:
             m_nbhood_poses[offset(pos)].clear();
     }
     
+    vecu dim_lens() const {
+        return m_dim_lens;
+    }
+
     std::size_t default_range() const {
         return m_default_range;
     }
@@ -166,9 +167,8 @@ public:
     virtual bool stop_condition() const = 0;
     virtual bool iterate() = 0;
 
-    automata_base(const veci& corner0, const veci& corner1, 
-                  std::size_t default_range) {
-        set_origin_and_dim_lens(corner0, corner1);
+    automata_base(const vecu& dimlens, std::size_t default_range) {
+        set_dim_lens(dimlens);
         set_default_range(default_range);
         std::size_t new_num_cells = std::accumulate(m_dim_lens.x.begin(), m_dim_lens.x.end(), 
                                                     static_cast<std::size_t>(1),
@@ -185,7 +185,6 @@ private:
     std::size_t m_default_range;
     std::size_t m_default_nbhood_size;
 
-    veci m_origin;
     vecu m_dim_lens;
 
     cells_container m_cells;
@@ -195,13 +194,8 @@ private:
         m_default_nbhood_size = cgr::make_nbhood_offset<NbhoodKind, Dim>(
             0, m_dim_lens, m_default_range).size();
     }    
-    void set_origin_and_dim_lens(const veci& corner0, const veci& corner1) {
-        veci new_origin = corner0;
-        veci far_corner = corner1;
-
-        spt::sort_elementwise(new_origin, far_corner);
-        m_origin = new_origin;
-        m_dim_lens = far_corner - new_origin;
+    void set_dim_lens(const vecu& dimlens) {
+        m_dim_lens = dimlens;
     }
 };
 

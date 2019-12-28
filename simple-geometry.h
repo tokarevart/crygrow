@@ -4,12 +4,13 @@
 
 namespace cgr {
 
-template <typename Automata>
+template <nbhood_kind NbhoodKind = nbhood_kind::euclid, typename Real = double>
 class simple_geometry {
 public:
-    static constexpr std::size_t dim = Automata::Dim;
-    using cell_type = typename Automata::cell_type;
-    using cells_container = typename Automata::cells_container;
+    static constexpr std::size_t dim = 3;
+    using automata_type = simple_automata<dim, NbhoodKind, Real>;
+    using cell_type = typename automata_type::cell_type;
+    using cells_container = typename automata_type::cells_container;
 
     cells_container grain_boundaries(const cells_container& cells) const {
         cells_container res;

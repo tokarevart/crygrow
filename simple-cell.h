@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include <numeric>
-#include "cell-mutability.h"
 #include "simple-crystallite.h"
 
 

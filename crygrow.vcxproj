@@ -162,11 +162,9 @@
     <ClCompile Include="crygrow.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="automata-base.h" />
     <ClInclude Include="cgralgs.h" />
     <ClInclude Include="neighborhood.h" />
     <ClInclude Include="mat.h" />
-    <ClInclude Include="cell-mutability.h" />
     <ClInclude Include="simple-automata.h" />
     <ClInclude Include="simple-cell.h" />
     <ClInclude Include="simple-crystallite.h" />

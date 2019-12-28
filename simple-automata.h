@@ -126,7 +126,6 @@ public:
 
     simple_automata(std::size_t dim_len, std::size_t default_range = 1)
         : simple_automata(vecu::filled_with(dim_len), default_range) {}
-
     simple_automata(const vecu& dim_lens, std::size_t default_range = 1)
         : base(dim_lens, default_range) {
         m_cells_delta.assign(base::num_cells(), 0.0);

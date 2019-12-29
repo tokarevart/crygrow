@@ -235,7 +235,7 @@ public:
                             //    delta = absdot;
                         }
                     } else {
-                        delta += accdp.magnitude();
+                        delta += accdp.magnitude() * 0.4;
                     }
                 }
                 Real factor = static_cast<Real>(std::clamp<std::int64_t>(

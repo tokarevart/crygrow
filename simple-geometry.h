@@ -15,9 +15,12 @@ public:
     using grain_type = typename automata_type::grain_type;
 
     bool grains_includes_unsorted(std::vector<grain_type*> first, std::vector<grain_type*> second) const {
-        std::sort(first.begin(), first.end());
-        std::sort(second.begin(), second.end());
-        return std::includes(first.begin(), first.end(), second.begin(), second.end());
+        if (first.size() < second.size())
+            return false;
+        for (auto s : second)
+            if (std::find(first.begin(), first.end(), s) == first.end())
+                return false;
+        return true;
     }
     bool grains_equal_unsorted(const std::vector<grain_type*>& first, const std::vector<grain_type*>& second) const {
         if (first.size() != second.size())

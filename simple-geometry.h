@@ -19,7 +19,7 @@ public:
         std::sort(second.begin(), second.end());
         return std::includes(first.begin(), first.end(), second.begin(), second.end());
     }
-    bool grains_equals_unsorted(const std::vector<grain_type*>& first, const std::vector<grain_type*>& second) const {
+    bool grains_equal_unsorted(const std::vector<grain_type*>& first, const std::vector<grain_type*>& second) const {
         if (first.size() != second.size())
             return false;
         for (auto f : first)

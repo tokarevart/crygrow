@@ -16,7 +16,7 @@ constexpr auto kind = cgr::nbhood_kind::euclid;
 using pos_t = spt::veci<dim>;
 using automata_t = cgr::simple_automata<dim, kind>;
 using cell_t = cgr::simple_cell<dim>;
-using crystallite_t = cgr::simple_crystallite<dim>;
+using crystallite_t = cgr::simple_grain<dim>;
 using material_t = cgr::simple_material<dim>;
 using nbhood_pos_t = cgr::nbhood_pos<dim>;
 

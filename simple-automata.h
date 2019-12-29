@@ -28,9 +28,9 @@ public:
     using nbhood_offset_type = cgr::nbhood_offset;
     using nbhood_offsets_container = std::vector<nbhood_offset_type>;
     using cells_delta_container = std::vector<Real>;
-    using crystallite_type = typename cell_type::crystallite_type;
-    using material_type = typename crystallite_type::material_type;
-    using orientation_type = typename crystallite_type::orientation_type;
+    using grain_type = typename cell_type::grain_type;
+    using material_type = typename grain_type::material_type;
+    using orientation_type = typename grain_type::orientation_type;
     using grow_dir = typename material_type::grow_dir;
 
     std::size_t num_cells() const {
@@ -199,7 +199,7 @@ public:
                     continue;
                 
                 Real delta = 0.0;
-                std::map<crystallite_type*, grow_dir> nbhpcrysts_accdps;
+                std::map<grain_type*, grow_dir> nbhpcrysts_accdps;
                 std::int64_t accdpmagn2 = 0;
                 std::size_t numcrystednb = 0;
                 for (auto nboff : get_nbhood_offset(i)) {

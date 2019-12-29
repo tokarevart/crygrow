@@ -44,13 +44,13 @@
     <ClInclude Include="simple-cell.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="simple-crystallite.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
     <ClInclude Include="simple-material.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="simple-geometry.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="simple-grain.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

@@ -8,7 +8,7 @@ namespace cgr {
 
 template <std::size_t Dim, typename Real = double>
 struct simple_cell {
-    using crystallite_type = simple_crystallite<Dim, Real>;
+    using crystallite_type = cgr::simple_crystallite<Dim, Real>;
 
     Real crystallinity; // 0.0 to 1.0
     std::vector<crystallite_type*> grains;

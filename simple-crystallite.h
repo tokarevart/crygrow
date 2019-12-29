@@ -8,7 +8,7 @@ namespace cgr {
 template <std::size_t Dim, typename Real = double>
 class simple_crystallite {
 public:
-    using material_type = simple_material<Dim, Real>;
+    using material_type = cgr::simple_material<Dim, Real>;
     using orientation_type = spt::mat<Dim, Real>; // |each vec| == 1
 
     const material_type* material() const {

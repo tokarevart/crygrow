@@ -11,6 +11,7 @@ constexpr std::size_t dim = 3;
 #else
 constexpr std::size_t dim = 2;
 #endif
+std::size_t seed = 3;
 constexpr auto kind = cgr::nbhood_kind::euclid;
 using pos_t = spt::veci<dim>;
 using automata_t = cgr::simple_automata<dim, kind>;
@@ -85,7 +86,7 @@ std::uint64_t min_distance2(pos_t pos, std::vector<pos_t> others) {
 
 std::vector<pos_t> make_random_central_poses(std::size_t size, std::size_t num, std::uint64_t min_dist2 = 0) {
     std::vector<pos_t> res;
-    std::mt19937_64 gen;
+    std::mt19937_64 gen(seed);
     std::uniform_int_distribution<std::size_t> dis(0, size - 1);
     for (std::size_t i = 0; i < num;) {
         pos_t curpos;
@@ -121,7 +122,7 @@ int main() {
     //auto init_central_poses = make_central_pos(size);
     auto init_central_poses = make_random_central_poses(size, 30, (range * 4) * (range * 4));
 
-    material_t mater(cgr::material_property::anisotropic, { 
+    material_t mater(cgr::material_property::isotropic, { 
         #ifdef DIM3
         spt::vecd<dim>{ 1.0, 0.0, 0.0 }.normalize(),
         spt::vecd<dim>{ 0.0, 1.0, 0.0 }.normalize(),
@@ -133,7 +134,7 @@ int main() {
     //std::vector<crystallite_t> crysts(init_central_poses.size(), crystallite_t(&mater));
     std::vector<crystallite_t> crysts;
     crysts.reserve(init_central_poses.size());
-    std::mt19937_64 gen;
+    std::mt19937_64 gen(seed);
     std::uniform_real_distribution<double> dis(-1.0, std::nextafter(1.0, 2.0));
     for (std::size_t i = 0; i < init_central_poses.size(); ++i) {
         #ifdef DIM3
@@ -178,7 +179,7 @@ int main() {
             #ifdef DIM3
             curpos[2] = static_cast<std::int64_t>(size) / 2;
             #endif
-            auto pcell = automata.get_cell(curpos);
+            auto pcell = automata.get_cell(i);
 
             std::array<std::uint8_t, 3> color;
             constexpr bool blackwhite = false;
@@ -214,6 +215,15 @@ int main() {
                 << static_cast<int>(color[2]) << std::endl;
         }
         ofile.close();
+
+        std::size_t num_cells_gtdimpl1 = 0;
+        for (std::size_t i = 0; i < size * size; ++i) {
+            auto pcell = automata.get_cell(i);
+            if (pcell->grains.size() > dim + 1)
+                ++num_cells_gtdimpl1;
+        }
+        std::cout << num_cells_gtdimpl1 << std::endl;
+
         std::system("python ./visualize.py");
     }
 

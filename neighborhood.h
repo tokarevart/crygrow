@@ -20,10 +20,7 @@ enum class nbhood_kind {
 template <nbhood_kind NbhoodKind, std::size_t Dim>
 bool inside_nbhood(const spt::veci<Dim>& pos, std::size_t range) {
     if constexpr (NbhoodKind == nbhood_kind::von_neumann) {
-        std::int64_t sum_abs = 0;
-        for (auto e : pos.x)
-            sum_abs += std::abs(e);
-        return static_cast<std::size_t>(sum_abs) <= range;
+        return cgr::magnitude_von_neumann(pos) <= range;
 
     } else if constexpr (NbhoodKind == nbhood_kind::moore) {
         for (auto e : pos.x)
@@ -32,7 +29,7 @@ bool inside_nbhood(const spt::veci<Dim>& pos, std::size_t range) {
         return true;
 
     } else if constexpr (NbhoodKind == nbhood_kind::euclid) {
-        return static_cast<std::size_t>(pos.magnitude2()) <= range * range;
+        return cgr::magnitude2_euclid(pos) <= range * range;
     }
 }
 

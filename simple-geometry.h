@@ -8,7 +8,7 @@ template <nbhood_kind NbhoodKind = nbhood_kind::euclid, typename Real = double>
 class simple_geometry {
 public:
     static constexpr std::size_t dim = 3;
-    using automata_type = simple_automata<dim, NbhoodKind, Real>;
+    using automata_type = cgr::simple_automata<dim, NbhoodKind, Real>;
     using cell_type = typename automata_type::cell_type;
     using cells_container = typename automata_type::cells_container;
 
@@ -19,9 +19,9 @@ public:
                 res.push_back(pcell);
         return res;
     }
-    // res_type group_boundaries(const cells_container& boundarycells) const {
-    //    
-    //}
+    std::array<cells_container, dim> group_boundaries(const cells_container& boundarycells) const {
+        
+    }
 
 
 private:

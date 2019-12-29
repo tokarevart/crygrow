@@ -21,11 +21,11 @@ public:
     static constexpr Real epsilon = std::numeric_limits<Real>::epsilon();
     using veci = spt::veci<Dim>;
     using vecu = spt::vecu<Dim>;
-    using cell_type = simple_cell<Dim, Real>;
+    using cell_type = cgr::simple_cell<Dim, Real>;
     using cells_container = std::vector<cell_type*>;
-    using nbhood_type = nbhood<Dim, cell_type>;
-    using nbhood_pos_type = nbhood_pos<Dim>;
-    using nbhood_offset_type = nbhood_offset;
+    using nbhood_type = cgr::nbhood<Dim, cell_type>;
+    using nbhood_pos_type = cgr::nbhood_pos<Dim>;
+    using nbhood_offset_type = cgr::nbhood_offset;
     using nbhood_offsets_container = std::vector<nbhood_offset_type>;
     using cells_delta_container = std::vector<Real>;
     using crystallite_type = typename cell_type::crystallite_type;
@@ -184,10 +184,10 @@ public:
         auto defnbhoffset = make_nbhood_offset();
         std::int64_t accdefdpmagn2 = 0;
         for (auto nboff : defnbhoffset)
-            accdefdpmagn2 += static_cast<Real>((
+            accdefdpmagn2 += (
                 veci::filled_with(default_range())
                 - cgr::upos(nboff, vecu::filled_with(2 * default_range() + 1))
-                ).magnitude2());
+                ).magnitude2();
         
         #pragma omp parallel 
         {
@@ -215,10 +215,10 @@ public:
                                   pnb->grains.front()) == pcell->grains.end())
                         pcell->grains.push_back(pnb->grains.front());
                     
-                    grow_dir deltapos = curpos - static_cast<veci>(upos(nboff));
+                    veci deltapos = curpos - static_cast<veci>(upos(nboff));
                     accdpmagn2 += deltapos.magnitude2();
 
-                    nbhpcrysts_accdps[pnb->grains.front()] += deltapos;
+                    nbhpcrysts_accdps[pnb->grains.front()] += static_cast<grow_dir>(deltapos);
                     ++numcrystednb;
                 }
 

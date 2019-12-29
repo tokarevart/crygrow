@@ -39,4 +39,33 @@ bool inside(const spt::vecu<Dim>& pos, const spt::vecu<Dim>& dim_lens) {
     return true;
 }
 
+template <std::size_t Dim>
+std::size_t magnitude_von_neumann(const spt::veci<Dim>& pos) {
+    std::int64_t sum_abs = 0;
+    for (auto e : pos.x)
+        sum_abs += std::abs(e);
+    return static_cast<std::size_t>(sum_abs);
+}
+
+template <std::size_t Dim>
+std::size_t magnitude_moore(const spt::veci<Dim>& pos) {
+    std::size_t max_abs = 0;
+    for (auto e : pos.x) {
+        auto abse = static_cast<std::size_t>(std::abs(e));
+        if (abse > max_abs)
+            max_abs = abse;
+    }
+    return max_abs;
+}
+
+template <std::size_t Dim, typename Real = double>
+Real magnitude_euclid(const spt::veci<Dim>& pos) {
+    return std::sqrt(pos.magnitude2());
+}
+
+template <std::size_t Dim>
+std::size_t magnitude2_euclid(const spt::veci<Dim>& pos) {
+    return pos.magnitude2();
+}
+
 } // namespace cgr

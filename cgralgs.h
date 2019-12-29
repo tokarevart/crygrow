@@ -39,18 +39,30 @@ bool inside(const spt::vecu<Dim>& pos, const spt::vecu<Dim>& dim_lens) {
     return true;
 }
 
+template <std::size_t Dim, typename ValueType>
+ValueType norm_cryst(const spt::vec<Dim, ValueType>& dir,
+                     const std::vector<spt::vec<Dim, ValueType>>& es) {
+    ValueType maxpn = 0;
+    for (auto& e : es) {
+        auto pn = std::abs(spt::dot(dir, e)) / spt::dot(e, e);
+        if (pn > maxpn)
+            maxpn = pn;
+    }
+    return maxpn;
+}
+
 template <std::size_t Dim>
-std::size_t magnitude_von_neumann(const spt::veci<Dim>& pos) {
+std::size_t norm_taxicab(const spt::veci<Dim>& dir) {
     std::int64_t sum_abs = 0;
-    for (auto e : pos.x)
+    for (auto e : dir.x)
         sum_abs += std::abs(e);
     return static_cast<std::size_t>(sum_abs);
 }
 
 template <std::size_t Dim>
-std::size_t magnitude_moore(const spt::veci<Dim>& pos) {
+std::size_t norm_chebyshev(const spt::veci<Dim>& dir) {
     std::size_t max_abs = 0;
-    for (auto e : pos.x) {
+    for (auto e : dir.x) {
         auto abse = static_cast<std::size_t>(std::abs(e));
         if (abse > max_abs)
             max_abs = abse;
@@ -59,13 +71,13 @@ std::size_t magnitude_moore(const spt::veci<Dim>& pos) {
 }
 
 template <std::size_t Dim, typename Real = double>
-Real magnitude_euclid(const spt::veci<Dim>& pos) {
-    return std::sqrt(pos.magnitude2());
+Real norm_euclid(const spt::veci<Dim>& dir) {
+    return std::sqrt(dir.magnitude2());
 }
 
 template <std::size_t Dim>
-std::size_t magnitude2_euclid(const spt::veci<Dim>& pos) {
-    return pos.magnitude2();
+std::size_t norm2_euclid(const spt::veci<Dim>& dir) {
+    return dir.magnitude2();
 }
 
 } // namespace cgr

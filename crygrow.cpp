@@ -4,7 +4,7 @@
 #include "sptalgs.h"
 #include "simple-automata.h"
 
-//#define DIM3
+#define DIM3
 
 #ifdef DIM3
 constexpr std::size_t dim = 3;
@@ -113,14 +113,14 @@ std::vector<pos_t> make_random_central_poses(std::size_t size, std::size_t num, 
 
 
 int main() {
-    std::size_t size = 500;
-    std::size_t range = 8;
+    std::size_t size = 150;
+    std::size_t range = 2;
     automata_t automata(size, range);
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
     //auto init_central_poses = make_central_pos(size);
-    auto init_central_poses = make_random_central_poses(size, 30, (range * 4) * (range * 4));
+    auto init_central_poses = make_random_central_poses(size, 70, (range * 4) * (range * 4));
 
     material_t mater(cgr::material_property::isotropic, { 
         #ifdef DIM3

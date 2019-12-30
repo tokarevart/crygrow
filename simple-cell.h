@@ -14,10 +14,10 @@ struct simple_cell {
     Real crystallinity; // 0.0 to 1.0
     grains_container grains;
 
-    simple_cell(Real crystallinity = 0.0, grain_type* crystallite = nullptr)
+    simple_cell(Real crystallinity = 0.0, grain_type* grain = nullptr)
         : crystallinity{crystallinity} {
-        if (crystallite)
-            grains.push_back(crystallite);
+        if (grain)
+            grains.push_back(grain);
     }
 };
 

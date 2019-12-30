@@ -235,7 +235,7 @@ public:
                             //    delta = absdot;
                         }
                     } else {
-                        delta += accdp.magnitude() * 0.4;
+                        delta += accdp.magnitude() * 1.5;
                     }
                 }
                 Real factor = static_cast<Real>(std::clamp<std::int64_t>(
@@ -287,7 +287,7 @@ private:
     nbhood_offsets_container m_nbhood_offsets;
 
     cells_delta_container m_cells_delta;
-    // todo: store common cells, such as empty cell and crystallized cell for each crystallite
+    // todo: store common cells, such as empty cell and crystallized cell for each grain
 
     void set_default_nbhood_size() {
         m_default_nbhood_size = cgr::make_nbhood_offset<NbhoodKind, Dim>(

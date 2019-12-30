@@ -16,8 +16,8 @@ public:
     using grain_type = typename automata_type::grain_type;
     using grains_container = typename cell_type::grains_container;
     // grains num then boundaries sorted
-    using double_sorted_grains_container = std::vector<std::vector<grains_container>>;
-    using double_sorted_offsets_container = std::vector<std::vector<grains_container>>;
+    using sorted2_grains_container = std::vector<std::vector<grains_container>>;
+    using sorted2_offsets_container = std::vector<std::vector<offsets_container>>;
 
     bool grains_includes_unsorted(const grains_container& first, const grains_container& second) const {
         if (first.size() < second.size())
@@ -47,7 +47,7 @@ public:
 
     // pjoint is a point joint (or point boundary)
     bool is_supreme_pjoint(const grains_container& bndgrains, 
-                           const double_sorted_grains_container& grconts) const {
+                           const sorted2_grains_container& grconts) const {
         if (bndgrains.size() < 4)
             return false;
 
@@ -100,19 +100,19 @@ public:
         }        
         return res;
     }
-    double_sorted_offsets_container double_sorted_offsets() const {
+    sorted2_offsets_container double_sorted_offsets() const {
         //
     }
-    double_sorted_grains_container double_sorted_offsets_to_grains(
-        const double_sorted_offsets_container& bndoffsets) const {
+    sorted2_grains_container double_sorted_offsets_to_grains(
+        const sorted2_offsets_container& bndoffsets) const {
         //
     }
 
     std::vector<grains_container> supreme_pjoints_grains(
-        const double_sorted_grains_container& grconts) const {
+        const sorted2_grains_container& grconts) const {
         //
     }
-    pos_type supreme_pjoints_poses(const double_sorted_offsets_container& bndoffsets) const {
+    pos_type supreme_pjoints_poses(const sorted2_offsets_container& bndoffsets) const {
         //
     }
 

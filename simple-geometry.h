@@ -45,31 +45,9 @@ public:
         return it;
     }
 
-    /* think about it later
-    bool is_surface_boundary(const grains_container& bndgrains, const double_sorted_grains& grconts) const {
-        return bndgrains.size() == 2;
-    }
-    bool is_linear_boundary(const grains_container& bndgrains, const double_sorted_grains& grconts) const {
-        if (bndgrains.size() < 3 ||
-            bndgrains.size() >= grconts.size())
-            return false;
-        
-        std::size_t count = 0;
-        for (auto& grcont : grconts[bndgrains.size()]) {
-            if (grains_includes_unsorted(grcont, bndgrains) &&
-                is_point_boundary(grcont, grconts)) {
-                if (++count == 2)
-                    return true;
-            }
-        }
-    }
-    bool is_point_boundary(const grains_container& bndgrains, const double_sorted_grains& grconts) const {
-        if (bndgrains.size() < 4)
-            return false;
-        return !is_linear_boundary(bndgrains, grconts);
-    }*/
-    bool is_supreme_point_boundary(const grains_container& bndgrains, 
-                                   const double_sorted_grains_container& grconts) const {
+    // pjoint is a point joint (or point boundary)
+    bool is_supreme_pjoint(const grains_container& bndgrains, 
+                           const double_sorted_grains_container& grconts) const {
         if (bndgrains.size() < 4)
             return false;
 
@@ -130,11 +108,11 @@ public:
         //
     }
 
-    std::vector<grains_container> supreme_point_boundaries_grains(
+    std::vector<grains_container> supreme_pjoints_grains(
         const double_sorted_grains_container& grconts) const {
         //
     }
-    pos_type supreme_point_boundaries_poses(const double_sorted_offsets_container& bndoffsets) const {
+    pos_type supreme_pjoints_poses(const double_sorted_offsets_container& bndoffsets) const {
         //
     }
 

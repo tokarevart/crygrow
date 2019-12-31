@@ -222,7 +222,7 @@ int main() {
             if (pcell->grains.size() > dim + 1)
                 ++num_cells_gtdimpl1;
         }
-        std::cout << num_cells_gtdimpl1 << std::endl;
+        std::cout << "number of cells with grains number >= dim + 1: " << num_cells_gtdimpl1 << std::endl;
 
         std::system("python ./visualize.py");
     }

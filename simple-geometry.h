@@ -121,15 +121,29 @@ public:
     }
 
     std::vector<grains_container> supreme_pjoints_grains(const grouped2_grains_container& grconts) const {
+        if (grconts.size() < 4)
+            return {};
+
         std::vector<grains_container> res;
-        for (auto& samenum : bndoffsets)
-            for (auto& grains : samenum)
+        for (auto samenum_it = grconts.begin() + 3; samenum_it < grconts.end(); ++samenum_it)
+            for (auto& grains : *samenum_it)
                 if (is_supreme_pjoint(grains, grconts))
                     res.push_back(grains);
         return res;
     }
-    pos_type supreme_pjoints_poses(const std::vector<grains_container>& pjgrains, const grouped2_offsets_container& bndoffsets) const {
-        //
+    pos_type supreme_pjoint_pos(const grains_container& pjgrains, const grouped2_offsets_container& bndoffsets) const {
+        std::size_t acc = 0;
+        auto& samenum = bndoffsets[pjgrains.size() - 1];
+        auto it = grains_find_in_offsets(samenum, pjgrains);
+        for (auto off : *it) 
+            acc += off;
+        return static_cast<Real>(acc) / it->size();
+    }
+    std::vector<pos_type> supreme_pjoints_poses(const std::vector<grains_container>& pjgrains, const grouped2_offsets_container& bndoffsets) const {
+        std::vector<pos_type> res;
+        for (auto& pjgrs : pjgrains)
+            res.push_back(supreme_pjoint_pos(pjgrs));
+        return res;
     }
 
     simple_geometry_tool(const automata_type* automata)

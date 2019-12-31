@@ -45,6 +45,10 @@ public:
         return it;
     }
 
+    offsets_container offsets_intersection(const offsets_container& first, const offsets_container& second) const {
+        //
+    }
+
     // pjoint is a point joint (or point boundary)
     bool is_supreme_pjoint(const grains_container& bndgrains, 
                            const grouped2_grains_container& grconts) const {
@@ -131,15 +135,19 @@ public:
                     res.push_back(grains);
         return res;
     }
-    pos_type supreme_pjoint_pos(const grains_container& pjgrains, const grouped2_offsets_container& bndoffsets) const {
+    pos_type supreme_pjoint_pos(const offsets_container& offsets) const {
         std::size_t acc = 0;
+        for (auto off : offsets)
+            acc += off;
+        return static_cast<Real>(acc) / offsets->size();
+    }
+    pos_type supreme_pjoint_pos(const grains_container& pjgrains, const grouped2_offsets_container& bndoffsets) const {
         auto& samenum = bndoffsets[pjgrains.size() - 1];
         auto it = grains_find_in_offsets(samenum, pjgrains);
-        for (auto off : *it) 
-            acc += off;
-        return static_cast<Real>(acc) / it->size();
+        return supreme_pjoint_pos(*it);
     }
-    std::vector<pos_type> supreme_pjoints_poses(const std::vector<grains_container>& pjgrains, const grouped2_offsets_container& bndoffsets) const {
+    std::vector<pos_type> supreme_pjoints_poses(
+        const std::vector<grains_container>& pjgrains, const grouped2_offsets_container& bndoffsets) const {
         std::vector<pos_type> res;
         for (auto& pjgrs : pjgrains)
             res.push_back(supreme_pjoint_pos(pjgrs));

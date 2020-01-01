@@ -1,4 +1,6 @@
 #pragma once
+#include <optional>
+#include <string>
 #include "simple-automata.h"
 
 
@@ -9,6 +11,7 @@ class simple_geometry_tool {
 public:
     static constexpr std::size_t dim = 3;
     using automata_type = cgr::simple_automata<dim, NbhoodKind, Real>;
+    using vecu = typename automata_type::vecu;
     using pos_type = spt::vec3<Real>;
     using cell_type = typename automata_type::cell_type;
     using cells_container = typename automata_type::cells_container;
@@ -47,6 +50,24 @@ public:
 
     offsets_container offsets_intersection(const offsets_container& first, const offsets_container& second) const {
         //
+    }
+
+    offsets_container box_vertices() const {
+        std::size_t l0 = get_dim_lens()[0];
+        std::size_t l1 = get_dim_lens()[1];
+        std::size_t l2 = get_dim_lens()[2];
+        std::size_t l012 = num_cells();
+        std::size_t l01 = l0 * l1;
+        return { 
+                     0,              l0 - 1,  l01 - l0,  l01 - 1,
+            l012 - l01, l012 - l01 + l0 - 1, l012 - l0, l012 - 1
+        };
+    }
+    offsets_container box_edges() const {
+
+    }
+    offsets_container box_faces() const {
+
     }
 
     // pjoint is a point joint (or point boundary)
@@ -154,6 +175,25 @@ public:
         return res;
     }
 
+    std::optional<std::string> is_global_max_order_overflow() const {
+        for (std::size_t i = 0; i < num_cells(); ++i)
+            if (get_grains(i).size() > 4)
+                return "Max boundary order overflow\n";
+        return std::nullopt;
+    }
+    std::optional<std::string> is_box_vertices_max_order_overflow() const {
+
+    }
+    std::optional<std::string> is_box_edges_max_order_overflow() const {
+
+    }
+    std::optional<std::string> is_box_faces_max_order_overflow() const {
+
+    }
+    std::optional<std::string> is_exception() const {
+
+    }
+
     simple_geometry_tool(const automata_type* automata)
         : m_automata(automata) {}
 
@@ -169,6 +209,9 @@ private:
     }
     const grains_container& get_grains(std::size_t offset) const {
         return get_cell(offset)->grains;
+    }
+    const vecu& get_dim_lens() const {
+        return m_automata->get_dim_lens();
     }
 };
 

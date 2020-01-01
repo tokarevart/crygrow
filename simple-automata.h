@@ -36,7 +36,7 @@ public:
     std::size_t num_cells() const {
         return m_cells.size();
     }
-    const cells_container& cells() const {
+    const cells_container& get_cells() const {
         return m_cells;
     }
 
@@ -148,7 +148,7 @@ public:
             m_nbhood_poses[offset(pos)].clear();
     }
 
-    vecu dim_lens() const {
+    const vecu& get_dim_lens() const {
         return m_dim_lens;
     }
 

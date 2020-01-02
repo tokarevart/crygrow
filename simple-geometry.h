@@ -1,13 +1,14 @@
 #pragma once
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include "simple-automata.h"
 
 
 namespace cgr {
 
 template <nbhood_kind NbhoodKind = nbhood_kind::euclid, typename Real = double>
-class simple_geometry_tool {
+class simple_geo_tool {
 public:
     static constexpr std::size_t dim = 3;
     using automata_type = cgr::simple_automata<dim, NbhoodKind, Real>;
@@ -24,6 +25,94 @@ public:
     using vertices_container = offsets_container;
     using edges_container = std::vector<offsets_container>;
     using faces_container = std::vector<offsets_container>;
+
+    enum class geo_order {
+        forward,
+        reverse
+    };
+    
+    struct gr_unordered_base {
+        const grains_container* pgrains;
+        std::size_t idx;
+        
+        gr_unordered_base(const grains_container* pgrains, std::size_t idx)
+            : pgrains(pgrains), idx(idx) {}
+    };
+
+    struct gr_ordered_base : gr_unordered_base {
+        geo_order order;
+
+        void rev_order() {
+            switch (order) {
+            geo_order::forward:
+                order = geo_order::reverse; break;
+            geo_order::reverse:
+                order = geo_order::forward; break;
+            default: break;
+            }
+        }
+
+        gr_ordered_base(const grains_container* pgrains, std::size_t idx, geo_order order)
+            : gr_unordered_base(pgrains, idx) {
+            this->order = order;
+        }
+    };
+
+    struct gr_volume {
+        const grain_type* pgrain;
+        std::size_t idx;
+        std::vector<gr_face*> faces;
+
+        gr_volume(const grain_type* pgrain, std::size_t idx)
+            : pgrain(pgrain), idx(idx) {}
+    };
+
+    struct gr_face : public gr_ordered_base {
+        std::vector<gr_edge*> edges;
+
+        gr_face(const grains_container* pgrains, std::size_t idx, geo_order order = geo_order::forward)
+            : gr_ordered_base(pgrains, idx, order) {}
+    };
+
+    struct gr_edge : public gr_ordered_base {
+        std::vector<gr_vert*> verts;
+
+        gr_edge(const grains_container* pgrains, std::size_t idx, geo_order order = geo_order::forward)
+            : gr_ordered_base(pgrains, idx, order) {}
+    };
+
+    struct gr_vert : public gr_unordered_base {
+        pos_type pos;
+
+        gr_vert(const grains_container* pgrains, std::size_t idx, pos_type pos = pos_type())
+            : gr_unordered_base(pgrains, idx) {
+            this->pos = pos;
+        }
+    };
+
+    std::vector<gr_volume> make_gr_volumes(const std::vector<grains_container>& grconts) const {
+        std::unordered_set<grain_type*> uniquegrs;
+        for (auto& grcont : grconts)
+            for (auto& gr : grcont)
+                uniquegrs.insert(gr);
+
+        std::vector<gr_volume> res;
+        res.reserve(uniquegrs.size());
+        for (std::size_t i = 0; i < uniquegrs.size(); ++i)
+            res.emplace_back(uniquegrs[i], i);
+        return res;
+    }
+    std::vector<gr_volume> make_gr_volumes(const grouped2_grains_container& grconts) const {
+        return make_gr_volumes(grconts[1]);
+    }
+    
+    void make_gr_geos(
+        std::vector<gr_volume>& grvols, std::vector<gr_face>& grfaces,
+        std::vector<gr_edge>& gredges, std::vector<gr_vert>& grverts,
+        const grouped2_grains_container& grconts,
+        const grouped2_offsets_container& offsconts) const {
+        //
+    }
 
     bool grains_includes_unsorted(const grains_container& first, const grains_container& second) const {
         if (first.size() < second.size())
@@ -52,7 +141,7 @@ public:
     }
 
     offsets_container offsets_intersection(const offsets_container& first, const offsets_container& second) const {
-        //
+        // todo
     }
 
     template <std::size_t Dir>
@@ -85,12 +174,6 @@ public:
         return res;
     }
 
-    /* make std::vector unique
-    std::unordered_set<std::size_t> s;
-    for (auto i : vec)
-        s.insert(i);
-    vec.assign(s.begin(), s.end());
-    */
     template <std::size_t Dir>
     std::size_t vshift(std::size_t origin) const {
         return shift<Dir>(origin, get_dim_lens()[Dir] - 1);
@@ -151,6 +234,13 @@ public:
             for (auto off : cont)
                 res.push_back(off);
         return res;
+    }
+    offsets_container flatten_unique(const std::vector<offsets_container>& conts) const {
+        std::unordered_set<std::size_t> us;
+        for (auto& cont : conts)
+            for (auto off : cont)
+                us.insert(off);
+        return offsets_container(us.begin(), us.end());
     }
 
     // pjoint is a point joint (or point boundary)
@@ -216,10 +306,10 @@ public:
             res.emplace_back(std::move(group_boundaries_by_grains(group)));
         return res;
     }
-    grouped2_grains_container grouped2_offsets_to_grains(const grouped2_offsets_container& bndoffsets) const {
+    grouped2_grains_container grouped2_offsets_to_grains(const grouped2_offsets_container& offsconts) const {
         grouped2_grains_container res;
-        res.reserve(bndoffsets.size());
-        for (auto& samenum : bndoffsets) {
+        res.reserve(offsconts.size());
+        for (auto& samenum : offsconts) {
             res.emplace_back();
             res.back().reserve(samenum.size());
             for (auto& samebnd : samenum)
@@ -245,18 +335,20 @@ public:
             acc += off;
         return static_cast<Real>(acc) / offsets->size();
     }
-    pos_type supreme_pjoint_pos(const grains_container& pjgrains, const grouped2_offsets_container& bndoffsets) const {
-        auto& samenum = bndoffsets[pjgrains.size() - 1];
+    pos_type supreme_pjoint_pos(const grains_container& pjgrains, const grouped2_offsets_container& offsconts) const {
+        auto& samenum = offsconts[pjgrains.size() - 1];
         auto it = grains_find_in_offsets(samenum, pjgrains);
         return supreme_pjoint_pos(*it);
     }
     std::vector<pos_type> supreme_pjoints_poses(
-        const std::vector<grains_container>& pjgrains, const grouped2_offsets_container& bndoffsets) const {
+        const std::vector<grains_container>& pjgrains, const grouped2_offsets_container& offsconts) const {
         std::vector<pos_type> res;
         for (auto& pjgrs : pjgrains)
-            res.push_back(supreme_pjoint_pos(pjgrs));
+            res.push_back(supreme_pjoint_pos(pjgrs, offsconts));
         return res;
     }
+
+
 
     //
 
@@ -279,7 +371,7 @@ public:
         //
     }
 
-    simple_geometry_tool(const automata_type* automata)
+    simple_geo_tool(const automata_type* automata)
         : m_automata(automata) {}
 
 

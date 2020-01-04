@@ -26,66 +26,64 @@ public:
     using edges_container = std::vector<offsets_container>;
     using faces_container = std::vector<offsets_container>;
 
-    enum class geo_order {
+    enum class geo_orient {
         forward,
         reverse
     };
     
-    struct gr_unordered_base {
-        const grains_container* pgrains;
-        std::size_t idx;
-        
-        gr_unordered_base(const grains_container* pgrains, std::size_t idx)
-            : pgrains(pgrains), idx(idx) {}
-    };
+    template <typename T>
+    struct oriented {
+        const T* obj;
+        geo_orient orient;
 
-    struct gr_ordered_base : gr_unordered_base {
-        geo_order order;
-
-        void rev_order() {
-            switch (order) {
-            geo_order::forward:
-                order = geo_order::reverse; break;
-            geo_order::reverse:
-                order = geo_order::forward; break;
+        void rev_orient() {
+            switch (orient) {
+            geo_orient::forward:
+                orient = geo_orient::reverse; break;
+            geo_orient::reverse:
+                orient = geo_orient::forward; break;
             default: break;
             }
         }
 
-        gr_ordered_base(const grains_container* pgrains, std::size_t idx, geo_order order)
-            : gr_unordered_base(pgrains, idx) {
-            this->order = order;
-        }
+        oriented(const T* obj, geo_orient orient = geo_orient::forward)
+            : obj(obj), orient(orient) {}
     };
 
     struct gr_volume {
         const grain_type* pgrain;
         std::size_t idx;
-        std::vector<gr_face*> faces;
+        std::vector<oriented<gr_face>> faces;
 
         gr_volume(const grain_type* pgrain, std::size_t idx)
             : pgrain(pgrain), idx(idx) {}
     };
 
-    struct gr_face : public gr_ordered_base {
-        std::vector<gr_edge*> edges;
+    struct gr_face {
+        const grains_container* pgrains;
+        std::size_t idx;
+        std::vector<oriented<gr_edge>> edges;
 
-        gr_face(const grains_container* pgrains, std::size_t idx, geo_order order = geo_order::forward)
-            : gr_ordered_base(pgrains, idx, order) {}
+        gr_face(const grains_container* pgrains, std::size_t idx)
+            : pgrains(pgrains), idx(idx) {}
     };
 
-    struct gr_edge : public gr_ordered_base {
+    struct gr_edge {
+        const grains_container* pgrains;
+        std::size_t idx;
         std::vector<gr_vert*> verts;
 
-        gr_edge(const grains_container* pgrains, std::size_t idx, geo_order order = geo_order::forward)
-            : gr_ordered_base(pgrains, idx, order) {}
+        gr_edge(const grains_container* pgrains, std::size_t idx)
+            : pgrains(pgrains), idx(idx) {}
     };
 
-    struct gr_vert : public gr_unordered_base {
+    struct gr_vert {
+        const grains_container* pgrains;
+        std::size_t idx;
         pos_type pos;
 
         gr_vert(const grains_container* pgrains, std::size_t idx, pos_type pos = pos_type())
-            : gr_unordered_base(pgrains, idx) {
+            : pgrains(pgrains), idx(idx) {
             this->pos = pos;
         }
     };

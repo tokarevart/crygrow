@@ -82,10 +82,8 @@ public:
         std::size_t idx;
         pos_type pos;
 
-        gr_vert(const grains_container* pgrains, std::size_t idx, pos_type pos = pos_type())
-            : pgrains(pgrains), idx(idx) {
-            this->pos = pos;
-        }
+        gr_vert(const grains_container* pgrains, std::size_t idx, pos_type pos)
+            : pgrains(pgrains), idx(idx), pos(pos) {}
     };
 
     std::vector<gr_volume> make_gr_volumes(const std::vector<grains_container>& grconts) const {
@@ -101,8 +99,30 @@ public:
             res.emplace_back(uniquegrs[i], i);
         return res;
     }
-    std::vector<gr_volume> make_gr_volumes(const vector2gd<offsets_container>& grconts) const {
-        return make_gr_volumes(grconts[0]);
+    //std::vector<gr_volume> make_gr_volumes(const vector2gd<offsets_container>& grconts) const {
+    //    return make_gr_volumes(grconts[0]);
+    //}
+    std::vector<gr_face> make_gr_faces(const std::vector<grains_container>& grconts) const {
+        std::vector<gr_face> res;
+        res.reserve(grconts.size());
+        for (std::size_t i = 0; i < grconts.size(); ++i)
+            res.emplace_back(&grconts[i], i);
+        return res;
+    }
+    std::vector<gr_edge> make_gr_edges(const std::vector<grains_container>& grconts) const {
+        std::vector<gr_edge> res;
+        res.reserve(grconts.size());
+        for (std::size_t i = 0; i < grconts.size(); ++i)
+            res.emplace_back(&grconts[i], i);
+        return res;
+    }
+    std::vector<gr_vert> make_gr_verts(const std::vector<grains_container>& grconts,
+                                       const std::vector<offsets_container>& offconts) const {
+        std::vector<gr_vert> res;
+        res.reserve(grconts.size());
+        for (std::size_t i = 0; i < grconts.size(); ++i)
+            res.emplace_back(&grconts[i], i, central_pos(offconts[i]);
+        return res;
     }
     
     //void make_gr_geos(
@@ -113,11 +133,14 @@ public:
     //    //
     //}
 
+    bool grains_contains_unsorted(const grains_container& first, const grain_type* second) const {
+        return std::find(first.begin(), first.end(), second) != first.end();
+    }
     bool grains_includes_unsorted(const grains_container& first, const grains_container& second) const {
         if (first.size() < second.size())
             return false;
         for (auto s : second)
-            if (std::find(first.begin(), first.end(), s) == first.end())
+            if (!grains_contains_unsorted(first, s))
                 return false;
         return true;
     }
@@ -131,17 +154,16 @@ public:
         return true;
     }
     std::vector<offsets_container>::iterator grains_find_in_offsets(
-        std::vector<offsets_container>& offsets, const grains_container& grains) const {
-        auto it = offsets.begin();
-        for (; it < offsets.end(); ++it)
+        std::vector<offsets_container>& offconts, const grains_container& grains) const {
+        auto it = offconts.begin();
+        for (; it < offconts.end(); ++it)
             if (grains_equal_unsorted(get_grains(it->front()), grains))
                 break;
         return it;
     }
 
-    offsets_container offsets_intersection(const offsets_container& first, const offsets_container& second) const {
-        // todo
-    }
+    //offsets_container offsets_intersection(const offsets_container& first, const offsets_container& second) const {
+    //}
 
     template <std::size_t Dir>
     std::size_t shift(std::size_t origin, std::size_t dist) const {
@@ -344,6 +366,30 @@ public:
     //}
 
 
+    void connect_geometry() {
+        for (auto& vol : m_grvolumes)
+            for (auto& face : m_grfaces)
+                if (grains_contains_unsorted(*face.pgrains, vol.pgrain))
+                    vol.faces.emplace_back(&face);
+
+        for (auto& face : m_grfaces)
+            for (auto& edge : m_gredges)
+                if (grains_includes_unsorted(*edge.pgrains, *face.pgrains))
+                    face.edges.emplace_back(&edge);
+
+        for (auto& edge : m_gredges)
+            for (auto& vert : m_grverts)
+                if (grains_includes_unsorted(*vert.pgrains, *edge.pgrains))
+                    edge.verts.push_back(&vert);
+    }
+
+    void make_gr_geometry(const std::vector<offsets_container>& pjointsoffs) {
+        m_grvolumes = make_gr_volumes(m_g2grs[0]);
+        m_grfaces = make_gr_faces(m_g2grs[0]);
+        m_gredges = make_gr_edges(m_g2grs[1]);
+        m_grverts = make_gr_verts(m_g2grs[2], pjointsoffs);
+        connect_geometry();
+    }
 
     void make_geometry() {
         auto box_vs = box_vertices();
@@ -357,6 +403,14 @@ public:
             }
         }
 
+        auto g2offs = grouped2_offsets();
+        m_g2grs = grouped2_offsets_to_grains(g2offs);
+        std::vector<offsets_container> pjsoffs = std::move(g2offs[2]);
+        g2offs.clear();
+        g2offs.shrink_to_fit();
+
+        make_gr_geometry(pjsoffs);
+        
         //
     }
 
@@ -387,9 +441,16 @@ public:
 
 private:
     const automata_type* m_automata;
+
     std::unordered_map<std::size_t, grains_container> m_boxbry_grconts;
     std::array<std::unique_ptr<grain_type>, 6> m_boxbry_grains;
-    vector2gd<grains_container> m_g2grconts;
+
+    vector2gd<grains_container> m_g2grs;
+
+    std::vector<gr_volume> m_grvolumes;
+    std::vector<gr_face> m_grfaces;
+    std::vector<gr_edge> m_gredges;
+    std::vector<gr_vert> m_grverts;
 
     std::size_t num_cells() const {
         return m_automata->num_cells();

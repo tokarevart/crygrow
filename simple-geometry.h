@@ -19,12 +19,12 @@ public:
     using offsets_container = std::vector<std::size_t>;
     using grain_type = typename automata_type::grain_type;
     using grains_container = typename cell_type::grains_container;
-    // grains num then boundaries sorted
-    using grouped2_grains_container = std::vector<std::vector<grains_container>>;
-    using grouped2_offsets_container = std::vector<std::vector<offsets_container>>;
     using vertices_container = offsets_container;
     using edges_container = std::vector<offsets_container>;
     using faces_container = std::vector<offsets_container>;
+    // grains num then boundaries grouped
+    template <typename T>
+    using vector2gd = std::vector<std::vector<T>>;
 
     enum class geo_orient {
         forward,
@@ -92,7 +92,8 @@ public:
         std::unordered_set<grain_type*> uniquegrs;
         for (auto& grcont : grconts)
             for (auto& gr : grcont)
-                uniquegrs.insert(gr);
+                if (gr->material())
+                    uniquegrs.insert(gr);
 
         std::vector<gr_volume> res;
         res.reserve(uniquegrs.size());
@@ -100,17 +101,17 @@ public:
             res.emplace_back(uniquegrs[i], i);
         return res;
     }
-    std::vector<gr_volume> make_gr_volumes(const grouped2_grains_container& grconts) const {
-        return make_gr_volumes(grconts[1]);
+    std::vector<gr_volume> make_gr_volumes(const vector2gd<offsets_container>& grconts) const {
+        return make_gr_volumes(grconts[0]);
     }
     
-    void make_gr_geos(
-        std::vector<gr_volume>& grvols, std::vector<gr_face>& grfaces,
-        std::vector<gr_edge>& gredges, std::vector<gr_vert>& grverts,
-        const grouped2_grains_container& grconts,
-        const grouped2_offsets_container& offsconts) const {
-        //
-    }
+    //void make_gr_geos(
+    //    std::vector<gr_volume>& grvols, std::vector<gr_face>& grfaces,
+    //    std::vector<gr_edge>& gredges, std::vector<gr_vert>& grverts,
+    //    const vector2gd<grains_container>& grconts,
+    //    const vector2gd<offsets_container>& offsconts) const {
+    //    //
+    //}
 
     bool grains_includes_unsorted(const grains_container& first, const grains_container& second) const {
         if (first.size() < second.size())
@@ -242,18 +243,18 @@ public:
     }
 
     // pjoint is a point joint (or point boundary)
-    bool is_supreme_pjoint(const grains_container& bndgrains, 
-                           const grouped2_grains_container& grconts) const {
-        if (bndgrains.size() < 4)
-            return false;
+    //bool is_supreme_pjoint(const grains_container& bndgrains, 
+    //                       const vector2gd<grains_container>& grconts) const {
+    //    if (bndgrains.size() < 4)
+    //        return false;
 
-        for (auto it = grconts.begin() + bndgrains.size(); it < grconts.end(); ++it)
-            for (auto& grcont : *it)
-                if (grains_includes_unsorted(grcont, bndgrains))
-                    return false;
+    //    for (auto it = grconts.begin() + bndgrains.size(); it < grconts.end(); ++it)
+    //        for (auto& grcont : *it)
+    //            if (grains_includes_unsorted(grcont, bndgrains))
+    //                return false;
 
-        return true;
-    }
+    //    return true;
+    //}
 
     offsets_container boundaries_offsets() const {
         offsets_container res;
@@ -272,9 +273,9 @@ public:
             res.push_back(boundary_grains(offcont));
         return res;
     }
-    std::vector<offsets_container> group_boundaries_by_grains(const offsets_container& bndoffsets) const {
+    std::vector<offsets_container> group_boundaries_by_grains(const offsets_container& bryoffsets) const {
         std::vector<offsets_container> res;
-        for (auto off : bndoffsets) {
+        for (auto off : bryoffsets) {
             auto found = grains_find_in_offsets(res, get_grains(off));
             if (found == res.end()) {
                 res.push_back(offsets_container{ off });
@@ -284,71 +285,82 @@ public:
         }
         return res;
     }
-    std::vector<offsets_container> group_boundaries_by_grains_num(const offsets_container& bndoffsets) const {
+    std::vector<offsets_container> group_boundaries_by_grains_num(const offsets_container& bryoffsets) const {
         std::vector<offsets_container> res;
-        for (auto off : bndoffsets) {
+        for (auto off : bryoffsets) {
             std::size_t num_grains = get_grains(off).size();
             if (num_grains > res.size())
                 while (res.size() < num_grains)
                     res.emplace_back();
 
-            res[num_grains - 1].push_back(off);
+            res[num_grains - 2].push_back(off);
         }        
         return res;
     }
-    grouped2_offsets_container sorted2_offsets() const {
+    vector2gd<offsets_container> grouped2_offsets() const {
         auto groupedbynum = group_boundaries_by_grains_num(boundaries_offsets());
-        grouped2_offsets_container res;
+        vector2gd<offsets_container> res;
         res.reserve(groupedbynum);
         for (auto& group : groupedbynum)
-            res.emplace_back(std::move(group_boundaries_by_grains(group)));
+            res.push_back(std::move(group_boundaries_by_grains(group)));
         return res;
     }
-    grouped2_grains_container grouped2_offsets_to_grains(const grouped2_offsets_container& offsconts) const {
-        grouped2_grains_container res;
+    vector2gd<grains_container> grouped2_offsets_to_grains(const vector2gd<offsets_container>& offsconts) const {
+        vector2gd<grains_container> res;
         res.reserve(offsconts.size());
-        for (auto& samenum : offsconts) {
-            res.emplace_back();
-            res.back().reserve(samenum.size());
-            for (auto& samebnd : samenum)
-                res.back().push_back(get_grains(samebnd.front()));
-        }
+        for (auto& samenum : offsconts)
+            res.push_back(std::move(boundaries_grains(samenum)));
         return res;
     }
 
-    std::vector<grains_container> supreme_pjoints_grains(const grouped2_grains_container& grconts) const {
-        if (grconts.size() < 4)
-            return {};
+    //std::vector<grains_container> supreme_pjoints_grains(const vector2gd<grains_container>& grconts) const {
+    //    if (grconts.size() < 4)
+    //        return {};
 
-        std::vector<grains_container> res;
-        for (auto samenum_it = grconts.begin() + 3; samenum_it < grconts.end(); ++samenum_it)
-            for (auto& grains : *samenum_it)
-                if (is_supreme_pjoint(grains, grconts))
-                    res.push_back(grains);
-        return res;
-    }
-    pos_type supreme_pjoint_pos(const offsets_container& offsets) const {
+    //    std::vector<grains_container> res;
+    //    for (auto samenum_it = grconts.begin() + 3; samenum_it < grconts.end(); ++samenum_it)
+    //        for (auto& grains : *samenum_it)
+    //            if (is_supreme_pjoint(grains, grconts))
+    //                res.push_back(grains);
+    //    return res;
+    //}
+    pos_type central_pos(const offsets_container& offsets) const {
         std::size_t acc = 0;
         for (auto off : offsets)
             acc += off;
         return static_cast<Real>(acc) / offsets->size();
     }
-    pos_type supreme_pjoint_pos(const grains_container& pjgrains, const grouped2_offsets_container& offsconts) const {
-        auto& samenum = offsconts[pjgrains.size() - 1];
-        auto it = grains_find_in_offsets(samenum, pjgrains);
-        return supreme_pjoint_pos(*it);
+    //pos_type supreme_pjoint_pos(const grains_container& pjgrains, const vector2gd<offsets_container>& offsconts) const {
+    //    auto& samenum = offsconts[pjgrains.size() - 1];
+    //    auto it = grains_find_in_offsets(samenum, pjgrains);
+    //    return central_pos(*it);
+    //}
+    //std::vector<pos_type> supreme_pjoints_poses(
+    //    const std::vector<grains_container>& pjgrains, const vector2gd<offsets_container>& offsconts) const {
+    //    std::vector<pos_type> res;
+    //    for (auto& pjgrs : pjgrains)
+    //        res.push_back(supreme_pjoint_pos(pjgrs, offsconts));
+    //    return res;
+    //}
+
+
+
+    void make_geometry() {
+        auto box_vs = box_vertices();
+        auto box_es = box_edges(boxvs);
+        auto box_fs = box_faces(boxes);
+
+        for (std::size_t i = 0; i < 6; ++i) {
+            for (auto off : box_fs[i]) {
+                m_boxbry_grains[i] = std::make_unique<grain_type>(nullptr);
+                add_grain(off, m_boxbry_grains[i].get());
+            }
+        }
+
+        //
     }
-    std::vector<pos_type> supreme_pjoints_poses(
-        const std::vector<grains_container>& pjgrains, const grouped2_offsets_container& offsconts) const {
-        std::vector<pos_type> res;
-        for (auto& pjgrs : pjgrains)
-            res.push_back(supreme_pjoint_pos(pjgrs, offsconts));
-        return res;
-    }
 
 
-
-    //
 
     std::optional<std::string> is_global_max_order_overflow() const {
         for (std::size_t i = 0; i < num_cells(); ++i)
@@ -375,6 +387,9 @@ public:
 
 private:
     const automata_type* m_automata;
+    std::unordered_map<std::size_t, grains_container> m_boxbry_grconts;
+    std::array<std::unique_ptr<grain_type>, 6> m_boxbry_grains;
+    vector2gd<grains_container> m_g2grconts;
 
     std::size_t num_cells() const {
         return m_automata->num_cells();
@@ -382,7 +397,19 @@ private:
     cell_type* get_cell(std::size_t offset) const {
         return m_automata->get_cell(offset);
     }
+    void add_grain(std::size_t offset, const grain_type* pgrain) {
+        m_boxbry_grconts.insert({ offset, get_cell(offset)->grains });
+        m_boxbry_grconts[offset].push_back(const_cast<grain_type*>(pgrain));
+    }
     const grains_container& get_grains(std::size_t offset) const {
+        vecu dlens = get_dim_lens();
+        spt::vec3u upos = cgr::upos(offset, dlens);
+
+        for (std::size_t i = 0; i < 3; ++i)
+            if (upos[i] == 0 ||
+                upos[i] == dlens[i] - 1)
+                return m_boxbry_grconts[offset];
+
         return get_cell(offset)->grains;
     }
     const vecu& get_dim_lens() const {

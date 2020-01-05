@@ -405,12 +405,26 @@ public:
 
         auto g2offs = grouped2_offsets();
         m_g2grs = grouped2_offsets_to_grains(g2offs);
-        std::vector<offsets_container> pjsoffs = std::move(g2offs[2]);
+        make_gr_geometry(g2offs[2]);
         g2offs.clear();
         g2offs.shrink_to_fit();
 
-        make_gr_geometry(pjsoffs);
-        
+        for (auto& face : m_grfaces) {
+            for (std::size_t i = 0; i < face.edges.size() - 1; ++i) {
+                std::size_t nextedge_idx;
+                for (std::size_t j = i + 1; j < face.edges.size(); ++j) {
+                    if (face.edges[i].obj->verts.back() == face.edges[j].obj->verts.front() ||
+                        face.edges[i].obj->verts.back() == face.edges[j].obj->verts.back()) {
+                        nextedge_idx = j;
+                        break;
+                    }
+                }
+                if (face.edges[i].obj->verts.back() == face.edges[nextedge_idx].obj->verts.back())
+                    face.edges[nextedge_idx].rev_orient();
+                std::swap(face.edges[i + 1], face.edges[nextedge_idx]);
+            }
+        }
+
         //
     }
 

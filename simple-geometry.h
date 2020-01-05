@@ -2,6 +2,7 @@
 #include <optional>
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 #include "simple-automata.h"
 
 
@@ -37,53 +38,48 @@ public:
         geo_orient orient;
 
         void rev_orient() {
-            switch (orient) {
-            geo_orient::forward:
-                orient = geo_orient::reverse; break;
-            geo_orient::reverse:
-                orient = geo_orient::forward; break;
-            default: break;
-            }
+            orient = orient == geo_orient::forward ? 
+                geo_orient::reverse : geo_orient::forward;
         }
 
         oriented(const T* obj, geo_orient orient = geo_orient::forward)
             : obj(obj), orient(orient) {}
     };
 
-    struct gr_volume {
-        const grain_type* pgrain;
-        std::size_t idx;
-        std::vector<oriented<gr_face>> faces;
-
-        gr_volume(const grain_type* pgrain, std::size_t idx)
-            : pgrain(pgrain), idx(idx) {}
-    };
-
-    struct gr_face {
+    struct gr_vert {
         const grains_container* pgrains;
-        std::size_t idx;
-        std::vector<oriented<gr_edge>> edges;
+        std::size_t tag;
+        pos_type pos;
 
-        gr_face(const grains_container* pgrains, std::size_t idx)
-            : pgrains(pgrains), idx(idx) {}
+        gr_vert(const grains_container* pgrains, std::size_t tag, pos_type pos)
+            : pgrains(pgrains), tag(tag), pos(pos) {}
     };
 
     struct gr_edge {
         const grains_container* pgrains;
-        std::size_t idx;
+        std::size_t tag;
         std::vector<gr_vert*> verts;
 
-        gr_edge(const grains_container* pgrains, std::size_t idx)
-            : pgrains(pgrains), idx(idx) {}
+        gr_edge(const grains_container* pgrains, std::size_t tag)
+            : pgrains(pgrains), tag(tag) {}
     };
 
-    struct gr_vert {
+    struct gr_face {
         const grains_container* pgrains;
-        std::size_t idx;
-        pos_type pos;
+        std::size_t tag;
+        std::vector<oriented<gr_edge>> edges;
 
-        gr_vert(const grains_container* pgrains, std::size_t idx, pos_type pos)
-            : pgrains(pgrains), idx(idx), pos(pos) {}
+        gr_face(const grains_container* pgrains, std::size_t tag)
+            : pgrains(pgrains), tag(tag) {}
+    };
+
+    struct gr_volume {
+        const grain_type* pgrain;
+        std::size_t tag;
+        std::vector<oriented<gr_face>> faces;
+
+        gr_volume(const grain_type* pgrain, std::size_t tag)
+            : pgrain(pgrain), tag(tag) {}
     };
 
     std::vector<gr_volume> make_gr_volumes(const std::vector<grains_container>& grconts) const {
@@ -95,25 +91,23 @@ public:
 
         std::vector<gr_volume> res;
         res.reserve(uniquegrs.size());
-        for (std::size_t i = 0; i < uniquegrs.size(); ++i)
-            res.emplace_back(uniquegrs[i], i);
+        std::size_t i = 0;
+        for (auto it = uniquegrs.begin(); it != uniquegrs.end(); ++it)
+            res.emplace_back(*it, i++ + 1);
         return res;
     }
-    //std::vector<gr_volume> make_gr_volumes(const vector2gd<offsets_container>& grconts) const {
-    //    return make_gr_volumes(grconts[0]);
-    //}
     std::vector<gr_face> make_gr_faces(const std::vector<grains_container>& grconts) const {
         std::vector<gr_face> res;
         res.reserve(grconts.size());
         for (std::size_t i = 0; i < grconts.size(); ++i)
-            res.emplace_back(&grconts[i], i);
+            res.emplace_back(&grconts[i], i + 1);
         return res;
     }
     std::vector<gr_edge> make_gr_edges(const std::vector<grains_container>& grconts) const {
         std::vector<gr_edge> res;
         res.reserve(grconts.size());
         for (std::size_t i = 0; i < grconts.size(); ++i)
-            res.emplace_back(&grconts[i], i);
+            res.emplace_back(&grconts[i], i + 1);
         return res;
     }
     std::vector<gr_vert> make_gr_verts(const std::vector<grains_container>& grconts,
@@ -121,18 +115,10 @@ public:
         std::vector<gr_vert> res;
         res.reserve(grconts.size());
         for (std::size_t i = 0; i < grconts.size(); ++i)
-            res.emplace_back(&grconts[i], i, central_pos(offconts[i]);
+            res.emplace_back(&grconts[i], i + 1, central_pos(offconts[i]));
         return res;
     }
     
-    //void make_gr_geos(
-    //    std::vector<gr_volume>& grvols, std::vector<gr_face>& grfaces,
-    //    std::vector<gr_edge>& gredges, std::vector<gr_vert>& grverts,
-    //    const vector2gd<grains_container>& grconts,
-    //    const vector2gd<offsets_container>& offsconts) const {
-    //    //
-    //}
-
     bool grains_contains_unsorted(const grains_container& first, const grain_type* second) const {
         return std::find(first.begin(), first.end(), second) != first.end();
     }
@@ -161,10 +147,7 @@ public:
                 break;
         return it;
     }
-
-    //offsets_container offsets_intersection(const offsets_container& first, const offsets_container& second) const {
-    //}
-
+    
     template <std::size_t Dir>
     std::size_t shift(std::size_t origin, std::size_t dist) const {
         if constexpr (Dir == 0) 
@@ -263,26 +246,15 @@ public:
                 us.insert(off);
         return offsets_container(us.begin(), us.end());
     }
-
-    // pjoint is a point joint (or point boundary)
-    //bool is_supreme_pjoint(const grains_container& bndgrains, 
-    //                       const vector2gd<grains_container>& grconts) const {
-    //    if (bndgrains.size() < 4)
-    //        return false;
-
-    //    for (auto it = grconts.begin() + bndgrains.size(); it < grconts.end(); ++it)
-    //        for (auto& grcont : *it)
-    //            if (grains_includes_unsorted(grcont, bndgrains))
-    //                return false;
-
-    //    return true;
-    //}
-
+    
     offsets_container boundaries_offsets() const {
         offsets_container res;
-        for (std::size_t i = 0; i < num_cells(); ++i)
+        for (std::size_t i = 0; i < num_cells(); ++i) {
             if (get_grains(i).size() > 1)
                 res.push_back(i);
+            if (get_grains(i).size() > 4)
+                std::cout << "fuck!";
+        }
         return res;
     }
     const grains_container& boundary_grains(const offsets_container& boundary) const {
@@ -312,7 +284,7 @@ public:
         for (auto off : bryoffsets) {
             std::size_t num_grains = get_grains(off).size();
             if (num_grains > res.size())
-                while (res.size() < num_grains)
+                while (res.size() < num_grains - 1)
                     res.emplace_back();
 
             res[num_grains - 2].push_back(off);
@@ -322,7 +294,7 @@ public:
     vector2gd<offsets_container> grouped2_offsets() const {
         auto groupedbynum = group_boundaries_by_grains_num(boundaries_offsets());
         vector2gd<offsets_container> res;
-        res.reserve(groupedbynum);
+        res.reserve(groupedbynum.size());
         for (auto& group : groupedbynum)
             res.push_back(std::move(group_boundaries_by_grains(group)));
         return res;
@@ -335,35 +307,15 @@ public:
         return res;
     }
 
-    //std::vector<grains_container> supreme_pjoints_grains(const vector2gd<grains_container>& grconts) const {
-    //    if (grconts.size() < 4)
-    //        return {};
-
-    //    std::vector<grains_container> res;
-    //    for (auto samenum_it = grconts.begin() + 3; samenum_it < grconts.end(); ++samenum_it)
-    //        for (auto& grains : *samenum_it)
-    //            if (is_supreme_pjoint(grains, grconts))
-    //                res.push_back(grains);
-    //    return res;
-    //}
     pos_type central_pos(const offsets_container& offsets) const {
-        std::size_t acc = 0;
+        vecu acc;
         for (auto off : offsets)
-            acc += off;
-        return static_cast<Real>(acc) / offsets->size();
+            acc += cgr::upos(off, get_dim_lens());
+        auto accreal = static_cast<pos_type>(acc);
+        for (auto& e : accreal.x)
+            e /= offsets.size();
+        return accreal;
     }
-    //pos_type supreme_pjoint_pos(const grains_container& pjgrains, const vector2gd<offsets_container>& offsconts) const {
-    //    auto& samenum = offsconts[pjgrains.size() - 1];
-    //    auto it = grains_find_in_offsets(samenum, pjgrains);
-    //    return central_pos(*it);
-    //}
-    //std::vector<pos_type> supreme_pjoints_poses(
-    //    const std::vector<grains_container>& pjgrains, const vector2gd<offsets_container>& offsconts) const {
-    //    std::vector<pos_type> res;
-    //    for (auto& pjgrs : pjgrains)
-    //        res.push_back(supreme_pjoint_pos(pjgrs, offsconts));
-    //    return res;
-    //}
 
 
     void connect_geometry() {
@@ -393,12 +345,12 @@ public:
 
     void make_geometry() {
         auto box_vs = box_vertices();
-        auto box_es = box_edges(boxvs);
-        auto box_fs = box_faces(boxes);
+        auto box_es = box_edges(box_vs);
+        auto box_fs = box_faces(box_es);
 
         for (std::size_t i = 0; i < 6; ++i) {
+            m_boxbry_grains[i] = std::make_unique<grain_type>(nullptr);
             for (auto off : box_fs[i]) {
-                m_boxbry_grains[i] = std::make_unique<grain_type>(nullptr);
                 add_grain(off, m_boxbry_grains[i].get());
             }
         }
@@ -411,7 +363,7 @@ public:
 
         for (auto& face : m_grfaces) {
             for (std::size_t i = 0; i < face.edges.size() - 1; ++i) {
-                std::size_t nextedge_idx;
+                std::size_t nextedge_idx = 0;
                 for (std::size_t j = i + 1; j < face.edges.size(); ++j) {
                     if (face.edges[i].obj->verts.back() == face.edges[j].obj->verts.front() ||
                         face.edges[i].obj->verts.back() == face.edges[j].obj->verts.back()) {
@@ -428,6 +380,63 @@ public:
         //
     }
 
+    template <typename T>
+    struct tag_str_impl {
+        static std::string run(const T& grobj) {
+            return std::to_string(grobj.tag);
+        }
+    };
+    template <typename T>
+    struct tag_str_impl<oriented<T>> {
+        static std::string run(const oriented<T>& grobj) {
+            std::string prefix = "";
+            if (grobj.orient == geo_orient::reverse)
+                prefix = "-";
+            return prefix + std::to_string(grobj.obj->tag);
+        }
+    };
+
+    template <typename T>
+    std::string tag_str(const T& grobj) const {
+        return tag_str_impl<T>::run(grobj);
+    }
+
+    std::string geo_point_pos_str(const pos_type& pos) const {
+        return "{" + std::to_string(pos.x[0]) + ", " 
+            + std::to_string(pos.x[1]) + ", " 
+            + std::to_string(pos.x[2]) + "};";
+    }
+
+    std::string geo_point_str(const gr_vert& vert) const {
+        return "Point(" + tag_str(vert) + ") = " + geo_point_pos_str(vert.pos);
+    }
+
+    void write_geo_points(std::ostream& os) const {
+        for (auto& v : m_grverts)
+            os << geo_point_str(v) + "\n";
+    }
+
+    std::string geo_line_verts_str(const pos_type& pos) const {
+        return "{" + std::to_string(pos.x[0]) + ", "
+            + std::to_string(pos.x[1]) + ", "
+            + std::to_string(pos.x[2]) + "};";
+    }
+
+    std::string geo_line_str(const gr_edge& edge) const {
+        return "Line(" + tag_str(edge) + ") = {" + tag_str(*edge.verts.front()) 
+            + ", " + tag_str(*edge.verts.back()) + "};";
+    }
+
+    void write_geo_lines(std::ostream& os) const {
+        for (auto& e : m_gredges)
+            os << geo_line_str(e) + "\n";
+    }
+
+    void write_geo(std::ostream& os) const {
+        write_geo_points(os);
+        write_geo_lines(os);
+        //
+    }
 
 
     std::optional<std::string> is_global_max_order_overflow() const {
@@ -456,7 +465,7 @@ public:
 private:
     const automata_type* m_automata;
 
-    std::unordered_map<std::size_t, grains_container> m_boxbry_grconts;
+    std::unordered_map<std::size_t, std::unique_ptr<grains_container>> m_boxbry_grconts;
     std::array<std::unique_ptr<grain_type>, 6> m_boxbry_grains;
 
     vector2gd<grains_container> m_g2grs;
@@ -473,8 +482,8 @@ private:
         return m_automata->get_cell(offset);
     }
     void add_grain(std::size_t offset, const grain_type* pgrain) {
-        m_boxbry_grconts.insert({ offset, get_cell(offset)->grains });
-        m_boxbry_grconts[offset].push_back(const_cast<grain_type*>(pgrain));
+        m_boxbry_grconts.insert({ offset, std::make_unique<grains_container>(get_cell(offset)->grains) });
+        m_boxbry_grconts[offset]->push_back(const_cast<grain_type*>(pgrain));
     }
     const grains_container& get_grains(std::size_t offset) const {
         vecu dlens = get_dim_lens();
@@ -482,8 +491,10 @@ private:
 
         for (std::size_t i = 0; i < 3; ++i)
             if (upos[i] == 0 ||
-                upos[i] == dlens[i] - 1)
-                return m_boxbry_grconts[offset];
+                upos[i] == dlens[i] - 1) {
+                auto searchres = m_boxbry_grconts.find(offset);
+                return const_cast<const grains_container&>(*searchres->second);
+            }
 
         return get_cell(offset)->grains;
     }

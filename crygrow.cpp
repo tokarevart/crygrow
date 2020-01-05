@@ -3,6 +3,7 @@
 #include <random>
 #include "sptalgs.h"
 #include "simple-automata.h"
+#include "simple-geometry.h"
 
 #define DIM3
 
@@ -11,7 +12,7 @@ constexpr std::size_t dim = 3;
 #else
 constexpr std::size_t dim = 2;
 #endif
-std::size_t seed = 3;
+std::size_t seed = 4;
 constexpr auto kind = cgr::nbhood_kind::euclid;
 using pos_t = spt::veci<dim>;
 using automata_t = cgr::simple_automata<dim, kind>;
@@ -113,14 +114,14 @@ std::vector<pos_t> make_random_central_poses(std::size_t size, std::size_t num, 
 
 
 int main() {
-    std::size_t size = 150;
-    std::size_t range = 2;
+    std::size_t size = 100;
+    std::size_t range = 3;
     automata_t automata(size, range);
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
     //auto init_central_poses = make_central_pos(size);
-    auto init_central_poses = make_random_central_poses(size, 70, (range * 4) * (range * 4));
+    auto init_central_poses = make_random_central_poses(size, 2, (range * 4) * (range * 4));
 
     material_t mater(cgr::material_property::isotropic, { 
         #ifdef DIM3
@@ -171,13 +172,15 @@ int main() {
         std::ofstream ofile("automata-image-data.txt");
         ofile << "size " << size << std::endl;
         for (std::size_t i = 0; i < 100; ++i)
-        //while (!automata.stop_condition())
+        while (!automata.stop_condition())
             automata.iterate();
         
         for (std::size_t i = 0; i < size * size; ++i) {
             auto curpos = automata.upos(i);
             #ifdef DIM3
-            curpos[2] = static_cast<std::int64_t>(size) / 2;
+            //curpos[2] = static_cast<std::int64_t>(size) / 2;
+            //curpos[2] = size - 1;
+            curpos[2] = 0;
             #endif
             auto pcell = automata.get_cell(i);
 
@@ -226,6 +229,11 @@ int main() {
 
         std::system("python ./visualize.py");
     }
+
+    cgr::simple_geo_tool simplegeo(&automata);
+    simplegeo.make_geometry();
+    //std::ofstream file("kek.geo");
+    simplegeo.write_geo(std::cout);
 
     return 0;
 }

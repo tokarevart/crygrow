@@ -253,7 +253,7 @@ public:
             if (get_grains(i).size() > 1)
                 res.push_back(i);
             if (get_grains(i).size() > 4)
-                std::cout << "fuck!";
+                std::cout << "oops!";
         }
         return res;
     }
@@ -363,15 +363,22 @@ public:
 
         for (auto& face : m_grfaces) {
             for (std::size_t i = 0; i < face.edges.size() - 1; ++i) {
-                std::size_t nextedge_idx = 0;
+                std::size_t nextedge_idx = std::numeric_limits<std::size_t>::max();
                 for (std::size_t j = i + 1; j < face.edges.size(); ++j) {
-                    if (face.edges[i].obj->verts.back() == face.edges[j].obj->verts.front() ||
-                        face.edges[i].obj->verts.back() == face.edges[j].obj->verts.back()) {
+                    if ((face.edges[i].orient == geo_orient::forward &&
+                         (face.edges[i].obj->verts.back() == face.edges[j].obj->verts.front() ||
+                          face.edges[i].obj->verts.back() == face.edges[j].obj->verts.back())) ||
+                        (face.edges[i].orient == geo_orient::reverse &&
+                         (face.edges[i].obj->verts.front() == face.edges[j].obj->verts.front() ||
+                          face.edges[i].obj->verts.front() == face.edges[j].obj->verts.back()))) {
                         nextedge_idx = j;
                         break;
                     }
                 }
-                if (face.edges[i].obj->verts.back() == face.edges[nextedge_idx].obj->verts.back())
+                if ((face.edges[i].orient == geo_orient::forward &&
+                     face.edges[i].obj->verts.back() == face.edges[nextedge_idx].obj->verts.back()) ||
+                    (face.edges[i].orient == geo_orient::reverse &&
+                     face.edges[i].obj->verts.front() == face.edges[nextedge_idx].obj->verts.back()))
                     face.edges[nextedge_idx].rev_orient();
                 std::swap(face.edges[i + 1], face.edges[nextedge_idx]);
             }
@@ -432,9 +439,33 @@ public:
             os << geo_line_str(e) + "\n";
     }
 
+    std::string geo_surface_line_loop(const gr_face& face) const {
+        std::string inbraces = "";
+        for (std::size_t i = 0; i < face.edges.size() - 1; ++i)
+            inbraces += tag_str(face.edges[i]) + ", ";
+        inbraces += tag_str(face.edges[face.edges.size() - 1]);
+        return "Line Loop(" + tag_str(face) + ") = {" + inbraces + "};";
+    }
+
+    void write_geo_line_loops(std::ostream& os) const {
+        for (auto& f : m_grfaces)
+            os << geo_surface_line_loop(f) + "\n";
+    }
+
+    std::string geo_surface_str(const gr_face& face) const {
+        return "Plane Surface(" + tag_str(face) + ") = {" + tag_str(face) + "};";
+    }
+    
+    void write_geo_surfaces(std::ostream& os) const {
+        for (auto& f : m_grfaces)
+            os << geo_surface_str(f) + "\n";
+    }
+
     void write_geo(std::ostream& os) const {
         write_geo_points(os);
         write_geo_lines(os);
+        write_geo_line_loops(os);
+        write_geo_surfaces(os);
         //
     }
 

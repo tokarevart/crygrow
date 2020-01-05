@@ -12,7 +12,7 @@ constexpr std::size_t dim = 3;
 #else
 constexpr std::size_t dim = 2;
 #endif
-std::size_t seed = 4;
+std::size_t seed = 2;
 constexpr auto kind = cgr::nbhood_kind::euclid;
 using pos_t = spt::veci<dim>;
 using automata_t = cgr::simple_automata<dim, kind>;
@@ -121,7 +121,7 @@ int main() {
     automata.set_cells(default_poses, default_cells);
 
     //auto init_central_poses = make_central_pos(size);
-    auto init_central_poses = make_random_central_poses(size, 2, (range * 4) * (range * 4));
+    auto init_central_poses = make_random_central_poses(size, 5, (range * 4) * (range * 4));
 
     material_t mater(cgr::material_property::isotropic, { 
         #ifdef DIM3
@@ -182,7 +182,7 @@ int main() {
             //curpos[2] = size - 1;
             curpos[2] = 0;
             #endif
-            auto pcell = automata.get_cell(i);
+            auto pcell = automata.get_cell(curpos);
 
             std::array<std::uint8_t, 3> color;
             constexpr bool blackwhite = false;
@@ -232,7 +232,8 @@ int main() {
 
     cgr::simple_geo_tool simplegeo(&automata);
     simplegeo.make_geometry();
-    //std::ofstream file("kek.geo");
+    std::ofstream file("kek.geo");
+    simplegeo.write_geo(file);
     simplegeo.write_geo(std::cout);
 
     return 0;

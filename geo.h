@@ -1,169 +1,143 @@
 #pragma once
 #include <cstddef>
+#include <cstdlib>
+#include <cstdint>
 #include <array>
 #include <vector>
 #include <memory>
+#include <cmath>
 #include "vec.h"
 #include "sptops.h"
 #include "sptalgs.h"
+#include "iteration.h"
 
 namespace geo {
 
 using real_type = double;
-
-enum class orientation {
-    forward,
-    reverse
-};
-
-template <typename T>
-struct oriented {
-    T* entity;
-    orientation orient;
-
-    void reverse() {
-        orient = orient == orientation::forward ?
-            orientation::reverse : orientation::forward;
-    }
-
-    auto begin() {
-        return orient == orientation::forward ?
-            entity->begin() : entity->rbegin();
-    }
-    auto end() {
-        return orient == orientation::forward ?
-            entity->end() : entity->rend();
-    }
-    auto rbegin() {
-        return orient == orientation::forward ?
-            entity->rbegin() : entity->begin();
-    }
-    auto rend() {
-        return orient == orientation::forward ?
-            entity->rend() : entity->end();
-    }
-
-    auto front_ptr() {
-        return entity->front_ptr();
-    }
-    auto back_ptr() {
-        return entity->back_ptr();
-    }
-
-    oriented(const T* entity, orientation orient = orientation::forward)
-        : entity(entity), orient(orient) {}
-};
+using tag_type = std::int_fast32_t;
+using utag_type = std::uint_fast32_t;
 
 struct geometry {
-    std::vector<std::unique_ptr<volume>>  volumes;
-    std::vector<std::unique_ptr<surface>> surfaces;
-    std::vector<std::unique_ptr<line>>    lines;
-    std::vector<std::unique_ptr<point>>   points;
+    std::vector<volume>  volumes;
+    std::vector<surface> surfaces;
+    std::vector<line>    lines;
+    std::vector<point>   points;
+
+    std::size_t tag_to_idx(tag_type tag) const {
+        return std::abs(tag) - 1;
+    }
+
+    itr::iteration<tag_type> volume_iteration(tag_type volume_tag) {
+        return { 
+            0, volumes[tag_to_idx(volume_tag)].size(),
+            volume_tag > 0 ? itr::direction::forward : itr::direction::reverse 
+        };
+    }
+    itr::iteration<tag_type> surface_iteration(tag_type surface_tag) {
+        return {
+            0, surfaces[tag_to_idx(surface_tag)].size(),
+            surface_tag > 0 ? itr::direction::forward : itr::direction::reverse
+        };
+    }
+    itr::iteration<utag_type> line_iteration(tag_type line_tag) {
+        return {
+            0, 2,
+            line_tag > 0 ? itr::direction::forward : itr::direction::reverse
+        };
+    }
 };
 
 struct point {
-    std::size_t tag;
+    utag_type tag;
     spt::vec3<real_type> x;
 };
 
 struct line {
-    std::size_t tag;
-    std::array<point*, 2> points;
+    using tags_container = std::array<utag_type, 2>;
+    tags_container points_tags;
+    utag_type tag;
 
-    auto begin() { 
-        return points.begin(); 
+    tags_container::iterator begin() {
+        return points_tags.begin();
     }
-    auto end() { 
-        return points.end(); 
+    tags_container::iterator end() {
+        return points_tags.end();
     }
-    auto rbegin() { 
-        return points.rbegin(); 
+    tags_container::reverse_iterator rbegin() {
+        return points_tags.rbegin();
     }
-    auto rend() { 
-        return points.rend(); 
+    tags_container::reverse_iterator rend() {
+        return points_tags.rend();
     }
-
-    auto front_ptr() {
-        return points.front();
-    }
-    auto back_ptr() {
-        return points.back();
-    }
-};
-
-struct plane_surface {
-    std::size_t tag;
-    std::vector<std::unique_ptr<oriented<line>>> lines;
-
-    auto begin() { 
-        return lines.begin(); 
-    }
-    auto end() { 
-        return lines.end(); 
-    }
-    auto rbegin() { 
-        return lines.rbegin(); 
-    }
-    auto rend() { 
-        return lines.rend(); 
+    std::size_t size() const {
+        return points_tags.size();
     }
 
-    auto front_ptr() { 
-        return lines.front().get(); 
+    tag_type front() {
+        return points_tags.front();
     }
-    auto back_ptr() {
-        return lines.back().get();
+    tag_type back() {
+        return points_tags.back();
     }
 };
 
 struct surface {
-    std::size_t tag;
-    std::vector<std::unique_ptr<oriented<line>>> lines;
+    using tags_container = std::vector<tag_type>;
+    tags_container lines_tags;
+    utag_type tag;
+    bool is_plane = false;
 
-    auto begin() { 
-        return lines.begin(); 
+    tags_container::iterator begin() {
+        return lines_tags.begin();
     }
-    auto end() { 
-        return lines.end(); 
+    tags_container::iterator end() {
+        return lines_tags.end();
     }
-    auto rbegin() { 
-        return lines.rbegin(); 
+    tags_container::reverse_iterator rbegin() {
+        return lines_tags.rbegin();
     }
-    auto rend() { 
-        return lines.rend(); 
+    tags_container::reverse_iterator rend() {
+        return lines_tags.rend();
+    }
+    std::size_t size() const {
+        return lines_tags.size();
     }
 
-    auto front_ptr() {
-        return lines.front().get();
+    tag_type front() {
+        return lines_tags.front();
     }
-    auto back_ptr() {
-        return lines.back().get();
+    tag_type back() {
+        return lines_tags.back();
     }
 };
 
 struct volume {
-    std::size_t tag;
-    std::vector<std::unique_ptr<oriented<surface>>> surfaces;
+    using tags_container = std::vector<tag_type>;
+    tags_container surfaces_tags;
+    utag_type tag;
 
-    auto begin() { 
-        return surfaces.begin(); 
+    tags_container::iterator begin() {
+        return surfaces_tags.begin();
     }
-    auto end() { 
-        return surfaces.end(); 
+    tags_container::iterator end() {
+        return surfaces_tags.end();
     }
-    auto rbegin() { 
-        return surfaces.rbegin(); 
+    tags_container::reverse_iterator rbegin() {
+        return surfaces_tags.rbegin();
     }
-    auto rend() { 
-        return surfaces.rend(); 
+    tags_container::reverse_iterator rend() {
+        return surfaces_tags.rend();
+    }
+    std::size_t size() const {
+        return surfaces_tags.size();
     }
 
-    auto front_ptr() {
-        return surfaces.front().get();
+    tag_type front() {
+        return surfaces_tags.front();
     }
-    auto back_ptr() {
-        return surfaces.back().get();
+    tag_type back() {
+        return surfaces_tags.back();
     }
 };
 
-}
+} // namespace geo

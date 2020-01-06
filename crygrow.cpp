@@ -112,6 +112,18 @@ std::vector<pos_t> make_random_central_poses(std::size_t size, std::size_t num, 
     return res;
 }
 
+#include "iteration.h"
+int main_test() {
+    itr::iteration<int> it(0, 7);
+    for (auto i = it.begin(); !it.has_ended(); i = it.next())
+        std::cout << i << ' ';
+    std::cout << std::endl;
+    it.init(0, 7, itr::direction::reverse);
+    for (auto i = it.begin(); !it.has_ended(); i = it.next())
+        std::cout << i << ' ';
+
+    return 0;
+}
 
 int main() {
     std::size_t size = 100;

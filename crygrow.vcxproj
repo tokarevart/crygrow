@@ -163,6 +163,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cgralgs.h" />
+    <ClInclude Include="geo.h" />
+    <ClInclude Include="geoalgs.h" />
     <ClInclude Include="neighborhood.h" />
     <ClInclude Include="mat.h" />
     <ClInclude Include="simple-automata.h" />

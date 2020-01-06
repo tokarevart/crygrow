@@ -67,7 +67,7 @@ public:
     struct gr_face {
         const grains_container* pgrains;
         std::size_t tag;
-        std::vector<oriented<gr_edge>> edges;
+        std::vector<std::unique_ptr<oriented<gr_edge>>> edges;
 
         gr_face(const grains_container* pgrains, std::size_t tag)
             : pgrains(pgrains), tag(tag) {}
@@ -76,7 +76,7 @@ public:
     struct gr_volume {
         const grain_type* pgrain;
         std::size_t tag;
-        std::vector<oriented<gr_face>> faces;
+        std::vector<std::unique_ptr<oriented<gr_face>>> faces;
 
         gr_volume(const grain_type* pgrain, std::size_t tag)
             : pgrain(pgrain), tag(tag) {}
@@ -330,12 +330,12 @@ public:
         for (auto& vol : m_gr_geo.volumes)
             for (auto& face : m_gr_geo.faces)
                 if (grains_contains_unsorted(*face->pgrains, vol->pgrain))
-                    vol->faces.emplace_back(face.get());
+                    vol->faces.emplace_back(std::make_unique<oriented<gr_face>>(face.get()));
 
         for (auto& face : m_gr_geo.faces)
             for (auto& edge : m_gr_geo.edges)
                 if (grains_includes_unsorted(*edge->pgrains, *face->pgrains))
-                    face->edges.emplace_back(edge.get());
+                    face->edges.emplace_back(std::make_unique<oriented<gr_edge>>(edge.get()));
 
         for (auto& edge : m_gr_geo.edges)
             for (auto& vert : m_gr_geo.verts)
@@ -374,21 +374,21 @@ public:
             for (std::size_t i = 0; i < face.edges.size() - 1; ++i) {
                 std::size_t nextedge_idx = std::numeric_limits<std::size_t>::max();
                 for (std::size_t j = i + 1; j < face.edges.size(); ++j) {
-                    if ((face.edges[i].orient == geo_orient::forward &&
-                         (face.edges[i].obj->verts.back() == face.edges[j].obj->verts.front() ||
-                          face.edges[i].obj->verts.back() == face.edges[j].obj->verts.back())) ||
-                        (face.edges[i].orient == geo_orient::reverse &&
-                         (face.edges[i].obj->verts.front() == face.edges[j].obj->verts.front() ||
-                          face.edges[i].obj->verts.front() == face.edges[j].obj->verts.back()))) {
+                    if ((face.edges[i]->orient == geo_orient::forward &&
+                         (face.edges[i]->obj->verts.back() == face.edges[j]->obj->verts.front() ||
+                          face.edges[i]->obj->verts.back() == face.edges[j]->obj->verts.back())) ||
+                        (face.edges[i]->orient == geo_orient::reverse &&
+                         (face.edges[i]->obj->verts.front() == face.edges[j]->obj->verts.front() ||
+                          face.edges[i]->obj->verts.front() == face.edges[j]->obj->verts.back()))) {
                         nextedge_idx = j;
                         break;
                     }
                 }
-                if ((face.edges[i].orient == geo_orient::forward &&
-                     face.edges[i].obj->verts.back() == face.edges[nextedge_idx].obj->verts.back()) ||
-                    (face.edges[i].orient == geo_orient::reverse &&
-                     face.edges[i].obj->verts.front() == face.edges[nextedge_idx].obj->verts.back()))
-                    face.edges[nextedge_idx].rev_orient();
+                if ((face.edges[i]->orient == geo_orient::forward &&
+                     face.edges[i]->obj->verts.back() == face.edges[nextedge_idx]->obj->verts.back()) ||
+                    (face.edges[i]->orient == geo_orient::reverse &&
+                     face.edges[i]->obj->verts.front() == face.edges[nextedge_idx]->obj->verts.back()))
+                    face.edges[nextedge_idx]->rev_orient();
                 std::swap(face.edges[i + 1], face.edges[nextedge_idx]);
             }
         }
@@ -451,8 +451,8 @@ public:
     std::string geo_line_loop(const gr_face& face) const {
         std::string inbraces = "";
         for (std::size_t i = 0; i < face.edges.size() - 1; ++i)
-            inbraces += tag_str(face.edges[i]) + ", ";
-        inbraces += tag_str(face.edges[face.edges.size() - 1]);
+            inbraces += tag_str(*face.edges[i]) + ", ";
+        inbraces += tag_str(*face.edges[face.edges.size() - 1]);
         return "Line Loop(" + tag_str(face) + ") = {" + inbraces + "};";
     }
 

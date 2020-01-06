@@ -49,17 +49,17 @@ struct line {
 
 struct plane_surface {
     std::size_t tag;
-    std::vector<oriented<line>> lines;
+    std::vector<std::unique_ptr<oriented<line>>> lines;
 };
 
 struct surface {
     std::size_t tag;
-    std::vector<oriented<line>> lines;
+    std::vector<std::unique_ptr<oriented<line>>> lines;
 };
 
 struct volume {
     std::size_t tag;
-    std::vector<oriented<surface>> surfaces;
+    std::vector<std::unique_ptr<oriented<surface>>> surfaces;
 };
 
 }

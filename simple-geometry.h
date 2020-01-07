@@ -4,22 +4,25 @@
 #include <unordered_set>
 #include <unordered_map>
 #include "simple-automata.h"
+#include "grgeo.h"
 
 
 namespace cgr {
 
-template <nbhood_kind NbhoodKind = nbhood_kind::euclid, typename Real = double>
 class simple_geo_tool {
 public:
     static constexpr std::size_t dim = 3;
-    using automata_type = cgr::simple_automata<dim, NbhoodKind, Real>;
-    using vecu = typename automata_type::vecu;
-    using pos_type = spt::vec3<Real>;
-    using cell_type = typename automata_type::cell_type;
-    using cells_container = typename automata_type::cells_container;
+    using vecu = spt::vec3u;
+    using real_type = grgeo::real_type;
+    using tag_type = grgeo::tag_type;
+    using utag_type = grgeo::utag_type;
+    using pos_type = grgeo::pos_type;
+
+    using cell_type = grgeo::cell_type;
+    using cells_container = grgeo::cells_container;
     using offsets_container = std::vector<std::size_t>;
-    using grain_type = typename automata_type::grain_type;
-    using grains_container = typename cell_type::grains_container;
+    using grain_type = cell_type::grain_type;
+    using grains_container = cell_type::grains_container;
     using vertices_container = offsets_container;
     using edges_container = std::vector<offsets_container>;
     using faces_container = std::vector<offsets_container>;
@@ -27,66 +30,31 @@ public:
     template <typename T>
     using vector2gd = std::vector<std::vector<T>>;
 
-    enum class geo_orient {
-        forward,
-        reverse
-    };
-
-    template <typename T>
-    struct oriented {
-        const T* obj;
-        geo_orient orient;
-
-        void rev_orient() {
-            orient = orient == geo_orient::forward ? 
-                geo_orient::reverse : geo_orient::forward;
-        }
-
-        oriented(const T* obj, geo_orient orient = geo_orient::forward)
-            : obj(obj), orient(orient) {}
-    };
-
     struct gr_vert {
+        geo::tag_type tag;
         const grains_container* pgrains;
-        std::size_t tag;
-        pos_type pos;
-
-        gr_vert(const grains_container* pgrains, std::size_t tag, pos_type pos)
-            : pgrains(pgrains), tag(tag), pos(pos) {}
     };
 
     struct gr_edge {
+        geo::tag_type tag;
         const grains_container* pgrains;
-        std::size_t tag;
-        std::vector<gr_vert*> verts;
-
-        gr_edge(const grains_container* pgrains, std::size_t tag)
-            : pgrains(pgrains), tag(tag) {}
     };
 
     struct gr_face {
+        geo::tag_type tag;
         const grains_container* pgrains;
-        std::size_t tag;
-        std::vector<std::unique_ptr<oriented<gr_edge>>> edges;
-
-        gr_face(const grains_container* pgrains, std::size_t tag)
-            : pgrains(pgrains), tag(tag) {}
     };
 
     struct gr_volume {
+        geo::tag_type tag;
         const grain_type* pgrain;
-        std::size_t tag;
-        std::vector<std::unique_ptr<oriented<gr_face>>> faces;
-
-        gr_volume(const grain_type* pgrain, std::size_t tag)
-            : pgrain(pgrain), tag(tag) {}
     };
 
     struct gr_geometry {
-        std::vector<std::unique_ptr<gr_volume>> volumes;
-        std::vector<std::unique_ptr<gr_face>>   faces;
-        std::vector<std::unique_ptr<gr_edge>>   edges;
-        std::vector<std::unique_ptr<gr_vert>>   verts;
+        std::vector<gr_volume> volumes;
+        std::vector<gr_face>   faces;
+        std::vector<gr_edge>   edges;
+        std::vector<gr_vert>   verts;
     };
 
 

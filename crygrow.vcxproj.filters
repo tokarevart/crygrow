@@ -59,10 +59,10 @@
     <ClInclude Include="geoalgs.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="iteration.h">
+    <ClInclude Include="grgeo.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="grgeo.h">
+    <ClInclude Include="range-iter.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

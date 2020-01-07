@@ -9,7 +9,7 @@
 #include "vec.h"
 #include "sptops.h"
 #include "sptalgs.h"
-#include "iteration.h"
+#include "range-iter.h"
 
 namespace geo {
 
@@ -198,24 +198,24 @@ struct geometry {
     }
 
     template <typename TagType>
-    itr::iteration<std::size_t> volume_iteration(TagType tag) {
+    itr::range_iter<std::size_t> volume_iteration(TagType tag) {
         return {
             0, get_volume(tag).size(),
-            tag > 0 ? itr::direction::forward : itr::direction::reverse
+            tag > 0 ? itr::dir::forward : itr::dir::reverse
         };
     }
     template <typename TagType>
-    itr::iteration<std::size_t> surface_iteration(TagType tag) {
+    itr::range_iter<std::size_t> surface_iteration(TagType tag) {
         return {
             0, get_surface(tag).size(),
-            tag > 0 ? itr::direction::forward : itr::direction::reverse
+            tag > 0 ? itr::dir::forward : itr::dir::reverse
         };
     }
     template <typename TagType>
-    itr::iteration<std::size_t> line_iteration(TagType tag) {
+    itr::range_iter<std::size_t> line_iteration(TagType tag) {
         return {
             0, 2,
-            tag > 0 ? itr::direction::forward : itr::direction::reverse
+            tag > 0 ? itr::dir::forward : itr::dir::reverse
         };
     }
 };

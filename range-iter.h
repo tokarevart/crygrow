@@ -5,7 +5,7 @@
 
 namespace itr {
 
-enum class direction {
+enum class dir {
     forward,
     reverse
 };
@@ -21,7 +21,7 @@ enum class direction {
 //   else      : end+1, end+2,   ... begin
 //
 template <typename Signed>
-class iteration {
+class range_iter {
 public:
     Signed first() const {
         return m_begin;
@@ -42,13 +42,21 @@ public:
         return m_current == m_end;
     }
 
-    void init(Signed begin, Signed end, direction dir) {
+    range_iter& operator++() {
+        next();
+        return *this;
+    }
+    Signed operator*() {
+        return m_current;
+    }
+    
+    void init(Signed begin, Signed end, dir dir) {
         if (begin > end) {
             auto buf = begin;
             begin = end + 1;
             end = buf + 1;
         }
-        if (dir == direction::forward) {
+        if (dir == dir::forward) {
             m_begin = begin;
             m_end = end;
             m_step = 1;
@@ -60,7 +68,7 @@ public:
         m_current = m_begin;
     }
 
-    iteration(Signed begin, Signed end, direction dir = direction::forward) {
+    range_iter(Signed begin, Signed end, dir dir = dir::forward) {
         init(begin, end, dir);
     }
 

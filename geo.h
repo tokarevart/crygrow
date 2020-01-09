@@ -221,6 +221,11 @@ struct geometry {
             tag > 0 ? itr::dir::forward : itr::dir::reverse
         };
     }
+    template <typename TagType>
+    std::pair<utag_type, utag_type> get_line_point_tags(TagType tag) {
+        line& line = get_line(tag);
+        return tag > 0 ? std::make_pair(line[0], line[1]) : std::make_pair(line[1], line[0]);
+    }
 
     template <typename TagType>
     void orient_surface_edges(TagType tag) {
@@ -243,14 +248,6 @@ struct geometry {
         for (volume& vol : volumes)
             for (tag_type stag : vol)
                 orient_surface_edges(stag);
-    }
-
-
-private:
-    template <typename TagType>
-    std::pair<utag_type, utag_type> get_line_point_tags(TagType tag) {
-        line& line = get_line(tag);
-        return tag > 0 ? std::make_pair(line[0], line[1]) : std::make_pair(line[1], line[0]);
     }
 };
 

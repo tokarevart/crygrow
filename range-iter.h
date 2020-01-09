@@ -23,10 +23,10 @@ enum class dir {
 template <typename Signed>
 class range_iter {
 public:
-    Signed first() const {
+    Signed front() const {
         return m_begin;
     }
-    Signed last() const {
+    Signed back() const {
         return m_end - m_step;
     }
     Signed begin() const {
@@ -36,7 +36,10 @@ public:
         return m_end;
     }
     Signed next() {
-        return m_current += m_step;
+        return m_current + m_step;
+    }
+    Signed prev() {
+        return m_current - m_step;
     }
     bool has_ended() const {
         return m_current == m_end;

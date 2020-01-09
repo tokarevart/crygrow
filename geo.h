@@ -28,7 +28,7 @@ struct point {
 
 struct line {
     using tags_container = std::array<utag_type, 2>;
-    tags_container point_tags;
+    tags_container point_tags{ 0, 0 };
     utag_type tag;
 
     tags_container::iterator begin() {
@@ -47,17 +47,17 @@ struct line {
         return point_tags.size();
     }
 
-    tag_type front() {
+    utag_type& front() {
         return point_tags.front();
     }
-    tag_type back() {
+    utag_type& back() {
         return point_tags.back();
     }
 
-    utag_type at(std::size_t idx) const {
+    utag_type& at(std::size_t idx) {
         return point_tags[idx];
     }
-    utag_type operator[](std::size_t idx) const {
+    utag_type& operator[](std::size_t idx) {
         return at(idx);
     }
 
@@ -87,17 +87,17 @@ struct surface {
         return line_tags.size();
     }
 
-    tag_type front() {
+    tag_type& front() {
         return line_tags.front();
     }
-    tag_type back() {
+    tag_type& back() {
         return line_tags.back();
     }
 
-    tag_type at(std::size_t idx) const {
+    tag_type& at(std::size_t idx) {
         return line_tags[idx];
     }
-    tag_type operator[](std::size_t idx) const {
+    tag_type& operator[](std::size_t idx) {
         return at(idx);
     }
 
@@ -126,17 +126,17 @@ struct volume {
         return surface_tags.size();
     }
 
-    tag_type front() {
+    tag_type& front() {
         return surface_tags.front();
     }
-    tag_type back() {
+    tag_type& back() {
         return surface_tags.back();
     }
 
-    tag_type at(std::size_t idx) const {
+    tag_type& at(std::size_t idx) {
         return surface_tags[idx];
     }
-    tag_type operator[](std::size_t idx) const {
+    tag_type& operator[](std::size_t idx) {
         return at(idx);
     }
 
@@ -153,10 +153,13 @@ struct geometry {
     template <typename TagType>
     std::size_t tag_to_idx(TagType tag) const {
         if constexpr (std::is_signed_v<TagType>) {
-            return std::abs(tag) - 1;
+            return static_cast<std::size_t>(std::abs(tag)) - 1;
         } else {
             return tag - 1;
         }
+    }
+    utag_type idx_to_utag(std::size_t idx) const {
+        return idx + 1;
     }
 
     utag_type add_volume(volume::tags_container surface_tags = volume::tags_container()) {
@@ -198,25 +201,56 @@ struct geometry {
     }
 
     template <typename TagType>
-    itr::range_iter<std::size_t> volume_iteration(TagType tag) {
+    itr::range_iter<std::size_t> volume_iter(TagType tag) {
         return {
             0, get_volume(tag).size(),
             tag > 0 ? itr::dir::forward : itr::dir::reverse
         };
     }
     template <typename TagType>
-    itr::range_iter<std::size_t> surface_iteration(TagType tag) {
+    itr::range_iter<std::size_t> surface_iter(TagType tag) {
         return {
             0, get_surface(tag).size(),
             tag > 0 ? itr::dir::forward : itr::dir::reverse
         };
     }
     template <typename TagType>
-    itr::range_iter<std::size_t> line_iteration(TagType tag) {
+    itr::range_iter<std::size_t> line_iter(TagType tag) {
         return {
             0, 2,
             tag > 0 ? itr::dir::forward : itr::dir::reverse
         };
+    }
+
+    template <typename TagType>
+    void orient_surface_edges(TagType tag) {
+        surface& surface = get_surface(tag);
+        for (std::size_t mli = 0; mli < surface.size() - 1; ++mli) {
+            auto [mp0, mp1] = get_line_point_tags(surface[mli]);
+            for (std::size_t li = mli + 1; li < surface.size(); ++li) {
+                auto [p0, p1] = get_line_point_tags(surface[li]);
+                if (mp1 != p0 && mp1 != p1)
+                    continue;
+                if (mp1 == p1)
+                    surface[li] = -surface[li];
+                std::swap(surface[mli + 1], surface[li]);
+                break;
+            }
+        }
+    }
+
+    void orient_edges() {
+        for (volume& vol : volumes)
+            for (tag_type stag : vol)
+                orient_surface_edges(stag);
+    }
+
+
+private:
+    template <typename TagType>
+    std::pair<utag_type, utag_type> get_line_point_tags(TagType tag) {
+        line& line = get_line(tag);
+        return tag > 0 ? std::make_pair(line[0], line[1]) : std::make_pair(line[1], line[0]);
     }
 };
 

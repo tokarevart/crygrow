@@ -1,3 +1,6 @@
+// Copyright © 2020 Tokarev Artem. All rights reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include <cstddef>
 #include <cstdlib>
@@ -22,6 +25,54 @@ struct point {
     utag_type tag;
     pos_type x;
 
+    auto begin() {
+        return x.x.begin();
+    }
+    auto begin() const {
+        return x.x.begin();
+    }
+    auto end() {
+        return x.x.end();
+    }
+    auto end() const {
+        return x.x.end();
+    }
+    auto rbegin() {
+        return x.x.rbegin();
+    }
+    auto rbegin() const {
+        return x.x.rbegin();
+    }
+    auto rend() {
+        return x.x.rend();
+    }
+    auto rend() const {
+        return x.x.rend();
+    }
+    std::size_t size() const {
+        return x.x.size();
+    }
+
+    auto& front() {
+        return x.x.front();
+    }
+    auto& front() const {
+        return x.x.front();
+    }
+    auto& back() {
+        return x.x.back();
+    }
+    auto& back() const {
+        return x.x.back();
+    }
+
+    auto& operator[](std::size_t idx) {
+        return x[idx];
+    }
+    auto& operator[](std::size_t idx) const {
+        return x[idx];
+    }
+
     point(utag_type tag, pos_type x = pos_type())
         : tag(tag), x(x) {}
 };
@@ -31,34 +82,52 @@ struct line {
     tags_container point_tags{ 0, 0 };
     utag_type tag;
 
-    tags_container::iterator begin() {
+    auto begin() {
         return point_tags.begin();
     }
-    tags_container::iterator end() {
+    auto begin() const {
+        return point_tags.begin();
+    }
+    auto end() {
         return point_tags.end();
     }
-    tags_container::reverse_iterator rbegin() {
+    auto end() const {
+        return point_tags.end();
+    }
+    auto rbegin() {
         return point_tags.rbegin();
     }
-    tags_container::reverse_iterator rend() {
+    auto rbegin() const {
+        return point_tags.rbegin();
+    }
+    auto rend() {
+        return point_tags.rend();
+    }
+    auto rend() const {
         return point_tags.rend();
     }
     std::size_t size() const {
         return point_tags.size();
     }
 
-    utag_type& front() {
+    auto& front() {
         return point_tags.front();
     }
-    utag_type& back() {
+    auto& front() const {
+        return point_tags.front();
+    }
+    auto& back() {
+        return point_tags.back();
+    }
+    auto& back() const {
         return point_tags.back();
     }
 
-    utag_type& at(std::size_t idx) {
+    auto& operator[](std::size_t idx) {
         return point_tags[idx];
     }
-    utag_type& operator[](std::size_t idx) {
-        return at(idx);
+    auto& operator[](std::size_t idx) const {
+        return point_tags[idx];
     }
 
     line(utag_type tag, tags_container point_tags = tags_container())
@@ -71,34 +140,52 @@ struct surface {
     utag_type tag;
     bool is_plane = false;
 
-    tags_container::iterator begin() {
+    auto begin() {
         return line_tags.begin();
     }
-    tags_container::iterator end() {
+    auto begin() const {
+        return line_tags.begin();
+    }
+    auto end() {
         return line_tags.end();
     }
-    tags_container::reverse_iterator rbegin() {
+    auto end() const {
+        return line_tags.end();
+    }
+    auto rbegin() {
         return line_tags.rbegin();
     }
-    tags_container::reverse_iterator rend() {
+    auto rbegin() const {
+        return line_tags.rbegin();
+    }
+    auto rend() {
+        return line_tags.rend();
+    }
+    auto rend() const {
         return line_tags.rend();
     }
     std::size_t size() const {
         return line_tags.size();
     }
 
-    tag_type& front() {
+    auto& front() {
         return line_tags.front();
     }
-    tag_type& back() {
+    auto& front() const {
+        return line_tags.front();
+    }
+    auto& back() {
+        return line_tags.back();
+    }
+    auto& back() const {
         return line_tags.back();
     }
 
-    tag_type& at(std::size_t idx) {
+    auto& operator[](std::size_t idx) {
         return line_tags[idx];
     }
-    tag_type& operator[](std::size_t idx) {
-        return at(idx);
+    auto& operator[](std::size_t idx) const {
+        return line_tags[idx];
     }
 
     surface(utag_type tag, tags_container line_tags = tags_container())
@@ -110,34 +197,52 @@ struct volume {
     tags_container surface_tags;
     utag_type tag;
 
-    tags_container::iterator begin() {
+    auto begin() {
         return surface_tags.begin();
     }
-    tags_container::iterator end() {
+    auto begin() const {
+        return surface_tags.begin();
+    }
+    auto end() {
         return surface_tags.end();
     }
-    tags_container::reverse_iterator rbegin() {
+    auto end() const {
+        return surface_tags.end();
+    }
+    auto rbegin() {
         return surface_tags.rbegin();
     }
-    tags_container::reverse_iterator rend() {
+    auto rbegin() const {
+        return surface_tags.rbegin();
+    }
+    auto rend() {
+        return surface_tags.rend();
+    }
+    auto rend() const {
         return surface_tags.rend();
     }
     std::size_t size() const {
         return surface_tags.size();
     }
 
-    tag_type& front() {
+    auto& front() {
         return surface_tags.front();
     }
-    tag_type& back() {
+    auto& front() const {
+        return surface_tags.front();
+    }
+    auto& back() {
+        return surface_tags.back();
+    }
+    auto& back() const {
         return surface_tags.back();
     }
 
-    tag_type& at(std::size_t idx) {
+    auto& operator[](std::size_t idx) {
         return surface_tags[idx];
     }
-    tag_type& operator[](std::size_t idx) {
-        return at(idx);
+    auto& operator[](std::size_t idx) const {
+        return surface_tags[idx];
     }
 
     volume(utag_type tag, tags_container surface_tags = tags_container())
@@ -163,18 +268,18 @@ struct geometry {
     }
 
     utag_type add_volume(volume::tags_container surface_tags = volume::tags_container()) {
-        utag_type tag = points.size() + 1;
-        volumes.emplace_back(volumes.size() + 1, std::move(surface_tags));
+        utag_type tag = volumes.size() + 1;
+        volumes.emplace_back(tag, std::move(surface_tags));
         return tag;
     }
     utag_type add_surface(surface::tags_container line_tags = surface::tags_container()) {
-        utag_type tag = points.size() + 1;
-        surfaces.emplace_back(surfaces.size() + 1, std::move(line_tags));
+        utag_type tag = surfaces.size() + 1;
+        surfaces.emplace_back(tag, std::move(line_tags));
         return tag;
     }
     utag_type add_line(line::tags_container point_tags = line::tags_container()) {
-        utag_type tag = points.size() + 1;
-        lines.emplace_back(lines.size() + 1, std::move(point_tags));
+        utag_type tag = lines.size() + 1;
+        lines.emplace_back(tag, std::move(point_tags));
         return tag;
     }
     utag_type add_point(pos_type x = pos_type()) {
@@ -243,11 +348,70 @@ struct geometry {
             }
         }
     }
-
     void orient_edges() {
         for (volume& vol : volumes)
             for (tag_type stag : vol)
                 orient_surface_edges(stag);
+    }
+
+    template <typename ExprType>
+    std::string expression_str(ExprType expr) const {
+        return std::to_string(expr);
+    }
+    template <template <typename... Args> typename Container, typename ExprType>
+    std::string expression_list_str(const Container<ExprType>& exprs) const {
+        std::string res = expression_str(exprs[0]);
+        for (std::size_t i = 1; i < exprs.size(); ++i)
+            res += ", " + expression_str(exprs[i]);
+        return res;
+    }
+    template <template <typename... Args> typename Container, typename ExprType>
+    std::string define_entity_str(std::string name, utag_type tag, const Container<ExprType>& exprs) const {
+        return name + "(" + expression_str(tag) + ") = {" + expression_list_str(exprs) + ");";
+    }
+
+    std::string point_str(const point& pnt) const {
+        return define_entity_str("Point", pnt.tag, std::vector(pnt.begin(), pnt.end()));
+    }
+    std::string line_str(const line& line) const {
+        return define_entity_str("Line", line.tag, std::vector(line.begin(), line.end()));
+    }
+    std::string line_loop_str(const surface& sur) const {
+        return define_entity_str("Line Loop", sur.tag, sur.line_tags);
+    }
+    std::string surface_str(const surface& sur) const {
+        return define_entity_str(sur.is_plane ? "Plane Surface" : "Surface", sur.tag, std::vector{ sur.tag });
+    }
+    std::string volume_str(const volume& vol) const {
+        return define_entity_str("Volume", vol.tag, vol.surface_tags);
+    }
+
+    void write_points(std::ostream& os) const {
+        for (auto& pnt : points)
+            os << point_str(pnt) << std::endl;
+    }
+    void write_lines(std::ostream& os) const {
+        for (auto& line : lines)
+            os << line_str(line) << std::endl;
+    }
+    void write_line_loops(std::ostream& os) const {
+        for (auto& sur : surfaces)
+            os << line_loop_str(sur) << std::endl;
+    }
+    void write_surfaces(std::ostream& os) const {
+        for (auto& sur : surfaces)
+            os << surface_str(sur) << std::endl;
+    }
+    void write_volumes(std::ostream& os) const {
+        for (auto& vol : volumes)
+            os << volume_str(vol) << std::endl;
+    }
+    void write(std::ostream& os) const {
+        write_points(os);
+        write_lines(os);
+        write_line_loops(os);
+        write_surfaces(os);
+        write_volumes(os);
     }
 };
 

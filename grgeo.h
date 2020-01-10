@@ -1,3 +1,6 @@
+// Copyright © 2019-2020 Tokarev Artem. All rights reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "geo.h"
 
@@ -16,33 +19,66 @@ using cells_container = std::vector<cell_type*>;
 using grain_type = cell_type::grain_type;
 using grains_container = cell_type::grains_container;
 
-struct gr_vert {
+struct gr_point {
     utag_type tag;
     const grains_container* pgrains;
+
+    gr_point(utag_type tag, const grains_container* pgrains)
+        : tag(tag), pgrains(pgrains) {}
 };
 
-struct gr_edge {
-    tag_type tag;
+struct gr_line {
+    utag_type tag;
     const grains_container* pgrains;
+
+    gr_line(utag_type tag, const grains_container* pgrains)
+        : tag(tag), pgrains(pgrains) {}
 };
 
-struct gr_face {
-    tag_type tag;
+struct gr_surface {
+    utag_type tag;
     const grains_container* pgrains;
+
+    gr_surface(utag_type tag, const grains_container* pgrains)
+        : tag(tag), pgrains(pgrains) {}
 };
 
 struct gr_volume {
-    tag_type tag;
+    utag_type tag;
     const grain_type* pgrain;
+
+    gr_volume(utag_type tag, const grain_type* pgrain)
+        : tag(tag), pgrain(pgrain) {}
 };
 
 struct gr_geometry {
     geo::geometry geometry;
 
-    std::vector<gr_volume> volumes;
-    std::vector<gr_face>   faces;
-    std::vector<gr_edge>   edges;
-    std::vector<gr_vert>   verts;
+    std::vector<gr_volume>  gr_volumes;
+    std::vector<gr_surface> gr_surfaces;
+    std::vector<gr_line>    gr_lines;
+    std::vector<gr_point>   gr_points;
+
+    utag_type add_gr_volume(const grain_type* pgrain, geo::volume::tags_container surface_tags = geo::volume::tags_container()) {
+        utag_type tag = geometry.add_volume(std::move(surface_tags));
+        gr_volumes.emplace_back(tag, pgrain);
+        return tag;
+    }
+    utag_type add_gr_surface(const grains_container* pgrains, geo::surface::tags_container line_tags = geo::surface::tags_container()) {
+        utag_type tag = geometry.add_surface(std::move(line_tags));
+        gr_surfaces.emplace_back(tag, pgrains);
+        return tag;
+    }
+    utag_type add_gr_line(const grains_container* pgrains, geo::line::tags_container point_tags = geo::line::tags_container()) {
+        utag_type tag = geometry.add_line(std::move(point_tags));
+        gr_lines.emplace_back(tag, pgrains);
+        return tag;
+    }
+    utag_type add_gr_point(const grains_container* pgrains, pos_type x = pos_type()) {
+        utag_type tag = geometry.add_point(x);
+        gr_points.emplace_back(tag, pgrains);
+        return tag;
+    }
 };
 
 } // namespace cgr

@@ -1,3 +1,6 @@
+// Copyright © 2019-2020 Tokarev Artem. All rights reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include <optional>
 #include <string>
@@ -228,6 +231,7 @@ public:
         for (std::size_t i = 0; i < num_cells(); ++i) {
             if (get_grains(i).size() > 1)
                 res.push_back(i);
+            // dirty hack
             if (get_grains(i).size() > 4)
                 std::cout << "oops!";
         }

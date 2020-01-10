@@ -34,7 +34,10 @@ public:
     template <typename T>
     using vector2gd = std::vector<std::vector<T>>;
 
-    void add_empty_gr_volumes(const std::vector<grains_container>& grconts) const {
+    using automata_type = cgr::simple_automata<dim, nbhood_kind::euclid, real_type>;
+    using gr_geometry = grgeo::gr_geometry;
+
+    void add_empty_gr_volumes(const std::vector<grains_container>& grconts) {
         std::unordered_set<grain_type*> uniquegrs;
         for (auto& grcont : grconts)
             for (auto& gr : grcont)
@@ -44,16 +47,16 @@ public:
         for (auto it = uniquegrs.begin(); it != uniquegrs.end(); ++it)
             m_gr_geo.add_gr_volume(*it);
     }
-    void add_empty_gr_surfaces(const std::vector<grains_container>& grconts) const {
+    void add_empty_gr_surfaces(const std::vector<grains_container>& grconts) {
         for (auto& grcont : grconts)
             m_gr_geo.add_gr_surface(&grcont);
     }
-    void add_empty_gr_lines(const std::vector<grains_container>& grconts) const {
+    void add_empty_gr_lines(const std::vector<grains_container>& grconts) {
         for (auto& grcont : grconts)
             m_gr_geo.add_gr_line(&grcont);
     }
     void add_gr_points(const std::vector<grains_container>& grconts,
-                       const std::vector<offsets_container>& offconts) const {
+                       const std::vector<offsets_container>& offconts) {
         for (std::size_t i = 0; i < grconts.size(); ++i)
             m_gr_geo.add_gr_point(&grconts[i], central_pos(offconts[i]));
     }
@@ -304,83 +307,9 @@ public:
         m_gr_geo.geometry.orient_lines();
         //
     }
-
-    template <typename T>
-    struct tag_str_impl {
-        static std::string run(const T& grobj) {
-            return std::to_string(grobj.tag);
-        }
-    };
-    template <typename T>
-    struct tag_str_impl<oriented<T>> {
-        static std::string run(const oriented<T>& grobj) {
-            std::string prefix = "";
-            if (grobj.orient == geo_orient::reverse)
-                prefix = "-";
-            return prefix + std::to_string(grobj.obj->tag);
-        }
-    };
-
-    template <typename T>
-    std::string tag_str(const T& grobj) const {
-        return tag_str_impl<T>::run(grobj);
-    }
-
-    std::string geo_point_pos_str(const pos_type& pos) const {
-        return "{" + std::to_string(pos.x[0]) + ", " 
-            + std::to_string(pos.x[1]) + ", " 
-            + std::to_string(pos.x[2]) + "};";
-    }
-
-    std::string geo_point_str(const gr_vert& vert) const {
-        return "Point(" + tag_str(vert) + ") = " + geo_point_pos_str(vert.pos);
-    }
-
-    void write_geo_points(std::ostream& os) const {
-        for (auto& v : m_gr_geo.verts)
-            os << geo_point_str(*v) + "\n";
-    }
-
-    std::string geo_line_verts_str(const pos_type& pos) const {
-        return "{" + std::to_string(pos.x[0]) + ", "
-            + std::to_string(pos.x[1]) + ", "
-            + std::to_string(pos.x[2]) + "};";
-    }
-
-    std::string geo_line_str(const gr_edge& edge) const {
-        return "Line(" + tag_str(edge) + ") = {" + tag_str(*edge.verts.front()) 
-            + ", " + tag_str(*edge.verts.back()) + "};";
-    }
-
-    void write_geo_lines(std::ostream& os) const {
-        for (auto& e : m_gr_geo.edges)
-            os << geo_line_str(*e) + "\n";
-    }
-
-    std::string geo_line_loop(const gr_face& face) const {
-        std::string inbraces = "";
-        for (std::size_t i = 0; i < face.edges.size() - 1; ++i)
-            inbraces += tag_str(*face.edges[i]) + ", ";
-        inbraces += tag_str(*face.edges[face.edges.size() - 1]);
-        return "Line Loop(" + tag_str(face) + ") = {" + inbraces + "};";
-    }
-
-    void write_geo_line_loops(std::ostream& os) const {
-        for (auto& f : m_gr_geo.faces)
-            os << geo_line_loop(*f) + "\n";
-    }
-
-    std::string geo_plane_surface_str(const gr_face& face) const {
-        return "Plane Surface(" + tag_str(face) + ") = {" + tag_str(face) + "};";
-    }
     
-    void write_geo_plane_surfaces(std::ostream& os) const {
-        for (auto& f : m_gr_geo.faces)
-            os << geo_plane_surface_str(*f) + "\n";
-    }
-
     void write_geo(std::ostream& os) const {
-        m_gr_geo.
+        m_gr_geo.geometry.write(os);
     }
 
 

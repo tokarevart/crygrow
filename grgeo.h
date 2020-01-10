@@ -69,6 +69,11 @@ struct gr_geometry {
         gr_surfaces.emplace_back(tag, pgrains);
         return tag;
     }
+    utag_type add_gr_plane_surface(const grains_container* pgrains, geo::surface::tags_container line_tags = geo::surface::tags_container()) {
+        utag_type tag = geometry.add_plane_surface(std::move(line_tags));
+        gr_surfaces.emplace_back(tag, pgrains);
+        return tag;
+    }
     utag_type add_gr_line(const grains_container* pgrains, geo::line::tags_container point_tags = geo::line::tags_container()) {
         utag_type tag = geometry.add_line(std::move(point_tags));
         gr_lines.emplace_back(tag, pgrains);

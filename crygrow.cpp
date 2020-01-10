@@ -242,7 +242,7 @@ int main() {
 
     cgr::simple_geo_tool simplegeo(&automata);
     simplegeo.make_geometry();
-    std::ofstream file("kek.geo");
+    std::ofstream file("polycr.geo");
     simplegeo.write_geo(file);
     simplegeo.write_geo(std::cout);
 

@@ -277,6 +277,11 @@ struct geometry {
         surfaces.emplace_back(tag, std::move(line_tags));
         return tag;
     }
+    utag_type add_plane_surface(surface::tags_container line_tags = surface::tags_container()) {
+        utag_type tag = add_surface(std::move(line_tags));
+        surfaces[tag_to_idx(tag)].is_plane = true;
+        return tag;
+    }
     utag_type add_line(line::tags_container point_tags = line::tags_container()) {
         utag_type tag = lines.size() + 1;
         lines.emplace_back(tag, std::move(point_tags));
@@ -306,6 +311,12 @@ struct geometry {
     }
 
     template <typename TagType>
+    std::pair<utag_type, utag_type> get_line_point_tags(TagType tag) {
+        line& line = get_line(tag);
+        return tag > 0 ? std::make_pair(line[0], line[1]) : std::make_pair(line[1], line[0]);
+    }
+
+    template <typename TagType>
     itr::range_iter<std::size_t> volume_iter(TagType tag) {
         return {
             0, get_volume(tag).size(),
@@ -325,11 +336,6 @@ struct geometry {
             0, 2,
             tag > 0 ? itr::dir::forward : itr::dir::reverse
         };
-    }
-    template <typename TagType>
-    std::pair<utag_type, utag_type> get_line_point_tags(TagType tag) {
-        line& line = get_line(tag);
-        return tag > 0 ? std::make_pair(line[0], line[1]) : std::make_pair(line[1], line[0]);
     }
 
     template <typename TagType>
@@ -367,7 +373,7 @@ struct geometry {
     }
     template <template <typename... Args> typename Container, typename ExprType>
     std::string define_entity_str(std::string name, utag_type tag, const Container<ExprType>& exprs) const {
-        return name + "(" + expression_str(tag) + ") = {" + expression_list_str(exprs) + ");";
+        return name + "(" + expression_str(tag) + ") = {" + expression_list_str(exprs) + "};";
     }
 
     std::string point_str(const point& pnt) const {

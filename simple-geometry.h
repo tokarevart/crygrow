@@ -49,7 +49,7 @@ public:
     }
     void add_empty_gr_surfaces(const std::vector<grains_container>& grconts) {
         for (auto& grcont : grconts)
-            m_gr_geo.add_gr_surface(&grcont);
+            m_gr_geo.add_gr_plane_surface(&grcont);
     }
     void add_empty_gr_lines(const std::vector<grains_container>& grconts) {
         for (auto& grcont : grconts)
@@ -173,9 +173,10 @@ public:
     }
 
     offsets_container flatten(const std::vector<offsets_container>& conts) const {
-        offsets_container res(std::accumulate<std::size_t>(
-            conts.begin(), conts.end(), 0,
-            [](const offsets_container& e) { return e.size(); }));
+        std::size_t sumsizes = 0;
+        for (auto& cont : conts)
+            sumsizes += conts.size();
+        offsets_container res(sumsizes);
         for (auto& cont : conts)
             for (auto off : cont)
                 res.push_back(off);
@@ -263,19 +264,21 @@ public:
 
     void connect_gr_geometry() {
         for (auto& vol : m_gr_geo.gr_volumes)
-            for (auto& face : m_gr_geo.gr_surfaces)
-                if (grains_contains_unsorted(*face->pgrains, vol->pgrain))
-                    vol->faces.emplace_back(std::make_unique<oriented<gr_face>>(face.get()));
+            for (auto& sur : m_gr_geo.gr_surfaces)
+                if (grains_contains_unsorted(*sur.pgrains, vol.pgrain))
+                    m_gr_geo.geometry.get_volume(vol.tag).surface_tags.push_back(sur.tag);
 
-        for (auto& face : m_gr_geo.gr_surfaces)
-            for (auto& edge : m_gr_geo.gr_lines)
-                if (grains_includes_unsorted(*edge->pgrains, *face->pgrains))
-                    face->edges.emplace_back(std::make_unique<oriented<gr_edge>>(edge.get()));
+        for (auto& sur : m_gr_geo.gr_surfaces)
+            for (auto& line : m_gr_geo.gr_lines)
+                if (grains_includes_unsorted(*line.pgrains, *sur.pgrains))
+                    m_gr_geo.geometry.get_surface(sur.tag).line_tags.push_back(line.tag);
 
-        for (auto& edge : m_gr_geo.gr_lines)
-            for (auto& vert : m_gr_geo.gr_points)
-                if (grains_includes_unsorted(*vert->pgrains, *edge->pgrains))
-                    edge->verts.push_back(vert.get());
+        for (auto& line : m_gr_geo.gr_lines)
+            for (auto& pnt : m_gr_geo.gr_points)
+                if (grains_includes_unsorted(*pnt.pgrains, *line.pgrains))
+                    m_gr_geo.geometry.get_line(line.tag).point_tags[0] == 0 ?
+                    m_gr_geo.geometry.get_line(line.tag).point_tags[0] = pnt.tag :
+                    m_gr_geo.geometry.get_line(line.tag).point_tags[1] = pnt.tag;
     }
 
     void init_gr_geometry(const std::vector<offsets_container>& pjointsoffs) {

@@ -261,45 +261,9 @@ public:
         return accreal;
     }
 
-
-    void connect_gr_geometry() {
-        for (auto& vol : m_gr_geo.gr_volumes)
-            for (auto& sur : m_gr_geo.gr_surfaces)
-                if (grains_contains_unsorted(*sur.pgrains, vol.pgrain))
-                    m_gr_geo.geometry.get_volume(vol.tag).surface_tags.push_back(sur.tag);
-
-        for (auto& sur : m_gr_geo.gr_surfaces)
-            for (auto& line : m_gr_geo.gr_lines)
-                if (grains_includes_unsorted(*line.pgrains, *sur.pgrains))
-                    m_gr_geo.geometry.get_surface(sur.tag).line_tags.push_back(line.tag);
-
-        for (auto& line : m_gr_geo.gr_lines)
-            for (auto& pnt : m_gr_geo.gr_points)
-                if (grains_includes_unsorted(*pnt.pgrains, *line.pgrains))
-                    m_gr_geo.geometry.get_line(line.tag).point_tags[0] == 0 ?
-                    m_gr_geo.geometry.get_line(line.tag).point_tags[0] = pnt.tag :
-                    m_gr_geo.geometry.get_line(line.tag).point_tags[1] = pnt.tag;
-    }
-
-    void init_gr_geometry(const std::vector<offsets_container>& pjointsoffs) {
-        add_empty_gr_volumes(m_g2grs[0]);
-        add_empty_gr_surfaces(m_g2grs[0]);
-        add_empty_gr_lines(m_g2grs[1]);
-        add_gr_points(m_g2grs[2], pjointsoffs);
-        connect_gr_geometry();
-    }
-
     void make_geometry() {
-        auto box_vs = box_vertices();
-        auto box_es = box_edges(box_vs);
-        auto box_fs = box_faces(box_es);
-
-        for (std::size_t i = 0; i < 6; ++i) {
-            m_boxbry_grains[i] = std::make_unique<grain_type>(nullptr);
-            for (auto off : box_fs[i]) {
-                add_grain(off, m_boxbry_grains[i].get());
-            }
-        }
+        m_boxbry_grconts.clear();
+        add_boxbry_grains();
 
         auto g2offs = grouped2_offsets();
         m_g2grs = grouped2_offsets_to_grains(g2offs);
@@ -315,8 +279,7 @@ public:
         m_gr_geo.geometry.write(os);
     }
 
-
-    std::optional<std::string> is_global_max_order_overflow() const {
+    std::optional<std::string> is_inner_max_order_overflow() const {
         for (std::size_t i = 0; i < num_cells(); ++i)
             if (get_grains(i).size() > 4)
                 return "Max boundary order overflow\n";
@@ -347,11 +310,49 @@ private:
     vector2gd<grains_container> m_g2grs;
     gr_geometry m_gr_geo;
 
+    void init_gr_geometry(const std::vector<offsets_container>& pjointsoffs) {
+        m_gr_geo.clear();
+        add_empty_gr_volumes(m_g2grs[0]);
+        add_empty_gr_surfaces(m_g2grs[0]);
+        add_empty_gr_lines(m_g2grs[1]);
+        add_gr_points(m_g2grs[2], pjointsoffs);
+        connect_gr_geometry();
+    }
+    void connect_gr_geometry() {
+        for (auto& vol : m_gr_geo.gr_volumes)
+            for (auto& sur : m_gr_geo.gr_surfaces)
+                if (grains_contains_unsorted(*sur.pgrains, vol.pgrain))
+                    m_gr_geo.geometry.get_volume(vol.tag).surface_tags.push_back(sur.tag);
+
+        for (auto& sur : m_gr_geo.gr_surfaces)
+            for (auto& line : m_gr_geo.gr_lines)
+                if (grains_includes_unsorted(*line.pgrains, *sur.pgrains))
+                    m_gr_geo.geometry.get_surface(sur.tag).line_tags.push_back(line.tag);
+
+        for (auto& line : m_gr_geo.gr_lines)
+            for (auto& pnt : m_gr_geo.gr_points)
+                if (grains_includes_unsorted(*pnt.pgrains, *line.pgrains))
+                    m_gr_geo.geometry.get_line(line.tag).point_tags[0] == 0 ?
+                    m_gr_geo.geometry.get_line(line.tag).point_tags[0] = pnt.tag :
+                    m_gr_geo.geometry.get_line(line.tag).point_tags[1] = pnt.tag;
+    }
+
     std::size_t num_cells() const {
         return m_automata->num_cells();
     }
     cell_type* get_cell(std::size_t offset) const {
         return m_automata->get_cell(offset);
+    }
+    void add_boxbry_grains() {
+        auto box_vs = box_vertices();
+        auto box_es = box_edges(box_vs);
+        auto box_fs = box_faces(box_es);
+
+        for (std::size_t i = 0; i < 6; ++i) {
+            m_boxbry_grains[i] = std::make_unique<grain_type>(nullptr);
+            for (auto off : box_fs[i])
+                add_grain(off, m_boxbry_grains[i].get());
+        }
     }
     void add_grain(std::size_t offset, const grain_type* pgrain) {
         m_boxbry_grconts.insert({ offset, std::make_unique<grains_container>(get_cell(offset)->grains) });

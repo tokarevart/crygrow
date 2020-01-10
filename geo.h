@@ -412,6 +412,18 @@ struct geometry {
         write_surfaces(os);
         write_volumes(os);
     }
+
+    void clear() {
+        volumes.clear();
+        surfaces.clear();
+        lines.clear();
+        points.clear();
+
+        volumes.shrink_to_fit();
+        surfaces.shrink_to_fit();
+        lines.shrink_to_fit();
+        points.shrink_to_fit();
+    }
 };
 
 } // namespace geo

@@ -84,6 +84,18 @@ struct gr_geometry {
         gr_points.emplace_back(tag, pgrains);
         return tag;
     }
+
+    void clear() {
+        gr_volumes.clear();
+        gr_surfaces.clear();
+        gr_lines.clear();
+        gr_points.clear();
+
+        gr_volumes.shrink_to_fit();
+        gr_surfaces.shrink_to_fit();
+        gr_lines.shrink_to_fit();
+        gr_points.shrink_to_fit();
+    }
 };
 
 } // namespace cgr

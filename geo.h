@@ -333,7 +333,7 @@ struct geometry {
     }
 
     template <typename TagType>
-    void orient_surface_edges(TagType tag) {
+    void orient_surface_lines(TagType tag) {
         surface& surface = get_surface(tag);
         for (std::size_t mli = 0; mli < surface.size() - 1; ++mli) {
             auto [mp0, mp1] = get_line_point_tags(surface[mli]);
@@ -348,10 +348,10 @@ struct geometry {
             }
         }
     }
-    void orient_edges() {
+    void orient_lines() {
         for (volume& vol : volumes)
             for (tag_type stag : vol)
-                orient_surface_edges(stag);
+                orient_surface_lines(stag);
     }
 
     template <typename ExprType>
@@ -376,11 +376,9 @@ struct geometry {
     std::string line_str(const line& line) const {
         return define_entity_str("Line", line.tag, std::vector(line.begin(), line.end()));
     }
-    std::string line_loop_str(const surface& sur) const {
-        return define_entity_str("Line Loop", sur.tag, sur.line_tags);
-    }
     std::string surface_str(const surface& sur) const {
-        return define_entity_str(sur.is_plane ? "Plane Surface" : "Surface", sur.tag, std::vector{ sur.tag });
+        return define_entity_str("Line Loop", sur.tag, sur.line_tags) + "\n" 
+            + define_entity_str(sur.is_plane ? "Plane Surface" : "Surface", sur.tag, std::vector{ sur.tag });
     }
     std::string volume_str(const volume& vol) const {
         return define_entity_str("Volume", vol.tag, vol.surface_tags);
@@ -394,10 +392,6 @@ struct geometry {
         for (auto& line : lines)
             os << line_str(line) << std::endl;
     }
-    void write_line_loops(std::ostream& os) const {
-        for (auto& sur : surfaces)
-            os << line_loop_str(sur) << std::endl;
-    }
     void write_surfaces(std::ostream& os) const {
         for (auto& sur : surfaces)
             os << surface_str(sur) << std::endl;
@@ -409,7 +403,6 @@ struct geometry {
     void write(std::ostream& os) const {
         write_points(os);
         write_lines(os);
-        write_line_loops(os);
         write_surfaces(os);
         write_volumes(os);
     }

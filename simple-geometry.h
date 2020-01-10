@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_set>
 #include <unordered_map>
+#include <algorithm>
 #include "simple-automata.h"
 #include "grgeo.h"
 
@@ -33,69 +34,28 @@ public:
     template <typename T>
     using vector2gd = std::vector<std::vector<T>>;
 
-    struct gr_vert {
-        geo::tag_type tag;
-        const grains_container* pgrains;
-    };
-
-    struct gr_edge {
-        geo::tag_type tag;
-        const grains_container* pgrains;
-    };
-
-    struct gr_face {
-        geo::tag_type tag;
-        const grains_container* pgrains;
-    };
-
-    struct gr_volume {
-        geo::tag_type tag;
-        const grain_type* pgrain;
-    };
-
-    struct gr_geometry {
-        std::vector<gr_volume> volumes;
-        std::vector<gr_face>   faces;
-        std::vector<gr_edge>   edges;
-        std::vector<gr_vert>   verts;
-    };
-
-
-    std::vector<std::unique_ptr<gr_volume>> make_gr_volumes(const std::vector<grains_container>& grconts) const {
+    void add_empty_gr_volumes(const std::vector<grains_container>& grconts) const {
         std::unordered_set<grain_type*> uniquegrs;
         for (auto& grcont : grconts)
             for (auto& gr : grcont)
                 if (gr->material())
                     uniquegrs.insert(gr);
 
-        std::vector<std::unique_ptr<gr_volume>> res;
-        res.reserve(uniquegrs.size());
-        std::size_t i = 0;
         for (auto it = uniquegrs.begin(); it != uniquegrs.end(); ++it)
-            res.push_back(std::make_unique<gr_volume>(*it, i++ + 1));
-        return res;
+            m_gr_geo.add_gr_volume(*it);
     }
-    std::vector<std::unique_ptr<gr_face>> make_gr_faces(const std::vector<grains_container>& grconts) const {
-        std::vector<std::unique_ptr<gr_face>> res;
-        res.reserve(grconts.size());
-        for (std::size_t i = 0; i < grconts.size(); ++i)
-            res.push_back(std::make_unique<gr_face>(&grconts[i], i + 1));
-        return res;
+    void add_empty_gr_surfaces(const std::vector<grains_container>& grconts) const {
+        for (auto& grcont : grconts)
+            m_gr_geo.add_gr_surface(&grcont);
     }
-    std::vector<std::unique_ptr<gr_edge>> make_gr_edges(const std::vector<grains_container>& grconts) const {
-        std::vector<std::unique_ptr<gr_edge>> res;
-        res.reserve(grconts.size());
-        for (std::size_t i = 0; i < grconts.size(); ++i)
-            res.push_back(std::make_unique<gr_edge>(&grconts[i], i + 1));
-        return res;
+    void add_empty_gr_lines(const std::vector<grains_container>& grconts) const {
+        for (auto& grcont : grconts)
+            m_gr_geo.add_gr_line(&grcont);
     }
-    std::vector<std::unique_ptr<gr_vert>> make_gr_verts(const std::vector<grains_container>& grconts,
-                                                        const std::vector<offsets_container>& offconts) const {
-        std::vector<std::unique_ptr<gr_vert>> res;
-        res.reserve(grconts.size());
+    void add_gr_points(const std::vector<grains_container>& grconts,
+                       const std::vector<offsets_container>& offconts) const {
         for (std::size_t i = 0; i < grconts.size(); ++i)
-            res.push_back(std::make_unique<gr_vert>(&grconts[i], i + 1, central_pos(offconts[i])));
-        return res;
+            m_gr_geo.add_gr_point(&grconts[i], central_pos(offconts[i]));
     }
     
     bool grains_contains_unsorted(const grains_container& first, const grain_type* second) const {
@@ -299,27 +259,27 @@ public:
 
 
     void connect_gr_geometry() {
-        for (auto& vol : m_gr_geo.volumes)
-            for (auto& face : m_gr_geo.faces)
+        for (auto& vol : m_gr_geo.gr_volumes)
+            for (auto& face : m_gr_geo.gr_surfaces)
                 if (grains_contains_unsorted(*face->pgrains, vol->pgrain))
                     vol->faces.emplace_back(std::make_unique<oriented<gr_face>>(face.get()));
 
-        for (auto& face : m_gr_geo.faces)
-            for (auto& edge : m_gr_geo.edges)
+        for (auto& face : m_gr_geo.gr_surfaces)
+            for (auto& edge : m_gr_geo.gr_lines)
                 if (grains_includes_unsorted(*edge->pgrains, *face->pgrains))
                     face->edges.emplace_back(std::make_unique<oriented<gr_edge>>(edge.get()));
 
-        for (auto& edge : m_gr_geo.edges)
-            for (auto& vert : m_gr_geo.verts)
+        for (auto& edge : m_gr_geo.gr_lines)
+            for (auto& vert : m_gr_geo.gr_points)
                 if (grains_includes_unsorted(*vert->pgrains, *edge->pgrains))
                     edge->verts.push_back(vert.get());
     }
 
-    void make_gr_geometry(const std::vector<offsets_container>& pjointsoffs) {
-        m_gr_geo.volumes = std::move(make_gr_volumes(m_g2grs[0]));
-        m_gr_geo.faces = std::move(make_gr_faces(m_g2grs[0]));
-        m_gr_geo.edges = std::move(make_gr_edges(m_g2grs[1]));
-        m_gr_geo.verts = std::move(make_gr_verts(m_g2grs[2], pjointsoffs));
+    void init_gr_geometry(const std::vector<offsets_container>& pjointsoffs) {
+        add_empty_gr_volumes(m_g2grs[0]);
+        add_empty_gr_surfaces(m_g2grs[0]);
+        add_empty_gr_lines(m_g2grs[1]);
+        add_gr_points(m_g2grs[2], pjointsoffs);
         connect_gr_geometry();
     }
 
@@ -337,34 +297,11 @@ public:
 
         auto g2offs = grouped2_offsets();
         m_g2grs = grouped2_offsets_to_grains(g2offs);
-        make_gr_geometry(g2offs[2]);
+        init_gr_geometry(g2offs[2]);
         g2offs.clear();
         g2offs.shrink_to_fit();
 
-        for (auto& pface : m_gr_geo.faces) {
-            auto& face = *pface;
-            for (std::size_t i = 0; i < face.edges.size() - 1; ++i) {
-                std::size_t nextedge_idx = std::numeric_limits<std::size_t>::max();
-                for (std::size_t j = i + 1; j < face.edges.size(); ++j) {
-                    if ((face.edges[i]->orient == geo_orient::forward &&
-                         (face.edges[i]->obj->verts.back() == face.edges[j]->obj->verts.front() ||
-                          face.edges[i]->obj->verts.back() == face.edges[j]->obj->verts.back())) ||
-                        (face.edges[i]->orient == geo_orient::reverse &&
-                         (face.edges[i]->obj->verts.front() == face.edges[j]->obj->verts.front() ||
-                          face.edges[i]->obj->verts.front() == face.edges[j]->obj->verts.back()))) {
-                        nextedge_idx = j;
-                        break;
-                    }
-                }
-                if ((face.edges[i]->orient == geo_orient::forward &&
-                     face.edges[i]->obj->verts.back() == face.edges[nextedge_idx]->obj->verts.back()) ||
-                    (face.edges[i]->orient == geo_orient::reverse &&
-                     face.edges[i]->obj->verts.front() == face.edges[nextedge_idx]->obj->verts.back()))
-                    face.edges[nextedge_idx]->rev_orient();
-                std::swap(face.edges[i + 1], face.edges[nextedge_idx]);
-            }
-        }
-
+        m_gr_geo.geometry.orient_lines();
         //
     }
 
@@ -443,11 +380,7 @@ public:
     }
 
     void write_geo(std::ostream& os) const {
-        write_geo_points(os);
-        write_geo_lines(os);
-        write_geo_line_loops(os);
-        write_geo_plane_surfaces(os);
-        //
+        m_gr_geo.
     }
 
 

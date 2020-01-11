@@ -7,6 +7,7 @@
 #include "sptalgs.h"
 #include "simple-automata.h"
 #include "simple-geometry.h"
+#include "progress-bar.h"
 
 #define DIM3
 
@@ -160,12 +161,15 @@ int main() {
     for (std::size_t i = 0; i < init_nbhood_poses.size(); ++i)
         automata.set_cells(init_nbhood_poses[i], init_nbhood_cells[i]);
     
+    progress_bar bar("Crystallization", automata.num_cells(), 70);
     while (!automata.stop_condition()) {
         std::ofstream ofile("automata-image-data.txt");
         ofile << "size " << size << std::endl;
-        for (std::size_t i = 0; i < 100; ++i)
-        while (!automata.stop_condition())
+        //for (std::size_t i = 0; i < 100; ++i)
+        while (!automata.stop_condition()) {
             automata.iterate();
+            bar.set_count(automata.num_crystallized_cells());
+        }
         
         for (std::size_t i = 0; i < size * size; ++i) {
             auto curpos = automata.upos(i);

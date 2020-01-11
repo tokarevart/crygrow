@@ -166,6 +166,7 @@
     <ClInclude Include="geo.h" />
     <ClInclude Include="geoalgs.h" />
     <ClInclude Include="grgeo.h" />
+    <ClInclude Include="progress-bar.h" />
     <ClInclude Include="range-iter.h" />
     <ClInclude Include="neighborhood.h" />
     <ClInclude Include="mat.h" />

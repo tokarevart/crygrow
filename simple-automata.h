@@ -36,6 +36,13 @@ public:
     using orientation_type = typename grain_type::orientation_type;
     using grow_dir = typename material_type::grow_dir;
 
+    std::size_t num_crystallized_cells() const {
+        std::size_t res = 0;
+        for (std::size_t i = 0; i < num_cells(); ++i)
+            if (get_cell(i)->crystallinity >= 1.0 - epsilon * (1.0 + get_cell(i)->crystallinity))
+                ++res;
+        return res;
+    }
     std::size_t num_cells() const {
         return m_cells.size();
     }

@@ -1,4 +1,4 @@
-// Copyright © 2018-2020 Tokarev Artem. All rights reserved.
+// Copyright © 2018-2020 Artem Tokarev. All rights reserved.
 // Licensed under the MIT License.
 
 // With help of David Eberly's and Dan Sunday's works.

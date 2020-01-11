@@ -19,11 +19,11 @@ namespace geo {
 using tag_type = std::int_fast32_t;
 using utag_type = std::uint_fast32_t;
 using real_type = double;
-using pos_type = spt::vec3<real_type>;
+using vec3r = spt::vec3<real_type>;
 
 struct point {
     utag_type tag;
-    pos_type x;
+    vec3r x;
 
     auto begin() {
         return x.x.begin();
@@ -73,7 +73,7 @@ struct point {
         return x[idx];
     }
 
-    point(utag_type tag, pos_type x = pos_type())
+    point(utag_type tag, vec3r x = vec3r())
         : tag(tag), x(x) {}
 };
 
@@ -255,6 +255,8 @@ struct geometry {
     std::vector<line>    lines;
     std::vector<point>   points;
 
+    std::vector<vec3r>   surface_normals;
+
     template <typename TagType>
     std::size_t tag_to_idx(TagType tag) const {
         if constexpr (std::is_signed_v<TagType>) {
@@ -287,59 +289,151 @@ struct geometry {
         lines.emplace_back(tag, std::move(point_tags));
         return tag;
     }
-    utag_type add_point(pos_type x = pos_type()) {
+    utag_type add_point(vec3r x = vec3r()) {
         utag_type tag = points.size() + 1;
         points.emplace_back(tag, x);
         return tag;
     }
 
-    template <typename TagType>
-    volume& get_volume(TagType tag) {
+    template <typename TagType> volume& get_volume(TagType tag) {
         return volumes[tag_to_idx(tag)];
     }
-    template <typename TagType>
-    surface& get_surface(TagType tag) {
+    template <typename TagType> const volume& get_volume(TagType tag) const {
+        return volumes[tag_to_idx(tag)];
+    }
+    template <typename TagType> surface& get_surface(TagType tag) {
         return surfaces[tag_to_idx(tag)];
     }
-    template <typename TagType>
-    line& get_line(TagType tag) {
+    template <typename TagType> const surface& get_surface(TagType tag) const {
+        return surfaces[tag_to_idx(tag)];
+    }
+    template <typename TagType> line& get_line(TagType tag) {
         return lines[tag_to_idx(tag)];
     }
-    template <typename TagType>
-    point& get_point(TagType tag) {
+    template <typename TagType> const line& get_line(TagType tag) const {
+        return lines[tag_to_idx(tag)];
+    }
+    template <typename TagType> point& get_point(TagType tag) {
+        return points[tag_to_idx(tag)];
+    }
+    template <typename TagType> const point& get_point(TagType tag) const {
         return points[tag_to_idx(tag)];
     }
 
-    template <typename TagType>
-    std::pair<utag_type, utag_type> get_line_point_tags(TagType tag) {
-        line& line = get_line(tag);
+    template <typename TagType> vec3r get_surface_normal(TagType tag) const {
+        return tag > 0 ? surface_normals[tag_to_idx(tag)] : -surface_normals[tag_to_idx(tag)];
+    }
+
+    template <typename TagType> auto get_line_point_tags(TagType tag) const {
+        const line& line = get_line(tag);
         return tag > 0 ? std::make_pair(line[0], line[1]) : std::make_pair(line[1], line[0]);
     }
 
-    template <typename TagType>
-    itr::range_iter<std::size_t> volume_iter(TagType tag) {
+    template <typename TagType> itr::range_iter<std::size_t> volume_iter(TagType tag) {
         return {
             0, get_volume(tag).size(),
             tag > 0 ? itr::dir::forward : itr::dir::reverse
         };
     }
-    template <typename TagType>
-    itr::range_iter<std::size_t> surface_iter(TagType tag) {
+    template <typename TagType> itr::range_iter<std::size_t> surface_iter(TagType tag) {
         return {
             0, get_surface(tag).size(),
             tag > 0 ? itr::dir::forward : itr::dir::reverse
         };
     }
-    template <typename TagType>
-    itr::range_iter<std::size_t> line_iter(TagType tag) {
+    template <typename TagType> itr::range_iter<std::size_t> line_iter(TagType tag) {
         return {
             0, 2,
             tag > 0 ? itr::dir::forward : itr::dir::reverse
         };
     }
 
-    template <typename TagType>
-    void orient_surface_lines(TagType tag) {
+    vec3r make_surface_point_raw_normal(tag_type line0_tag, tag_type line1_tag) const {
+        auto [p0, p1_0] = get_line_point_tags(line0_tag);
+        auto [p1_1, p2] = get_line_point_tags(line1_tag);
+        vec3r p1top0 = get_point(p0).x - get_point(p1_0).x;
+        vec3r p1top2 = get_point(p2).x - get_point(p1_1).x;
+        return spt::cross(p1top2, p1top0);
+    }
+    vec3r make_plane_surface_raw_normal(tag_type tag) const {
+        auto& surface_lines = get_surface(tag).line_tags;
+        vec3r rawn = make_surface_point_raw_normal(surface_lines[0], surface_lines[1]);
+        return tag > 0 ? rawn : -rawn;
+    }
+    vec3r make_surface_raw_normal(tag_type tag) const {
+        auto& surface_lines = get_surface(tag).line_tags;
+        vec3r rawn = make_surface_point_raw_normal(surface_lines.back(), surface_lines.front());
+        for (std::size_t i = 0; i < surface_lines.size() - 1; ++i)
+            rawn += make_surface_point_raw_normal(surface_lines[i], surface_lines[i + 1]);
+        return tag > 0 ? rawn : -rawn;
+    }
+    vec3r make_plane_surface_normal(tag_type tag) const {
+        return make_surface_raw_normal(tag).normalize();
+    }
+    vec3r make_surface_normal(tag_type tag) const {
+        return make_surface_raw_normal(tag).normalize();
+    }
+    vec3r make_auto_surface_normal(tag_type tag) const {
+        if (get_surface(tag).is_plane)
+            return make_plane_surface_normal(tag);
+        else
+            return make_surface_normal(tag);
+    }
+    void init_plane_surface_normals() {
+        surface_normals.clear();
+        surface_normals.reserve(surfaces.size());
+        for (std::size_t i = 0; i < surfaces.size(); ++i)
+            surface_normals.push_back(make_plane_surface_normal(idx_to_utag(i)));
+    }
+    void init_surface_normals() {
+        surface_normals.clear();
+        surface_normals.reserve(surfaces.size());
+        for (std::size_t i = 0; i < surfaces.size(); ++i)
+            surface_normals.push_back(make_surface_normal(idx_to_utag(i)));
+    }
+    void init_auto_surface_normals() {
+        surface_normals.clear();
+        surface_normals.reserve(surfaces.size());
+        for (std::size_t i = 0; i < surfaces.size(); ++i)
+            surface_normals.push_back(make_auto_surface_normal(idx_to_utag(i)));
+    }
+
+    bool surface_contains_line(utag_type sur_tag, utag_type line_tag) const {
+        for (auto ltag : get_surface(sur_tag))
+            if (std::abs(ltag) == line_tag)
+                return true;
+        return false;
+    }
+    auto find_surfaces_with_line_in_volume(utag_type vol_tag, utag_type line_tag) {
+        std::pair<volume::tags_container::iterator, volume::tags_container::iterator> res;
+        volume& vol = get_volume(vol_tag);
+        for (auto it = vol.begin(); it < vol.end(); ++it) {
+            if (surface_contains_line(*it, line_tag)) {
+                res.first = it;
+                break;
+            }
+        }
+        for (auto it = res.first + 1; it < vol.end(); ++it) {
+            if (surface_contains_line(*it, line_tag)) {
+                res.second = it;
+                break;
+            }
+        }
+        return res;
+    }
+
+    void orient_2surfaces_consistently(tag_type mainsur, tag_type& sur) {
+        // todo
+    }
+    void orient_volume_surfaces(utag_type tag) {
+        // todo
+    }
+    void orient_surfaces() {
+        for (volume& vol : volumes)
+            orient_volume_surfaces(vol.tag);
+    }
+
+    void orient_surface_lines(utag_type tag) {
         surface& surface = get_surface(tag);
         for (std::size_t mli = 0; mli < surface.size() - 1; ++mli) {
             auto [mp0, mp1] = get_line_point_tags(surface[mli]);

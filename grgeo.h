@@ -10,7 +10,7 @@ namespace cgr::grgeo {
 using tag_type = geo::tag_type;
 using utag_type = geo::utag_type;
 using real_type = geo::real_type;
-using pos_type = geo::pos_type;
+using vec3r = geo::vec3r;
 
 constexpr std::size_t dim = 3;
 using automata_type = cgr::simple_automata<dim, nbhood_kind::euclid, real_type>;
@@ -79,7 +79,7 @@ struct gr_geometry {
         gr_lines.emplace_back(tag, pgrains);
         return tag;
     }
-    utag_type add_gr_point(const grains_container* pgrains, pos_type x = pos_type()) {
+    utag_type add_gr_point(const grains_container* pgrains, vec3r x = vec3r()) {
         utag_type tag = geometry.add_point(x);
         gr_points.emplace_back(tag, pgrains);
         return tag;

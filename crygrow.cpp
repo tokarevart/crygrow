@@ -226,8 +226,8 @@ int main() {
         std::system("python ./visualize.py");
     }
 
-    cgr::simple_geo_tool simplegeo(&automata);
-    simplegeo.make_geometry();
+    cgr::simple_geo_from_automata simplegeo(&automata);
+    simplegeo.make();
     std::ofstream file("polycr.geo");
     simplegeo.write_geo(file);
     simplegeo.write_geo(std::cout);

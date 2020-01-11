@@ -13,14 +13,14 @@
 
 namespace cgr {
 
-class simple_geo_tool {
+class simple_geo_from_automata {
 public:
     static constexpr std::size_t dim = 3;
     using vecu = spt::vec3u;
     using real_type = grgeo::real_type;
     using tag_type = grgeo::tag_type;
     using utag_type = grgeo::utag_type;
-    using pos_type = grgeo::pos_type;
+    using vec3r = grgeo::vec3r;
 
     using cell_type = grgeo::cell_type;
     using cells_container = grgeo::cells_container;
@@ -251,17 +251,17 @@ public:
         return res;
     }
 
-    pos_type central_pos(const offsets_container& offsets) const {
+    vec3r central_pos(const offsets_container& offsets) const {
         vecu acc;
         for (auto off : offsets)
             acc += cgr::upos(off, get_dim_lens());
-        auto accreal = static_cast<pos_type>(acc);
+        auto accreal = static_cast<vec3r>(acc);
         for (auto& e : accreal.x)
             e /= offsets.size();
         return accreal;
     }
 
-    void make_geometry() {
+    void make() {
         m_boxbry_grconts.clear();
         add_boxbry_grains();
 
@@ -272,7 +272,8 @@ public:
         g2offs.shrink_to_fit();
 
         m_gr_geo.geometry.orient_lines();
-        //
+        m_gr_geo.geometry.init_surface_normals();
+        m_gr_geo.geometry.orient_surfaces();
     }
     
     void write_geo(std::ostream& os) const {
@@ -298,7 +299,7 @@ public:
         //
     }
 
-    simple_geo_tool(const automata_type* automata)
+    simple_geo_from_automata(const automata_type* automata)
         : m_automata(automata) {}
 
 

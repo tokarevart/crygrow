@@ -404,20 +404,33 @@ struct geometry {
                 return true;
         return false;
     }
-    auto find_surfaces_with_line_in_volume(utag_type vol_tag, utag_type line_tag) {
-        std::pair<volume::tags_container::iterator, volume::tags_container::iterator> res;
-        volume& vol = get_volume(vol_tag);
-        for (auto it = vol.begin(); it < vol.end(); ++it) {
-            if (surface_contains_line(*it, line_tag)) {
-                res.first = it;
+    auto find_adj_surfaces_to_line_in_volume(utag_type vol_tag, utag_type line_tag) const {
+        std::pair<std::size_t, std::size_t> res;
+        const volume& vol = get_volume(vol_tag);
+        for (std::size_t i = 0; i < vol.size(); ++i) {
+            if (surface_contains_line(std::abs(vol[i]), line_tag)) {
+                res.first = i;
                 break;
             }
         }
-        for (auto it = res.first + 1; it < vol.end(); ++it) {
-            if (surface_contains_line(*it, line_tag)) {
-                res.second = it;
+        for (std::size_t i = res.first + 1; i < vol.size(); ++i) {
+            if (surface_contains_line(std::abs(vol[i]), line_tag)) {
+                res.second = i;
                 break;
             }
+        }
+        return res;
+    }
+    std::vector<std::size_t> find_adj_surfaces_to_surface_in_volume(utag_type vol_tag, utag_type sur_tag) const {
+        std::vector<std::size_t> res;
+        const volume& vol = get_volume(vol_tag);
+        const surface& sur = get_surface(sur_tag);
+        for (tag_type ltag : sur) {
+            auto [s0idx, s1idx] = find_adj_surfaces_to_line_in_volume(vol_tag, std::abs(ltag));
+            if (std::abs(vol[s0idx]) == sur_tag)
+                res.push_back(s1idx);
+            else 
+                res.push_back(s0idx);
         }
         return res;
     }
@@ -425,8 +438,20 @@ struct geometry {
     void orient_2surfaces_consistently(tag_type mainsur, tag_type& sur) {
         // todo
     }
-    void orient_volume_surfaces(utag_type tag) {
-        // todo
+    void orient_volume_surfaces(utag_type vol_tag) {
+        volume& vol = get_volume(vol_tag);
+        std::vector<std::size_t> suridxs{ 0 };
+        suridxs.reserve(vol.size());
+        for (std::size_t i = 0; i < vol.size(); ++i) {
+            auto adjsurs = find_adj_surfaces_to_surface_in_volume(vol_tag, vol[suridxs[i]]);
+            for (std::size_t adjsuridx : adjsurs) {
+                if (std::find(suridxs.begin(), suridxs.end(), adjsuridx) != suridxs.end())
+                    continue;
+
+                suridxs.push_back(adjsuridx);
+                orient_2surfaces_consistently(vol[suridxs[i]], vol[adjsuridx]);
+            }
+        }
     }
     void orient_surfaces() {
         for (volume& vol : volumes)
@@ -451,7 +476,7 @@ struct geometry {
     void orient_lines() {
         for (volume& vol : volumes)
             for (tag_type stag : vol)
-                orient_surface_lines(stag);
+                orient_surface_lines(std::abs(stag));
     }
 
     template <typename ExprType>

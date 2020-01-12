@@ -41,10 +41,23 @@ bool weak_in_cuboid(const vec<Dim, ValueType>& corner0,
     return true;
 }
 
+template <std::size_t Dim, typename Real>
+vec<Dim, Real> project_on_normal_vec(const vec<Dim, Real>& v, const vec<Dim, Real>& on_v) {
+    return on_v * dot(v, on_v);
+}
+
 // NOTE: using with vec of integers needs different implementation
 template <std::size_t Dim, typename Real>
 vec<Dim, Real> project_on_vec(const vec<Dim, Real>& v, const vec<Dim, Real>& on_v) {
     return on_v * (dot(v, on_v) / on_v.magnitude2());
+}
+
+template <std::size_t Dim, typename Real>
+vec<Dim, Real> project_on_normal_line(
+    const vec<Dim, Real>& point,
+    const vec<Dim, Real>& line_p0, const vec<Dim, Real>& line_p1) {
+
+    return line_p0 + project_on_normal_vec(point - line_p0, line_p1 - line_p0);
 }
 
 template <std::size_t Dim, typename Real>
@@ -420,6 +433,22 @@ Real distance_point_to_segment(
     } else {
         return std::sqrt(sqr_magns[1]);
     }
+}
+
+template <typename Real>
+Real distance_point_to_plane(
+    const vec<3, Real>& point,
+    const vec<3, Real>& plane_p0, const vec<3, Real>& plane_p1, const vec<3, Real>& plane_p2) {
+
+    return std::sqrt(distance2_point_to_plane(point, plane_p0, plane_p1, plane_p2));
+}
+
+template <typename Real>
+Real distance2_point_to_plane(
+    const vec<3, Real>& point,
+    const vec<3, Real>& plane_p0, const vec<3, Real>& plane_p1, const vec<3, Real>& plane_p2) {
+
+    return (project_on_plane(point, plane_p0, plane_p1, plane_p2) - point).magnitude2();
 }
 
 template <typename Real>

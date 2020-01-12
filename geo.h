@@ -9,6 +9,7 @@
 #include <vector>
 #include <memory>
 #include <cmath>
+#include <limits>
 #include "vec.h"
 #include "sptops.h"
 #include "sptalgs.h"
@@ -332,6 +333,9 @@ struct geometry {
         auto [p0, p1] = get_line_point_tags(tag);
         return get_point(p1).x - get_point(p0).x;
     }
+    template <typename TagType> real_type line_length(TagType tag) const {
+        return make_line_vector(tag).magnitude();
+    }
 
     template <typename TagType> itr::range_iter<std::size_t> volume_iter(TagType tag) {
         return {
@@ -352,52 +356,129 @@ struct geometry {
         };
     }
 
-    vec3r make_surface_point_raw_normal(tag_type line0_tag, tag_type line1_tag) const {
+    real_type compute_surface_nonplanarity(utag_type tag) const {
+        const surface& sur = get_surface(tag);
+        std::vector<vec3r> surpoints;
+        surpoints.reserve(sur.size());
+        for (tag_type ltag : sur)
+            surpoints.push_back(get_point(get_line(ltag)[0]).x);
+
+        real_type maxdist2 = 0.0;
+        vec3r normal = compute_surface_point_normal(sur.back(), sur.front());
+        vec3r mainpoint = surpoints.front();
+        vec3r mp_plus_normal = mainpoint + normal;
+        for (vec3r point : surpoints) {
+            vec3r proj = spt::project_on_normal_line(point, mainpoint, mp_plus_normal);
+            real_type dist2 = (proj - mainpoint).magnitude2();
+            if (dist2 > maxdist2)
+                maxdist2 = dist2;
+        }
+        for (std::size_t i = 0; i < sur.size() - 1; ++i) {
+            normal = compute_surface_point_normal(sur[i], sur[i + 1]);
+            mainpoint = surpoints[i + 1];
+            mp_plus_normal = mainpoint + normal;
+
+            real_type plmaxdist2 = 0.0;
+            for (vec3r point : surpoints) {
+                vec3r proj = spt::project_on_normal_line(point, mainpoint, mp_plus_normal);
+                real_type dist2 = (proj - mainpoint).magnitude2();
+                if (dist2 > plmaxdist2)
+                    plmaxdist2 = dist2;
+            }
+            if (plmaxdist2 > maxdist2)
+                maxdist2 = plmaxdist2;
+        }
+
+        return std::sqrt(maxdist2);
+    }
+    real_type compute_volume_surfaces_nonplanarity(utag_type tag) const {
+        real_type maxnonpl = 0.0;
+        for (tag_type stag : get_volume(tag)) {
+            real_type nonpl = compute_surface_nonplanarity(std::abs(stag));
+            if (nonpl > maxnonpl)
+                maxnonpl = nonpl;
+        }
+        return maxnonpl;
+    }
+    real_type compute_volume_surfaces_relative_nonplanarity(utag_type tag) const {
+        real_type minlinelen = std::numeric_limits<real_type>::max();
+        for (tag_type stag : get_volume(tag)) {
+            for (tag_type ltag : get_surface(stag)) {
+                real_type linelen = line_length(ltag);
+                if (linelen < minlinelen)
+                    minlinelen = linelen;
+            }
+        }
+        return compute_volume_surfaces_nonplanarity(tag) / minlinelen;
+    }
+    real_type compute_nonplanarity() const {
+        real_type maxnonpl = 0.0;
+        for (std::size_t i = 0; i < volumes.size(); ++i) {
+            real_type rnonpl = compute_volume_surfaces_nonplanarity(idx_to_utag(i));
+            if (rnonpl > maxnonpl)
+                maxnonpl = rnonpl;
+        }
+        return maxnonpl;
+    }
+    real_type compute_relative_nonplanarity() const {
+        real_type maxrnonpl = 0.0;
+        for (std::size_t i = 0; i < volumes.size(); ++i) {
+            real_type rnonpl = compute_volume_surfaces_relative_nonplanarity(idx_to_utag(i));
+            if (rnonpl > maxrnonpl)
+                maxrnonpl = rnonpl;
+        }
+        return maxrnonpl;
+    }
+
+    vec3r compute_surface_point_raw_normal(tag_type line0_tag, tag_type line1_tag) const {
         vec3r p1top0 = -make_line_vector(line0_tag);
         vec3r p1top2 = make_line_vector(line1_tag);
         return spt::cross(p1top2, p1top0);
     }
-    vec3r make_plane_surface_raw_normal(tag_type tag) const {
+    vec3r compute_surface_point_normal(tag_type line0_tag, tag_type line1_tag) const {
+        return compute_surface_point_raw_normal(line0_tag, line1_tag).normalize();
+    }
+    vec3r compute_plane_surface_raw_normal(tag_type tag) const {
         auto& surface_lines = get_surface(tag).line_tags;
-        vec3r rawn = make_surface_point_raw_normal(surface_lines[0], surface_lines[1]);
+        vec3r rawn = compute_surface_point_raw_normal(surface_lines[0], surface_lines[1]);
         return tag > 0 ? rawn : -rawn;
     }
-    vec3r make_surface_raw_normal(tag_type tag) const {
-        auto& surface_lines = get_surface(tag).line_tags;
-        vec3r rawn = make_surface_point_raw_normal(surface_lines.back(), surface_lines.front());
-        for (std::size_t i = 0; i < surface_lines.size() - 1; ++i)
-            rawn += make_surface_point_raw_normal(surface_lines[i], surface_lines[i + 1]);
+    vec3r compute_surface_raw_normal(tag_type tag) const {
+        const surface& sur = get_surface(tag);
+        vec3r rawn = compute_surface_point_raw_normal(sur.back(), sur.front());
+        for (std::size_t i = 0; i < sur.size() - 1; ++i)
+            rawn += compute_surface_point_raw_normal(sur[i], sur[i + 1]);
         return tag > 0 ? rawn : -rawn;
     }
-    vec3r make_plane_surface_normal(tag_type tag) const {
-        return make_surface_raw_normal(tag).normalize();
+    vec3r compute_plane_surface_normal(tag_type tag) const {
+        return compute_surface_raw_normal(tag).normalize();
     }
-    vec3r make_surface_normal(tag_type tag) const {
-        return make_surface_raw_normal(tag).normalize();
+    vec3r compute_surface_normal(tag_type tag) const {
+        return compute_surface_raw_normal(tag).normalize();
     }
-    vec3r make_auto_surface_normal(tag_type tag) const {
+    vec3r compute_auto_surface_normal(tag_type tag) const {
         if (get_surface(tag).is_plane)
-            return make_plane_surface_normal(tag);
+            return compute_plane_surface_normal(tag);
         else
-            return make_surface_normal(tag);
+            return compute_surface_normal(tag);
     }
     void init_plane_surface_normals() {
         surface_normals.clear();
         surface_normals.reserve(surfaces.size());
         for (std::size_t i = 0; i < surfaces.size(); ++i)
-            surface_normals.push_back(make_plane_surface_normal(idx_to_utag(i)));
+            surface_normals.push_back(compute_plane_surface_normal(idx_to_utag(i)));
     }
     void init_surface_normals() {
         surface_normals.clear();
         surface_normals.reserve(surfaces.size());
         for (std::size_t i = 0; i < surfaces.size(); ++i)
-            surface_normals.push_back(make_surface_normal(idx_to_utag(i)));
+            surface_normals.push_back(compute_surface_normal(idx_to_utag(i)));
     }
     void init_auto_surface_normals() {
         surface_normals.clear();
         surface_normals.reserve(surfaces.size());
         for (std::size_t i = 0; i < surfaces.size(); ++i)
-            surface_normals.push_back(make_auto_surface_normal(idx_to_utag(i)));
+            surface_normals.push_back(compute_auto_surface_normal(idx_to_utag(i)));
     }
 
     bool surface_contains_line(utag_type sur_tag, utag_type line_tag) const {

@@ -276,6 +276,13 @@ public:
         m_gr_geo.geometry.orient_surfaces();
     }
     
+    real_type nonplanarity() const {
+        return m_gr_geo.geometry.compute_nonplanarity();
+    }
+    real_type relative_nonplanarity() const {
+        return m_gr_geo.geometry.compute_relative_nonplanarity();
+    }
+
     void write_geo(std::ostream& os) const {
         m_gr_geo.geometry.write(os);
     }

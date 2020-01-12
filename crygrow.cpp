@@ -230,7 +230,9 @@ int main() {
     simplegeo.make();
     std::ofstream file("polycr.geo");
     simplegeo.write_geo(file);
-    simplegeo.write_geo(std::cout);
+    //simplegeo.write_geo(std::cout);
+    std::cout << "nonplanarity: " << simplegeo.nonplanarity() << std::endl;
+    std::cout << "relative nonplanarity: " << simplegeo.relative_nonplanarity() << std::endl; // 0.1 is not so bad
 
     return 0;
 }

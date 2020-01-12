@@ -107,14 +107,14 @@ int main_test() {
 }
 
 int main() {
-    std::size_t size = 100;
-    std::size_t range = 3;
+    std::size_t size = 25;
+    std::size_t range = 2;
     automata_t automata(size, range);
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
     //auto init_central_poses = make_central_pos(size);
-    auto init_central_poses = make_random_central_poses(size, 5, (range * 4) * (range * 4));
+    auto init_central_poses = make_random_central_poses(size, 2, (range * 4) * (range * 4));
 
     material_t mater(cgr::material_property::isotropic, { 
         #ifdef DIM3

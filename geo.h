@@ -69,7 +69,7 @@ struct point {
     auto& operator[](std::size_t idx) {
         return x[idx];
     }
-    auto& operator[](std::size_t idx) const {
+    const auto& operator[](std::size_t idx) const {
         return x[idx];
     }
 
@@ -126,7 +126,7 @@ struct line {
     auto& operator[](std::size_t idx) {
         return point_tags[idx];
     }
-    auto& operator[](std::size_t idx) const {
+    const auto& operator[](std::size_t idx) const {
         return point_tags[idx];
     }
 
@@ -184,7 +184,7 @@ struct surface {
     auto& operator[](std::size_t idx) {
         return line_tags[idx];
     }
-    auto& operator[](std::size_t idx) const {
+    const auto& operator[](std::size_t idx) const {
         return line_tags[idx];
     }
 
@@ -328,6 +328,10 @@ struct geometry {
         const line& line = get_line(tag);
         return tag > 0 ? std::make_pair(line[0], line[1]) : std::make_pair(line[1], line[0]);
     }
+    template <typename TagType> vec3r make_line_vector(TagType tag) const {
+        auto [p0, p1] = get_line_point_tags(tag);
+        return get_point(p1).x - get_point(p0).x;
+    }
 
     template <typename TagType> itr::range_iter<std::size_t> volume_iter(TagType tag) {
         return {
@@ -349,10 +353,8 @@ struct geometry {
     }
 
     vec3r make_surface_point_raw_normal(tag_type line0_tag, tag_type line1_tag) const {
-        auto [p0, p1_0] = get_line_point_tags(line0_tag);
-        auto [p1_1, p2] = get_line_point_tags(line1_tag);
-        vec3r p1top0 = get_point(p0).x - get_point(p1_0).x;
-        vec3r p1top2 = get_point(p2).x - get_point(p1_1).x;
+        vec3r p1top0 = -make_line_vector(line0_tag);
+        vec3r p1top2 = make_line_vector(line1_tag);
         return spt::cross(p1top2, p1top0);
     }
     vec3r make_plane_surface_raw_normal(tag_type tag) const {
@@ -404,6 +406,12 @@ struct geometry {
                 return true;
         return false;
     }
+    utag_type find_2surfaces_common_line(utag_type sur0_tag, utag_type sur1_tag) const {
+        const surface& sur0 = get_surface(sur0_tag);
+        for (tag_type ltag : sur0)
+            if (surface_contains_line(sur1_tag, std::abs(ltag)))
+                return std::abs(ltag);
+    }
     auto find_adj_surfaces_to_line_in_volume(utag_type vol_tag, utag_type line_tag) const {
         std::pair<std::size_t, std::size_t> res;
         const volume& vol = get_volume(vol_tag);
@@ -435,15 +443,39 @@ struct geometry {
         return res;
     }
 
-    void orient_2surfaces_consistently(tag_type mainsur, tag_type& sur) {
-        // todo
+    void orient_2surfaces_consistently(tag_type mainsur_tag, tag_type& sur_tag) {
+        const surface& mainsur = get_surface(mainsur_tag);
+        const surface& sur = get_surface(sur_tag);
+
+        vec3r n0 = get_surface_normal(mainsur_tag);
+        vec3r n1 = get_surface_normal(sur_tag);
+        vec3r linevec = make_line_vector(find_2surfaces_common_line(std::abs(mainsur_tag), std::abs(sur_tag)));
+
+        vec3r a0 = spt::cross(linevec, n0);
+        vec3r a1 = spt::cross(linevec, n1);
+        real_type cosa0a1 = spt::cos(a0, a1);
+
+        real_type one_sqrt2 = 1.0 / std::sqrt(2.0);
+        if ((cosa0a1 >= -1.0 && cosa0a1 < -one_sqrt2) ||
+            (cosa0a1 >= one_sqrt2 && cosa0a1 <= 1)) {
+            real_type n0n1 = spt::dot(n0, n1);
+            real_type a0a1 = spt::dot(a0, a1);
+            if ((n0n1 > 0.0 && a0a1 > 0.0) ||
+                (n0n1 < 0.0 && a0a1 < 0.0))
+                sur_tag = -sur_tag;
+        } else {
+            vec3r n0n1 = spt::cross(n0, n1);
+            vec3r a0a1 = spt::cross(a0, a1);
+            if (spt::dot(n0n1, a0a1) > 0.0)
+                sur_tag = -sur_tag;
+        }
     }
     void orient_volume_surfaces(utag_type vol_tag) {
         volume& vol = get_volume(vol_tag);
         std::vector<std::size_t> suridxs{ 0 };
         suridxs.reserve(vol.size());
         for (std::size_t i = 0; i < vol.size(); ++i) {
-            auto adjsurs = find_adj_surfaces_to_surface_in_volume(vol_tag, vol[suridxs[i]]);
+            auto adjsurs = find_adj_surfaces_to_surface_in_volume(vol_tag, std::abs(vol[suridxs[i]]));
             for (std::size_t adjsuridx : adjsurs) {
                 if (std::find(suridxs.begin(), suridxs.end(), adjsuridx) != suridxs.end())
                     continue;
@@ -506,7 +538,8 @@ struct geometry {
             + define_entity_str(sur.is_plane ? "Plane Surface" : "Surface", sur.tag, std::vector{ sur.tag });
     }
     std::string volume_str(const volume& vol) const {
-        return define_entity_str("Volume", vol.tag, vol.surface_tags);
+        return define_entity_str("Surface Loop", vol.tag, vol.surface_tags) + "\n"
+            + define_entity_str("Volume", vol.tag, std::vector{ vol.tag });
     }
 
     void write_points(std::ostream& os) const {

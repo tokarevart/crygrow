@@ -430,6 +430,38 @@ struct geometry {
         return maxrnonpl;
     }
 
+    real_type compute_surface_planarity(utag_type tag) const {
+        const surface& sur = get_surface(tag);
+        real_type minpl = std::numeric_limits<real_type>::max();
+
+        vec3r rn0 = compute_surface_point_raw_normal(sur.back(), sur.front());
+        for (std::size_t i = 0; i < sur.size() - 1; ++i) {
+            vec3r rn1 = compute_surface_point_raw_normal(sur[i], sur[i + 1]);
+            real_type pl = spt::dot(rn0, rn1) / std::sqrt(rn0.magnitude2() * rn1.magnitude2());
+            if (pl < minpl)
+                minpl = pl;
+        }
+        for (std::size_t i = 0; i < sur.size() - 1; ++i) {
+            rn0 = compute_surface_point_raw_normal(sur[i], sur[i + 1]);
+            for (std::size_t j = 0; j < sur.size() - 1; ++j) {
+                vec3r rn1 = compute_surface_point_raw_normal(sur[j], sur[j + 1]);
+                real_type pl = spt::dot(rn0, rn1) / std::sqrt(rn0.magnitude2() * rn1.magnitude2());
+                if (pl < minpl)
+                    minpl = pl;
+            }
+        }
+        return minpl;
+    }
+    real_type compute_planarity() const {
+        real_type minpl = std::numeric_limits<real_type>::max();
+        for (std::size_t i = 0; i < surfaces.size(); ++i) {
+            real_type pl = compute_surface_planarity(idx_to_utag(i));
+            if (pl < minpl)
+                minpl = pl;
+        }
+        return minpl;
+    }
+
     vec3r compute_surface_point_raw_normal(tag_type line0_tag, tag_type line1_tag) const {
         vec3r p1top0 = -make_line_vector(line0_tag);
         vec3r p1top2 = make_line_vector(line1_tag);

@@ -276,6 +276,9 @@ public:
         m_gr_geo.geometry.orient_surfaces();
     }
     
+    real_type planarity() const {
+        return m_gr_geo.geometry.compute_planarity();
+    }
     real_type nonplanarity() const {
         return m_gr_geo.geometry.compute_nonplanarity();
     }

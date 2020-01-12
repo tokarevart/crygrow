@@ -16,7 +16,7 @@ constexpr std::size_t dim = 3;
 #else
 constexpr std::size_t dim = 2;
 #endif
-std::size_t seed = 2;
+std::size_t seed = 5;
 constexpr auto kind = cgr::nbhood_kind::euclid;
 using pos_t = spt::veci<dim>;
 using automata_t = cgr::simple_automata<dim, kind>;
@@ -107,14 +107,14 @@ int main_test() {
 }
 
 int main() {
-    std::size_t size = 25;
-    std::size_t range = 2;
+    std::size_t size = 120;
+    std::size_t range = 3;
     automata_t automata(size, range);
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
     //auto init_central_poses = make_central_pos(size);
-    auto init_central_poses = make_random_central_poses(size, 2, (range * 4) * (range * 4));
+    auto init_central_poses = make_random_central_poses(size, 8, (range * 4) * (range * 4));
 
     material_t mater(cgr::material_property::isotropic, { 
         #ifdef DIM3
@@ -232,7 +232,7 @@ int main() {
     simplegeo.write_geo(file);
     //simplegeo.write_geo(std::cout);
     std::cout << "nonplanarity: " << simplegeo.nonplanarity() << std::endl;
-    std::cout << "relative nonplanarity: " << simplegeo.relative_nonplanarity() << std::endl; // 0.1 is not so bad
+    std::cout << "relative nonplanarity: " << simplegeo.relative_nonplanarity() << std::endl;
 
     return 0;
 }

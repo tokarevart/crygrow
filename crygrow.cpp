@@ -232,8 +232,7 @@ int main() {
     simplegeo.write_geo(file);
     //simplegeo.write_geo(std::cout);
     std::cout << "planarity: " << simplegeo.planarity() << std::endl;
-    std::cout << "nonplanarity: " << simplegeo.nonplanarity() << std::endl;
-    std::cout << "relative nonplanarity: " << simplegeo.relative_nonplanarity() << std::endl;
+    std::cout << "nonplanarity/side_len: " << simplegeo.nonplanarity() / size << std::endl;
 
     return 0;
 }

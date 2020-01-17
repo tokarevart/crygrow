@@ -279,11 +279,26 @@ public:
     real_type planarity() const {
         return m_gr_geo.geometry.compute_planarity();
     }
-    real_type nonplanarity() const {
-        return m_gr_geo.geometry.compute_nonplanarity();
+    void optimize_nonplanarity() {
+        m_gr_geo.geometry.optimize_nonplanarity();
     }
-    real_type relative_nonplanarity() const {
-        return m_gr_geo.geometry.compute_relative_nonplanarity();
+    real_type gmsh_nonplanarity() const {
+        return m_gr_geo.geometry.compute_gmsh_nonplanarity();
+    }
+    real_type best_nonplanarity() const {
+        return m_gr_geo.geometry.compute_best_nonplanarity();
+    }
+    real_type worst_nonplanarity() const {
+        return m_gr_geo.geometry.compute_worst_nonplanarity();
+    }
+    real_type relative_gmsh_nonplanarity() const {
+        return m_gr_geo.geometry.compute_relative_gmsh_nonplanarity();
+    }
+    real_type relative_best_nonplanarity() const {
+        return m_gr_geo.geometry.compute_relative_best_nonplanarity();
+    }
+    real_type relative_worst_nonplanarity() const {
+        return m_gr_geo.geometry.compute_relative_worst_nonplanarity();
     }
 
     void write_geo(std::ostream& os) const {

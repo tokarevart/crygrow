@@ -228,11 +228,19 @@ int main() {
 
     cgr::simple_geo_from_automata simplegeo(&automata);
     simplegeo.make();
+
+    std::cout << "planarity: " << simplegeo.planarity() << std::endl;
+    std::cout << "before nonplanarity optimization:" << std::endl;
+    std::cout << "  best nonplanarity/side_len: " << simplegeo.best_nonplanarity() / size << std::endl;
+    std::cout << "  worst nonplanarity/side_len: " << simplegeo.worst_nonplanarity() / size << std::endl;
+    std::cout << "  gmsh nonplanarity/side_len: " << simplegeo.gmsh_nonplanarity() / size << std::endl;
+    simplegeo.optimize_nonplanarity();
+    std::cout << "after nonplanarity optimization:" << std::endl;
+    std::cout << "  gmsh nonplanarity/side_len: " << simplegeo.gmsh_nonplanarity() / size << std::endl;
+
     std::ofstream file("polycr.geo");
     simplegeo.write_geo(file);
     //simplegeo.write_geo(std::cout);
-    std::cout << "planarity: " << simplegeo.planarity() << std::endl;
-    std::cout << "nonplanarity/side_len: " << simplegeo.nonplanarity() / size << std::endl;
 
     return 0;
 }

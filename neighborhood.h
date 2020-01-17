@@ -237,24 +237,25 @@ template <std::size_t Dim, typename Cell>
 using nbhood = std::vector<Cell*>;
 
 
-template <std::size_t Dim, typename Cell>
-nbhood<Dim, Cell> make_nbhood(std::size_t center, const spt::vecu<Dim>& dim_lens, 
-                              nbhood_kind kind, std::size_t range,
-                              try_get_cell_t<Dim, Cell> trygetcell) {
-    nbhood<Dim, Cell> res;
-    auto nbhpos = trygetcell ? make_nbhood_pos(center, kind, range,
-                                               [trygetcell](std::size_t pos)
-                                               -> bool { return trygetcell.value()(pos); })
-        : make_nbhood_pos(center, kind, range);
-
-    for (auto& nbpos : nbhpos) {
-        auto pcell = trygetcell(nbpos);
-        if (pcell)
-            res.push_back(pcell);
-    }
-
-    return res;
-}
+// bad make_nbhood_pos
+//template <std::size_t Dim, typename Cell>
+//nbhood<Dim, Cell> make_nbhood(std::size_t center, const spt::vecu<Dim>& dim_lens, 
+//                              nbhood_kind kind, std::size_t range,
+//                              try_get_cell_t<Dim, Cell> trygetcell) {
+//    nbhood<Dim, Cell> res;
+//    auto nbhpos = trygetcell ? make_nbhood_pos(center, kind, range,
+//                                               [trygetcell](std::size_t pos)
+//                                               -> bool { return trygetcell.value()(pos); })
+//        : make_nbhood_pos(center, kind, range);
+//
+//    for (auto& nbpos : nbhpos) {
+//        auto pcell = trygetcell(nbpos);
+//        if (pcell)
+//            res.push_back(pcell);
+//    }
+//
+//    return res;
+//}
 
 
 template <std::size_t Dim, typename Cell>

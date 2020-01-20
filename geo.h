@@ -625,17 +625,17 @@ struct geometry {
         const surface& sur = get_surface(tag);
         real_type minpl = std::numeric_limits<real_type>::max();
 
-        vec3r rn0 = compute_surface_point_raw_normal(sur.back(), sur.front());
+        vec3r rn0 = compute_surface_point_cross(sur.back(), sur.front());
         for (std::size_t i = 0; i < sur.size() - 1; ++i) {
-            vec3r rn1 = compute_surface_point_raw_normal(sur[i], sur[i + 1]);
+            vec3r rn1 = compute_surface_point_cross(sur[i], sur[i + 1]);
             real_type pl = spt::dot(rn0, rn1) / std::sqrt(rn0.magnitude2() * rn1.magnitude2());
             if (pl < minpl)
                 minpl = pl;
         }
         for (std::size_t i = 0; i < sur.size() - 1; ++i) {
-            rn0 = compute_surface_point_raw_normal(sur[i], sur[i + 1]);
+            rn0 = compute_surface_point_cross(sur[i], sur[i + 1]);
             for (std::size_t j = 0; j < sur.size() - 1; ++j) {
-                vec3r rn1 = compute_surface_point_raw_normal(sur[j], sur[j + 1]);
+                vec3r rn1 = compute_surface_point_cross(sur[j], sur[j + 1]);
                 real_type pl = spt::dot(rn0, rn1) / std::sqrt(rn0.magnitude2() * rn1.magnitude2());
                 if (pl < minpl)
                     minpl = pl;
@@ -653,31 +653,31 @@ struct geometry {
         return minpl;
     }
 
-    vec3r compute_surface_point_raw_normal(tag_type line0_tag, tag_type line1_tag) const {
+    vec3r compute_surface_point_cross(tag_type line0_tag, tag_type line1_tag) const {
         vec3r p1top0 = -make_line_vector(line0_tag);
         vec3r p1top2 = make_line_vector(line1_tag);
         return spt::cross(p1top2, p1top0);
     }
     vec3r compute_surface_point_normal(tag_type line0_tag, tag_type line1_tag) const {
-        return compute_surface_point_raw_normal(line0_tag, line1_tag).normalize();
+        return compute_surface_point_cross(line0_tag, line1_tag).normalize();
     }
-    vec3r compute_plane_surface_raw_normal(tag_type tag) const {
+    vec3r compute_plane_surface_cross(tag_type tag) const {
         auto& surface_lines = get_surface(tag).line_tags;
-        vec3r rawn = compute_surface_point_raw_normal(surface_lines[0], surface_lines[1]);
+        vec3r rawn = compute_surface_point_cross(surface_lines[0], surface_lines[1]);
         return tag > 0 ? rawn : -rawn;
     }
-    vec3r compute_surface_raw_normal(tag_type tag) const {
+    vec3r compute_surface_cross(tag_type tag) const {
         const surface& sur = get_surface(tag);
-        vec3r rawn = compute_surface_point_raw_normal(sur.back(), sur.front());
+        vec3r rawn = compute_surface_point_cross(sur.back(), sur.front());
         for (std::size_t i = 0; i < sur.size() - 1; ++i)
-            rawn += compute_surface_point_raw_normal(sur[i], sur[i + 1]);
+            rawn += compute_surface_point_cross(sur[i], sur[i + 1]);
         return tag > 0 ? rawn : -rawn;
     }
     vec3r compute_plane_surface_normal(tag_type tag) const {
-        return compute_plane_surface_raw_normal(tag).normalize();
+        return compute_plane_surface_cross(tag).normalize();
     }
     vec3r compute_surface_normal(tag_type tag) const {
-        return compute_surface_raw_normal(tag).normalize();
+        return compute_surface_cross(tag).normalize();
     }
     vec3r compute_auto_surface_normal(tag_type tag) const {
         if (get_surface(tag).is_plane)

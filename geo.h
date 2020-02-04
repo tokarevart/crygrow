@@ -628,7 +628,7 @@ struct geometry {
         vec3r rn0 = compute_surface_point_cross(sur.back(), sur.front());
         for (std::size_t i = 0; i < sur.size() - 1; ++i) {
             vec3r rn1 = compute_surface_point_cross(sur[i], sur[i + 1]);
-            real_type pl = spt::dot(rn0, rn1) / std::sqrt(rn0.magnitude2() * rn1.magnitude2());
+            real_type pl = std::abs(spt::dot(rn0, rn1)) / std::sqrt(rn0.magnitude2() * rn1.magnitude2());
             if (pl < minpl)
                 minpl = pl;
         }
@@ -636,7 +636,7 @@ struct geometry {
             rn0 = compute_surface_point_cross(sur[i], sur[i + 1]);
             for (std::size_t j = 0; j < sur.size() - 1; ++j) {
                 vec3r rn1 = compute_surface_point_cross(sur[j], sur[j + 1]);
-                real_type pl = spt::dot(rn0, rn1) / std::sqrt(rn0.magnitude2() * rn1.magnitude2());
+                real_type pl = std::abs(spt::dot(rn0, rn1)) / std::sqrt(rn0.magnitude2() * rn1.magnitude2());
                 if (pl < minpl)
                     minpl = pl;
             }

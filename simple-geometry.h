@@ -196,8 +196,10 @@ public:
             if (get_grains(i).size() > 1)
                 res.push_back(i);
             // dirty hack
-            if (get_grains(i).size() > 4)
-                std::cout << "oops!";
+            if (get_grains(i).size() > 4) {
+                //std::cout << "oops!";
+                throw -1;
+            }
         }
         return res;
     }

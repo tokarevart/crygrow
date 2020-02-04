@@ -16,7 +16,7 @@ constexpr std::size_t dim = 3;
 #else
 constexpr std::size_t dim = 2;
 #endif
-std::size_t seed = 5;
+std::size_t seed = 0;
 constexpr auto kind = cgr::nbhood_kind::euclid;
 using pos_t = spt::veci<dim>;
 using automata_t = cgr::simple_automata<dim, kind>;
@@ -106,15 +106,15 @@ int main_test() {
     return 0;
 }
 
-int main() {
-    std::size_t size = 120;
-    std::size_t range = 3;
+int inner_main() {
+    std::size_t size = 280;
+    std::size_t range = 4;
     automata_t automata(size, range);
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
     //auto init_central_poses = make_central_pos(size);
-    auto init_central_poses = make_random_central_poses(size, 8, (range * 4) * (range * 4));
+    auto init_central_poses = make_random_central_poses(size, 30, std::pow(range * 4, 2));
 
     material_t mater(cgr::material_property::isotropic, { 
         #ifdef DIM3
@@ -215,15 +215,15 @@ int main() {
         }
         ofile.close();
 
-        std::size_t num_cells_gtdimpl1 = 0;
-        for (std::size_t i = 0; i < size * size; ++i) {
-            auto pcell = automata.get_cell(i);
-            if (pcell->grains.size() > dim + 1)
-                ++num_cells_gtdimpl1;
-        }
-        std::cout << "number of cells with grains number >= dim + 1: " << num_cells_gtdimpl1 << std::endl;
+        //std::size_t num_cells_gtdimpl1 = 0;
+        //for (std::size_t i = 0; i < size * size; ++i) {
+        //    auto pcell = automata.get_cell(i);
+        //    if (pcell->grains.size() > dim + 1)
+        //        ++num_cells_gtdimpl1;
+        //}
+        //std::cout << "number of cells with grains number >= dim + 1: " << num_cells_gtdimpl1 << std::endl;
 
-        std::system("python ./visualize.py");
+        //std::system("python ./visualize.py");
     }
 
     cgr::simple_geo_from_automata simplegeo(&automata);
@@ -241,6 +241,23 @@ int main() {
     std::ofstream file("polycr.geo");
     simplegeo.write_geo(file);
     //simplegeo.write_geo(std::cout);
+
+    return 0;
+}
+
+int main() {
+    seed = 2;
+    for (std::size_t i = 0;; ++i) {
+        std::cout << "iteration: " << i << std::endl;
+        std::cout << "seed: " << seed << std::endl;
+        try {
+            inner_main();
+        } catch (int _) {
+            ++seed;
+            continue;
+        }
+        break;
+    }
 
     return 0;
 }

@@ -1,4 +1,4 @@
-﻿// Copyright © 2018-2020 Artem Tokarev. All rights reserved.
+﻿// Copyright © 2018-2020 Artyom Tokarev. All rights reserved.
 // Licensed under the MIT License.
 
 #pragma once

@@ -1,4 +1,4 @@
-﻿// Copyright © 2019-2020 Artem Tokarev. All rights reserved.
+﻿// Copyright © 2019-2020 Artyom Tokarev. All rights reserved.
 // Licensed under the MIT License.
 
 #include <iostream>

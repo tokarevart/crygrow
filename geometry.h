@@ -7,13 +7,13 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <algorithm>
-#include "simple-automata.h"
+#include "automata.h"
 #include "grgeo.h"
 
 
 namespace cgr {
 
-class simple_geo_from_automata {
+class geo_from_automata {
 public:
     static constexpr std::size_t dim = 3;
     using vecu = spt::vec3u;
@@ -34,7 +34,7 @@ public:
     template <typename T>
     using vector2gd = std::vector<std::vector<T>>;
 
-    using automata_type = cgr::simple_automata<dim, nbhood_kind::euclid, real_type>;
+    using automata_type = cgr::automata<dim, nbhood_kind::euclid, real_type>;
     using gr_geometry = grgeo::gr_geometry;
 
     void add_empty_gr_volumes(const std::vector<grains_container>& grconts) {
@@ -326,7 +326,7 @@ public:
         //
     }
 
-    simple_geo_from_automata(const automata_type* automata)
+    geo_from_automata(const automata_type* automata)
         : m_automata(automata) {}
 
 

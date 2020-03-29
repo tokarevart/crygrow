@@ -13,8 +13,8 @@ using real_type = geo::real_type;
 using vec3r = geo::vec3r;
 
 constexpr std::size_t dim = 3;
-using automata_type = cgr::simple_automata<dim, nbhood_kind::euclid, real_type>;
-using cell_type = cgr::simple_cell<dim, real_type>;
+using automata_type = cgr::automata<dim, nbhood_kind::euclid, real_type>;
+using cell_type = cgr::cell<dim, real_type>;
 using cells_container = std::vector<cell_type*>;
 using grain_type = cell_type::grain_type;
 using grains_container = cell_type::grains_container;

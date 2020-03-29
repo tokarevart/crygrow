@@ -11,20 +11,20 @@
 #include "vec.h"
 #include "sptops.h"
 #include "cgralgs.h"
-#include "simple-cell.h"
+#include "cell.h"
 
 
 namespace cgr {
 
 template <std::size_t Dim, nbhood_kind NbhoodKind = nbhood_kind::euclid, typename Real = double>
-class simple_automata {
+class automata {
 public:
     static constexpr std::size_t dim = Dim;
     static constexpr cgr::nbhood_kind nbhood_kind = NbhoodKind;
     static constexpr Real epsilon = std::numeric_limits<Real>::epsilon();
     using veci = spt::veci<Dim>;
     using vecu = spt::vecu<Dim>;
-    using cell_type = cgr::simple_cell<Dim, Real>;
+    using cell_type = cgr::cell<Dim, Real>;
     using cells_container = std::vector<cell_type*>;
     using nbhood_type = cgr::nbhood<Dim, cell_type>;
     using nbhood_pos_type = cgr::nbhood_pos<Dim>;
@@ -273,9 +273,9 @@ public:
         return true;
     }
 
-    simple_automata(std::size_t dimlen, std::size_t default_range = 1)
-        : simple_automata(vecu::filled_with(dimlen), default_range) {}
-    simple_automata(const vecu& dimlens, std::size_t default_range = 1) {
+    automata(std::size_t dimlen, std::size_t default_range = 1)
+        : automata(vecu::filled_with(dimlen), default_range) {}
+    automata(const vecu& dimlens, std::size_t default_range = 1) {
         set_dim_lens(dimlens);
         set_default_range(default_range);
         std::size_t new_num_cells = std::accumulate(m_dim_lens.x.begin(), m_dim_lens.x.end(),

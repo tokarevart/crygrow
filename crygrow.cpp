@@ -5,8 +5,8 @@
 #include <fstream>
 #include <random>
 #include "sptalgs.h"
-#include "simple-automata.h"
-#include "simple-geometry.h"
+#include "automata.h"
+#include "geometry.h"
 #include "progress-bar.h"
 
 #define DIM3
@@ -19,10 +19,10 @@ constexpr std::size_t dim = 2;
 std::size_t seed = 0;
 constexpr auto kind = cgr::nbhood_kind::euclid;
 using pos_t = spt::veci<dim>;
-using automata_t = cgr::simple_automata<dim, kind>;
-using cell_t = cgr::simple_cell<dim>;
-using crystallite_t = cgr::simple_grain<dim>;
-using material_t = cgr::simple_material<dim>;
+using automata_t = cgr::automata<dim, kind>;
+using cell_t = cgr::cell<dim>;
+using crystallite_t = cgr::grain<dim>;
+using material_t = cgr::material<dim>;
 using nbhood_pos_t = cgr::nbhood_pos<dim>;
 
 using pair_pos_cell = std::pair<std::vector<pos_t>, std::vector<cell_t>>;
@@ -226,7 +226,7 @@ int inner_main() {
         //std::system("python ./visualize.py");
     }
 
-    cgr::simple_geo_from_automata simplegeo(&automata);
+    cgr::geo_from_automata simplegeo(&automata);
     simplegeo.make();
 
     std::cout << "planarity: " << simplegeo.planarity() << std::endl;

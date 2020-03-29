@@ -170,11 +170,11 @@
     <ClInclude Include="range-iter.h" />
     <ClInclude Include="neighborhood.h" />
     <ClInclude Include="mat.h" />
-    <ClInclude Include="simple-automata.h" />
-    <ClInclude Include="simple-cell.h" />
-    <ClInclude Include="simple-grain.h" />
-    <ClInclude Include="simple-geometry.h" />
-    <ClInclude Include="simple-material.h" />
+    <ClInclude Include="automata.h" />
+    <ClInclude Include="cell.h" />
+    <ClInclude Include="grain.h" />
+    <ClInclude Include="geometry.h" />
+    <ClInclude Include="material.h" />
     <ClInclude Include="sptalgs.h" />
     <ClInclude Include="sptops.h" />
     <ClInclude Include="vec.h" />

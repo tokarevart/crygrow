@@ -15,7 +15,7 @@ enum class material_property {
 };
 
 template <std::size_t Dim, typename Real = double>
-class simple_material {
+class material {
 public:
     using grow_dir = spt::vec<Dim, Real>;
 
@@ -26,7 +26,7 @@ public:
         return m_grow_dirs;
     }
 
-    simple_material(material_property prop, std::vector<grow_dir> gdirs = {})
+    material(material_property prop, std::vector<grow_dir> gdirs = {})
         : m_matproperty{prop} {
         if (!gdirs.empty())
             m_grow_dirs = std::move(gdirs);

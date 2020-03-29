@@ -37,6 +37,8 @@ bool inside_nbhood(const spt::veci<Dim>& pos, std::size_t range) {
 using nbhood_offset = std::vector<std::size_t>;
 
 template <std::size_t Dim, typename Cell>
+using get_cell_by_offset_t = std::function<Cell*(const std::size_t)>;
+template <std::size_t Dim, typename Cell>
 using try_get_cell_t = std::function<Cell*(const spt::veci<Dim>&)>;
 template <std::size_t Dim>
 using try_get_bcell_t = std::function<bool(const spt::veci<Dim>&)>;
@@ -195,6 +197,13 @@ public:
 
 
 template <nbhood_kind NbhoodKind, std::size_t Dim>
+nbhood_pos<Dim> make_nbhood_pos(const spt::veci<Dim>& center, std::size_t range,
+    std::optional<try_get_bcell_t<Dim>> trygetcell = std::nullopt) {
+    return nbhood_pos_impl<NbhoodKind, Dim>::run(center, range, trygetcell);
+}
+
+
+template <nbhood_kind NbhoodKind, std::size_t Dim>
 nbhood_offset make_nbhood_offset(std::size_t center, const spt::vecu<Dim>& dim_lens, std::size_t range,
                                  std::optional<try_get_bcell_t<Dim>> trygetcell = std::nullopt) {
     spt::veci<Dim> center_upos = cgr::upos(center, dim_lens);
@@ -226,36 +235,8 @@ nbhood_offset make_nbhood_offset(std::size_t center, const spt::vecu<Dim>& dim_l
 }
 
 
-template <nbhood_kind NbhoodKind, std::size_t Dim>
-nbhood_pos<Dim> make_nbhood_pos(const spt::veci<Dim>& center, std::size_t range, 
-                                std::optional<try_get_bcell_t<Dim>> trygetcell = std::nullopt) {
-    return nbhood_pos_impl<NbhoodKind, Dim>::run(center, range, trygetcell);
-}
-
-
 template <std::size_t Dim, typename Cell>
 using nbhood = std::vector<Cell*>;
-
-
-// bad make_nbhood_pos
-//template <std::size_t Dim, typename Cell>
-//nbhood<Dim, Cell> make_nbhood(std::size_t center, const spt::vecu<Dim>& dim_lens, 
-//                              nbhood_kind kind, std::size_t range,
-//                              try_get_cell_t<Dim, Cell> trygetcell) {
-//    nbhood<Dim, Cell> res;
-//    auto nbhpos = trygetcell ? make_nbhood_pos(center, kind, range,
-//                                               [trygetcell](std::size_t pos)
-//                                               -> bool { return trygetcell.value()(pos); })
-//        : make_nbhood_pos(center, kind, range);
-//
-//    for (auto& nbpos : nbhpos) {
-//        auto pcell = trygetcell(nbpos);
-//        if (pcell)
-//            res.push_back(pcell);
-//    }
-//
-//    return res;
-//}
 
 
 template <std::size_t Dim, typename Cell>
@@ -263,8 +244,8 @@ nbhood<Dim, Cell> make_nbhood(const spt::veci<Dim>& center, nbhood_kind kind, st
                               try_get_cell_t<Dim, Cell> trygetcell) {
     nbhood<Dim, Cell> res;
     auto nbhpos = trygetcell ? make_nbhood_pos(center, kind, range, 
-                                            [trygetcell](const spt::veci<Dim>& pos) 
-                                            -> bool { return trygetcell.value()(pos); }) 
+                                               [trygetcell](const spt::veci<Dim>& pos) 
+                                               -> bool { return trygetcell.value()(pos); }) 
         : make_nbhood_pos(center, kind, range);
 
     for (auto& nbpos : nbhpos) {
@@ -279,14 +260,11 @@ nbhood<Dim, Cell> make_nbhood(const spt::veci<Dim>& center, nbhood_kind kind, st
 
 template <std::size_t Dim, typename Cell>
 nbhood<Dim, Cell> make_nbhood(const nbhood_offset& nbhpos,
-                              try_get_cell_t<Dim, Cell> trygetcell) {
+                              get_cell_by_offset_t<Dim, Cell> getcell) {
     nbhood<Dim, Cell> res;
-    for (auto& nbpos : nbhpos) {
-        auto pcell = trygetcell(nbpos);
-        if (pcell)
-            res.push_back(pcell);
-    }
-
+    res.reserve(nbhpos.size());
+    for (auto& nbpos : nbhpos)
+        res.push_back(getcell(nbpos));
     return res;
 }
 

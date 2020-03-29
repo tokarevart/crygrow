@@ -59,14 +59,14 @@ public:
     cell_type* get_cell(const veci& pos) const {
         return get_cell(offset(pos));
     }
-    void  set_cell(std::size_t offset, const cell_type* new_cell) {
+    void set_cell(std::size_t offset, const cell_type* new_cell) {
         m_cells[offset] = const_cast<cell_type*>(new_cell);
     }
-    void  set_cell(const veci& pos, const cell_type* new_cell) {
+    void set_cell(const veci& pos, const cell_type* new_cell) {
         m_cells[offset(pos)] = const_cast<cell_type*>(new_cell);
     }
     template <typename PosesContainer, typename CellsContainer>
-    void  set_cells(const PosesContainer& poses, const CellsContainer& cells) {
+    void set_cells(const PosesContainer& poses, const CellsContainer& cells) {
         auto pos_it = poses.begin();
         auto cell_it = cells.begin();
         for (; pos_it != poses.end(); ++pos_it, ++cell_it)
@@ -79,7 +79,7 @@ public:
     cell_type* try_get_cell(const veci& pos) const {
         return inside(pos) ? get_cell(pos) : nullptr;
     }
-    bool  try_set_cell(const veci& pos, const cell_type* new_cell) {
+    bool try_set_cell(const veci& pos, const cell_type* new_cell) {
         if (inside(pos)) {
             m_cells[offset(pos)] = const_cast<cell_type*>(new_cell);
             return true;
@@ -88,7 +88,7 @@ public:
         return false;
     }
     template <typename PosesContainer, typename CellsContainer>
-    void  try_set_cells(const PosesContainer& poses, const CellsContainer& cells) {
+    void try_set_cells(const PosesContainer& poses, const CellsContainer& cells) {
         auto pos_it = poses.begin();
         auto cell_it = cells.begin();
         for (; pos_it != poses.end(); ++pos_it, ++cell_it)

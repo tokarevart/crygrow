@@ -715,6 +715,8 @@ struct geometry {
         for (tag_type ltag : sur0)
             if (surface_contains_line(sur1_tag, std::abs(ltag)))
                 return std::abs(ltag);
+
+        std::terminate();
     }
     auto find_adj_surfaces_to_line_in_volume(utag_type vol_tag, utag_type line_tag) const {
         std::pair<std::size_t, std::size_t> res;

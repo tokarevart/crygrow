@@ -16,11 +16,10 @@
 
 namespace cgr {
 
-template <std::size_t Dim, nbhood_kind NbhoodKind = nbhood_kind::euclid, typename Real = double>
+template <std::size_t Dim, typename Real = double>
 class automata {
 public:
     static constexpr std::size_t dim = Dim;
-    static constexpr cgr::nbhood_kind nbhood_kind = NbhoodKind;
     static constexpr Real epsilon = std::numeric_limits<Real>::epsilon();
     using veci = spt::veci<Dim>;
     using vecu = spt::vecu<Dim>;
@@ -96,7 +95,7 @@ public:
     }
 
     bool inside(const vecu& pos) const {
-        return inside(pos, m_dim_lens);
+        return cgr::inside(pos, m_dim_lens);
     }
     bool inside(const veci& pos) const {
         for (auto& e : pos.x)
@@ -111,15 +110,10 @@ public:
         return cgr::offset(static_cast<veci>(pos), m_dim_lens);
     }
 
-    nbhood_offset_type make_nbhood_offset() const {
-        return cgr::make_nbhood_offset<NbhoodKind, Dim>(
-            cgr::offset(veci::filled_with(m_default_range), vecu::filled_with(2 * m_default_range + 1)),
-            vecu::filled_with(2 * m_default_range + 1), m_default_range);
-    }
     nbhood_offset_type make_nbhood_offset(std::size_t pos_offset) const {
-        return cgr::make_nbhood_offset<NbhoodKind, Dim>(
+        return cgr::make_nbhood_offset<Dim>(m_default_nbhood_kind,
             pos_offset, m_dim_lens, m_default_range,
-            [this](const veci& pos) -> bool { return try_get_cell(pos); });
+            [this](const veci& pos) -> bool { return inside(pos); });
     }
     const nbhood_offset_type& get_nbhood_offset(std::size_t pos_offset) const {
         return m_nbhood_offsets[pos_offset];
@@ -162,6 +156,9 @@ public:
         return m_dim_lens;
     }
 
+    nbhood_kind default_nbhood_kind() const {
+        return m_default_nbhood_kind;
+    }
     std::size_t default_range() const {
         return m_default_range;
     }
@@ -273,9 +270,10 @@ public:
         return true;
     }
 
-    automata(std::size_t dimlen, std::size_t default_range = 1)
+    automata(std::size_t dimlen, std::size_t default_range = 1, nbhood_kind default_nbhood_kind = nbhood_kind::euclid)
         : automata(vecu::filled_with(dimlen), default_range) {}
-    automata(const vecu& dimlens, std::size_t default_range = 1) {
+    automata(const vecu& dimlens, std::size_t default_range = 1, nbhood_kind default_nbhood_kind = nbhood_kind::euclid) {
+        m_default_nbhood_kind = default_nbhood_kind;
         set_dim_lens(dimlens);
         set_default_range(default_range);
         std::size_t new_num_cells = std::accumulate(m_dim_lens.x.begin(), m_dim_lens.x.end(),
@@ -289,6 +287,7 @@ public:
 
 
 private:
+    nbhood_kind m_default_nbhood_kind;
     std::size_t m_default_range;
     std::size_t m_default_nbhood_size;
     vecu m_dim_lens;
@@ -300,8 +299,8 @@ private:
     // todo: store common cells, such as empty cell and crystallized cell for each grain
 
     void set_default_nbhood_size() {
-        m_default_nbhood_size = cgr::make_nbhood_offset<NbhoodKind, Dim>(
-            0, m_dim_lens, m_default_range).size();
+        m_default_nbhood_size = cgr::make_nbhood_offset<Dim>(m_default_nbhood_kind,
+            0, m_dim_lens, m_default_range, std::nullopt).size();
     }
     void set_dim_lens(const vecu& dimlens) {
         m_dim_lens = dimlens;
@@ -331,6 +330,13 @@ private:
 
         if (!get_nbhood_offset(offset).empty())
             clear_nbhood_offset(offset);
+    }
+
+    nbhood_offset_type make_nbhood_offset() const {
+        vecu dimlens = vecu::filled_with(2 * m_default_range + 1);
+        return cgr::make_nbhood_offset<Dim>(m_default_nbhood_kind,
+            cgr::offset(veci::filled_with(m_default_range), dimlens),
+            dimlens, m_default_range, std::nullopt);
     }
 };
 

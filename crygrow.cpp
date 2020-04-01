@@ -19,7 +19,7 @@ constexpr std::size_t dim = 2;
 std::size_t seed = 0;
 constexpr auto kind = cgr::nbhood_kind::euclid;
 using pos_t = spt::veci<dim>;
-using automata_t = cgr::automata<dim, kind>;
+using automata_t = cgr::automata<dim>;
 using cell_t = cgr::cell<dim>;
 using crystallite_t = cgr::grain<dim>;
 using material_t = cgr::material<dim>;
@@ -151,7 +151,7 @@ int inner_main() {
     std::vector<nbhood_pos_t> init_nbhood_poses;
     init_nbhood_poses.reserve(init_central_poses.size());
     for (auto& pos : init_central_poses)
-        init_nbhood_poses.emplace_back(cgr::make_nbhood_pos<kind, dim>(pos, range));
+        init_nbhood_poses.emplace_back(cgr::make_nbhood_pos<dim>(kind, pos, range, std::nullopt));
 
     std::vector<std::vector<cell_t>> init_nbhood_cells;
     init_nbhood_cells.reserve(init_nbhood_poses.size());
@@ -240,7 +240,7 @@ int inner_main() {
 
     std::ofstream file("polycr.geo");
     simplegeo.write_geo(file);
-    //simplegeo.write_geo(std::cout);
+    simplegeo.write_geo(std::cout);
 
     return 0;
 }

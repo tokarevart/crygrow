@@ -34,7 +34,7 @@ public:
     template <typename T>
     using vector2gd = std::vector<std::vector<T>>;
 
-    using automata_type = cgr::automata<dim, nbhood_kind::euclid, real_type>;
+    using automata_type = cgr::automata<dim, real_type>;
     using gr_geometry = grgeo::gr_geometry;
 
     void add_empty_gr_volumes(const std::vector<grains_container>& grconts) {

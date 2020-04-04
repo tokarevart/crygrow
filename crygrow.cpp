@@ -107,7 +107,7 @@ int main_test() {
 }
 
 int inner_main() {
-    std::size_t size = 180;
+    std::size_t size = 280;
     std::size_t range = 4;
     automata_t automata(size, cgr::make_nbhood_pos_shift_fn<dim>(cgr::nbhood_kind::euclid), range);
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());

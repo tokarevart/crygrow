@@ -42,16 +42,50 @@ bool inside(const spt::vecu<Dim>& pos, const spt::vecu<Dim>& dim_lens) {
     return true;
 }
 
+
+template <std::size_t Dim>
+using norm_fn = std::function<std::size_t(const spt::veci<Dim>&)>;
+
+
 template <std::size_t Dim, typename ValueType>
-ValueType norm_cryst(const spt::vec<Dim, ValueType>& dir,
-                     const std::vector<spt::vec<Dim, ValueType>>& es) {
+std::size_t norm_cryst(
+    const spt::veci<Dim>& dir, 
+    const std::vector<spt::vec<Dim, ValueType>>& growdirs) {
+
+    auto cdir = static_cast<spt::vec<Dim, ValueType>>(dir);
     ValueType maxpn = 0;
-    for (auto& e : es) {
-        auto pn = std::abs(spt::dot(dir, e)) / spt::dot(e, e);
+    for (auto& gd : growdirs) {
+        auto pn = std::abs(spt::dot(cdir, gd)) / spt::dot(gd, gd);
         if (pn > maxpn)
             maxpn = pn;
     }
-    return maxpn;
+    
+    if constexpr (std::is_integral_v<ValueType>)
+        return maxpn;
+    else
+        return maxpn + std::numeric_limits<ValueType>::epsilon();
+}
+
+template <std::size_t Dim, typename ValueType>
+norm_fn<Dim> make_norm_cryst_fn(std::vector<spt::vec<Dim, ValueType>> growdirs) {
+    std::vector<spt::vec<Dim, ValueType>> es_inv_dots;
+    es_inv_dots.reserve(growdirs.size());
+    for (auto& e : growdirs)
+        es_inv_dots.push_back(static_cast<ValueType>(1) / spt::dot(e, e));
+
+    return [std::move(growdirs), std::move(es_inv_dots)](const spt::veci<Dim>& dir) -> std::size_t {
+        auto cdir = static_cast<spt::vec<Dim, ValueType>>(dir);
+        ValueType maxpn = 0;
+        for (std::size_t i = 0; i < growdirs.size(); ++i) {
+            auto pn = std::abs(spt::dot(cdir, growdirs[i])) * es_inv_dots[i];
+            if (pn > maxpn)
+                maxpn = pn;
+        }
+        if constexpr (std::is_integral_v<ValueType>)
+            return maxpn;
+        else
+            return maxpn + std::numeric_limits<ValueType>::epsilon();
+    };
 }
 
 template <std::size_t Dim>
@@ -73,9 +107,9 @@ std::size_t norm_chebyshev(const spt::veci<Dim>& dir) {
     return max_abs;
 }
 
-template <std::size_t Dim, typename Real = double>
-Real norm_euclid(const spt::veci<Dim>& dir) {
-    return std::sqrt(dir.magnitude2());
+template <std::size_t Dim>
+std::size_t norm_euclid(const spt::veci<Dim>& dir) {
+    return std::sqrt(dir.magnitude2()) + std::numeric_limits<double>::epsilon();
 }
 
 template <std::size_t Dim>

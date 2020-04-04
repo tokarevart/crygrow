@@ -163,6 +163,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cgralgs.h" />
+    <ClInclude Include="clr-grain.h" />
     <ClInclude Include="geo.h" />
     <ClInclude Include="geoalgs.h" />
     <ClInclude Include="grgeo.h" />

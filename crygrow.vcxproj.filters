@@ -68,5 +68,8 @@
     <ClInclude Include="material.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="clr-grain.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

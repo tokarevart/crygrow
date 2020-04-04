@@ -14,26 +14,14 @@ namespace cgr {
 enum class nbhood_kind {
     von_neumann,
     moore,
-    euclid
+    euclid,
+    crystallographic
 };
 
+
 template <std::size_t Dim>
-bool inside_nbhood(nbhood_kind kind, const spt::veci<Dim>& pos, std::size_t range) {
-    switch (kind) {
-    case nbhood_kind::von_neumann:
-        return cgr::norm_taxicab(pos) <= range;
-
-    case nbhood_kind::moore:
-        for (auto e : pos.x)
-            if (e > static_cast<std::int64_t>(range))
-                return false;
-        return true;
-
-    case nbhood_kind::euclid:
-        return cgr::norm2_euclid(pos) <= range * range;
-    }
-
-    std::terminate();
+bool inside_nbhood(norm_fn<Dim> normfn, const spt::veci<Dim>& pos, std::size_t range) {
+    return normfn(pos) <= range;
 }
 
 
@@ -41,8 +29,10 @@ using nbhood_offset = std::vector<std::size_t>;
 
 template <std::size_t Dim, typename Cell>
 using get_cell_by_offset_fn = std::function<Cell*(const std::size_t)>;
+
 template <std::size_t Dim, typename Cell>
 using try_get_cell_fn = std::function<Cell*(const spt::veci<Dim>&)>;
+
 template <std::size_t Dim>
 using inside_fn = std::function<bool(const spt::veci<Dim>&)>;
 
@@ -53,9 +43,12 @@ using nbhood_pos = std::vector<spt::veci<Dim>>;
 template <std::size_t Dim>
 using nbhood_pos_shift_fn = std::function<nbhood_pos<Dim>(std::size_t)>;
 
+template <std::size_t Dim, typename Real = double>
+using orientation_t = spt::mat<Dim, Real>; // |each vec| == 1
+
 
 template <std::size_t Dim>
-nbhood_pos<Dim> make_nbhood_pos_shift(nbhood_kind kind, std::size_t range) {
+nbhood_pos<Dim> make_nbhood_pos_shift(norm_fn<Dim> normfn, std::size_t range) {
     std::vector<spt::veci<Dim>> res;
     std::size_t buf = 2 * range + 1;
     std::int64_t srange = range;
@@ -65,7 +58,7 @@ nbhood_pos<Dim> make_nbhood_pos_shift(nbhood_kind kind, std::size_t range) {
             for (std::int64_t x = -srange; x <= srange; ++x) {
                 auto sh = spt::veci<Dim>{ x, y };
                 if (!(x == 0 && y == 0) &&
-                    inside_nbhood<Dim>(kind, sh, range))
+                    inside_nbhood<Dim>(normfn, sh, range))
                     res.push_back(sh);
             }
         }
@@ -78,7 +71,7 @@ nbhood_pos<Dim> make_nbhood_pos_shift(nbhood_kind kind, std::size_t range) {
                 for (std::int64_t x = -srange; x <= srange; ++x) {
                     auto sh = spt::veci<Dim>{ x, y, z };
                     if (!(x == 0 && y == 0 && z == 0) &&
-                        inside_nbhood<Dim>(kind, sh, range))
+                        inside_nbhood<Dim>(normfn, sh, range))
                         res.push_back(sh);
                 }
             }
@@ -94,9 +87,9 @@ nbhood_pos<Dim> make_nbhood_pos_shift(nbhood_kind kind, std::size_t range) {
 
 
 template <std::size_t Dim>
-nbhood_pos_shift_fn<Dim> make_nbhood_pos_shift_fn(nbhood_kind kind) {
-    return [kind](std::size_t range) -> nbhood_pos<Dim> { 
-        return make_nbhood_pos<Dim>(kind, spt::veci<Dim>::filled_with(0), range, std::nullopt); 
+nbhood_pos_shift_fn<Dim> make_nbhood_pos_shift_fn(norm_fn<Dim> normfn) {
+    return [normfn](std::size_t range) -> nbhood_pos<Dim> {
+        return make_nbhood_pos_shift<Dim>(normfn, range);
     };
 }
 
@@ -142,10 +135,10 @@ nbhood_pos<Dim> make_nbhood_pos(
 
 template <std::size_t Dim>
 nbhood_pos<Dim> make_nbhood_pos(
-    nbhood_kind kind, const spt::veci<Dim>& center, std::size_t range,
+    norm_fn<Dim> normfn, const spt::veci<Dim>& center, std::size_t range,
     std::optional<inside_fn<Dim>> infn) {
 
-    return apply_nbhood_pos_shift<Dim>(center, make_nbhood_pos_shift<Dim>(kind, range), infn);
+    return apply_nbhood_pos_shift<Dim>(center, make_nbhood_pos_shift<Dim>(normfn, range), infn);
 }
 
 
@@ -162,11 +155,11 @@ nbhood_offset make_nbhood_offset(
 
 template <std::size_t Dim>
 nbhood_offset make_nbhood_offset(
-    nbhood_kind kind, std::size_t center, const spt::vecu<Dim>& dim_lens, 
+    norm_fn<Dim> normfn, std::size_t center, const spt::vecu<Dim>& dim_lens,
     std::size_t range, std::optional<inside_fn<Dim>> infn) {
 
     spt::veci<Dim> center_pos = cgr::upos(center, dim_lens);
-    auto nbhpos = make_nbhood_pos<Dim>(kind, center_pos, range, infn);
+    auto nbhpos = make_nbhood_pos<Dim>(normfn, center_pos, range, infn);
     return nbhood_pos_to_offset<Dim>(nbhpos, dim_lens);
 }
 
@@ -177,15 +170,15 @@ using nbhood = std::vector<Cell*>;
 
 template <std::size_t Dim, typename Cell>
 nbhood<Dim, Cell> make_nbhood(
-    nbhood_kind kind, const spt::veci<Dim>& center, std::size_t range,
+    norm_fn<Dim> normfn, const spt::veci<Dim>& center, std::size_t range,
     try_get_cell_fn<Dim, Cell> trygetcell) {
 
     nbhood<Dim, Cell> res;
     auto nbhpos = trygetcell ? 
-        make_nbhood_pos<Dim>(kind, center, range,
+        make_nbhood_pos<Dim>(normfn, center, range,
             [trygetcell](const spt::veci<Dim>& pos) -> bool { 
                 return trygetcell.value()(pos); }) 
-        : make_nbhood_pos<Dim>(kind, center, range);
+        : make_nbhood_pos<Dim>(normfn, center, range);
 
     for (auto& pos : nbhpos) {
         auto pcell = trygetcell(pos);

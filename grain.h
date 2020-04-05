@@ -23,7 +23,7 @@ public:
 
     grain(const material_type* mater, 
           const orientation_type& orien = orientation_type::identity())
-        : m_material{ const_cast<material_type*>(mater) }, m_orientation{ orien } {}
+        : m_material{ mater }, m_orientation{ orien } {}
 
 
 private:

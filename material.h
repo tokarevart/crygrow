@@ -9,32 +9,20 @@
 
 namespace cgr {
 
-enum class material_property {
-    isotropic,
-    anisotropic
-};
-
 template <std::size_t Dim, typename Real = double>
 class material {
 public:
     using grow_dir = spt::vec<Dim, Real>;
 
-    material_property matproperty() const {
-        return m_matproperty;
-    }
     const std::vector<grow_dir>& grow_dirs() const {
         return m_grow_dirs;
     }
 
-    material(material_property prop, std::vector<grow_dir> gdirs = {})
-        : m_matproperty{prop} {
-        if (!gdirs.empty())
-            m_grow_dirs = std::move(gdirs);
-    }
+    material(std::vector<grow_dir> gdirs = {})
+        : m_grow_dirs{ std::move(gdirs) } {}
 
 
 private:
-    material_property m_matproperty;
     std::vector<grow_dir> m_grow_dirs;
 };
 

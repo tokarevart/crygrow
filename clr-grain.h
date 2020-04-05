@@ -15,7 +15,8 @@ class clr_grain {
 public:
     using grain_type = cgr::grain<Dim, Real>;
     using orientation_type = orientation_t<Dim, Real>;
-    using offgrain_pair = std::pair<std::size_t, const grain_type*>;
+    using offdel_pair = std::pair<std::size_t, Real>; // offset and delta
+    using offset_fn = std::function<std::size_t(const spt::veci<Dim>&)>;
 
     const grain_type* grain() const {
         return m_grain;
@@ -28,19 +29,26 @@ public:
         m_shifts = make_nbhood_pos_shifts<Dim>(m_normfn, range);
     }
 
-    offgrain_pair next_offgrain() {
-        offgrain_pair temp = m_offgrains.back();
-        m_offgrains.pop_back();
+    void set_insidefn(inside_fn infn) {
+        m_infn = infn;
+    }
+    void set_offsetfn(offset_fn offfn) {
+        m_offfn = offfn;
+    }
+
+    offdel_pair next_offdel() {
+        offdel_pair temp = m_offdels.back();
+        m_offdels.pop_back();
         return temp;
     }
-    std::optional<offgrain_pair> try_next_offgrain() {
-        if (empty_offgrains())
+    std::optional<offdel_pair> try_next_offdel() {
+        if (empty_offdels())
             return std::nullopt;
         else
-            return next_offgrain();
+            return next_offdel();
     }
-    bool empty_offgrains() const {
-        return m_offgrains.empty();
+    bool empty_offdels() const {
+        return m_offdels.empty();
     }
 
     clr_grain(const grain_type* grain, nbhood_kind kind)
@@ -69,7 +77,9 @@ private:
     norm_fn<Dim> m_normfn;
     nbhood_pos<Dim> m_shifts;
     std::size_t m_range = 0;
-    std::vector<offgrain_pair> m_offgrains;
+    inside_fn m_infn;
+    offset_fn m_offfn;
+    std::vector<offdel_pair> m_offdels;
 
     std::vector<spt::vec<Dim, Real>> orientate_grow_dirs() const {
         auto transposed_orien = m_grain->orientation().transposed();

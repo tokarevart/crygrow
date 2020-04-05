@@ -82,10 +82,10 @@ public:
         return true;
     }
     std::vector<offsets_container>::iterator grains_find_in_offsets(
-        std::vector<offsets_container>& offconts, const grains_container& grains) const {
+        std::vector<offsets_container>& offconts, const grains_container& grns) const {
         auto it = offconts.begin();
         for (; it < offconts.end(); ++it)
-            if (grains_equal_unsorted(get_grains(it->front()), grains))
+            if (grains_equal_unsorted(grains(it->front()), grns))
                 break;
         return it;
     }
@@ -96,10 +96,10 @@ public:
             return origin + dist;
 
         if constexpr (Dir == 1) 
-            return origin + get_dim_lens()[0] * dist;
+            return origin + dim_lens()[0] * dist;
 
         if constexpr (Dir == 2) 
-            return origin + get_dim_lens()[1] * get_dim_lens()[0] * dist;
+            return origin + dim_lens()[1] * dim_lens()[0] * dist;
     }
     // exclusive dist_end
     template <std::size_t Dir>
@@ -122,15 +122,15 @@ public:
 
     template <std::size_t Dir>
     std::size_t vshift(std::size_t origin) const {
-        return shift<Dir>(origin, get_dim_lens()[Dir] - 1);
+        return shift<Dir>(origin, dim_lens()[Dir] - 1);
     }
     template <std::size_t Dir>
     offsets_container eshift(std::size_t vertex) const {
-        return shift<Dir>(vertex, 0, get_dim_lens()[Dir]);
+        return shift<Dir>(vertex, 0, dim_lens()[Dir]);
     }
     template <std::size_t Dir>
     offsets_container fshift(const offsets_container& edge) const {
-        return shift<Dir>(edge, 0, get_dim_lens()[Dir]);
+        return shift<Dir>(edge, 0, dim_lens()[Dir]);
     }
 
     vertices_container box_vertices() const {
@@ -193,10 +193,10 @@ public:
     offsets_container boundaries_offsets() const {
         offsets_container res;
         for (std::size_t i = 0; i < num_cells(); ++i) {
-            if (get_grains(i).size() > 1)
+            if (grains(i).size() > 1)
                 res.push_back(i);
             // dirty hack
-            if (get_grains(i).size() > 4) {
+            if (grains(i).size() > 4) {
                 //std::cout << "oops!";
                 throw -1;
             }
@@ -204,7 +204,7 @@ public:
         return res;
     }
     const grains_container& boundary_grains(const offsets_container& boundary) const {
-        return get_grains(boundary.front());
+        return grains(boundary.front());
     }
     std::vector<grains_container> boundaries_grains(const std::vector<offsets_container>& boundaries) const {
         std::vector<grains_container> res;
@@ -216,7 +216,7 @@ public:
     std::vector<offsets_container> group_boundaries_by_grains(const offsets_container& bryoffsets) const {
         std::vector<offsets_container> res;
         for (auto off : bryoffsets) {
-            auto found = grains_find_in_offsets(res, get_grains(off));
+            auto found = grains_find_in_offsets(res, grains(off));
             if (found == res.end()) {
                 res.push_back(offsets_container{ off });
             } else {
@@ -228,7 +228,7 @@ public:
     std::vector<offsets_container> group_boundaries_by_grains_num(const offsets_container& bryoffsets) const {
         std::vector<offsets_container> res;
         for (auto off : bryoffsets) {
-            std::size_t num_grains = get_grains(off).size();
+            std::size_t num_grains = grains(off).size();
             if (num_grains > res.size())
                 while (res.size() < num_grains - 1)
                     res.emplace_back();
@@ -256,7 +256,7 @@ public:
     vec3r central_pos(const offsets_container& offsets) const {
         vecu acc;
         for (auto off : offsets)
-            acc += cgr::upos(off, get_dim_lens());
+            acc += cgr::upos(off, dim_lens());
         auto accreal = static_cast<vec3r>(acc);
         for (auto& e : accreal.x)
             e /= offsets.size();
@@ -309,7 +309,7 @@ public:
 
     std::optional<std::string> is_inner_max_order_overflow() const {
         for (std::size_t i = 0; i < num_cells(); ++i)
-            if (get_grains(i).size() > 4)
+            if (grains(i).size() > 4)
                 return "Max boundary order overflow\n";
         return std::nullopt;
     }
@@ -368,8 +368,8 @@ private:
     std::size_t num_cells() const {
         return m_automata->num_cells();
     }
-    cell_type* get_cell(std::size_t offset) const {
-        return m_automata->get_cell(offset);
+    cell_type* cell(std::size_t offset) const {
+        return m_automata->cell(offset);
     }
     void add_boxbry_grains() {
         auto box_vs = box_vertices();
@@ -383,11 +383,11 @@ private:
         }
     }
     void add_grain(std::size_t offset, const grain_type* pgrain) {
-        m_boxbry_grconts.insert({ offset, std::make_unique<grains_container>(get_cell(offset)->grains) });
+        m_boxbry_grconts.insert({ offset, std::make_unique<grains_container>(cell(offset)->grains) });
         m_boxbry_grconts[offset]->push_back(const_cast<grain_type*>(pgrain));
     }
-    const grains_container& get_grains(std::size_t offset) const {
-        vecu dlens = get_dim_lens();
+    const grains_container& grains(std::size_t offset) const {
+        vecu dlens = dim_lens();
         spt::vec3u upos = cgr::upos(offset, dlens);
 
         for (std::size_t i = 0; i < 3; ++i)
@@ -397,10 +397,10 @@ private:
                 return const_cast<const grains_container&>(*searchres->second);
             }
 
-        return get_cell(offset)->grains;
+        return cell(offset)->grains;
     }
-    const vecu& get_dim_lens() const {
-        return m_automata->get_dim_lens();
+    const vecu& dim_lens() const {
+        return m_automata->dim_lens();
     }
 };
 

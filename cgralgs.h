@@ -8,24 +8,24 @@
 namespace cgr {
 
 template <std::size_t Dim>
-std::int64_t offset(const spt::veci<Dim>& pos, const spt::vecu<Dim>& dim_lens) {
+std::int64_t offset(const spt::veci<Dim>& pos, const spt::vecu<Dim>& dimlens) {
     std::int64_t res = pos.x[0];
-    std::int64_t mul = dim_lens[0];
+    std::int64_t mul = dimlens[0];
     for (std::size_t i = 1; i < Dim; ++i) {
         res += pos.x[i] * mul;
-        mul *= dim_lens[i];
+        mul *= dimlens[i];
     }
     return res;
 }
 
 template <std::size_t Dim>
-spt::vecu<Dim> upos(std::size_t offset, const spt::vecu<Dim>& dim_lens) {
+spt::vecu<Dim> upos(std::size_t offset, const spt::vecu<Dim>& dimlens) {
     spt::vecu<Dim> res;
     std::size_t t = offset;
     for (std::size_t i = Dim - 1; i > 0; --i) {
-        std::size_t prod = dim_lens[0];
+        std::size_t prod = dimlens[0];
         for (std::size_t j = 1; j < i; ++j)
-            prod *= dim_lens[j];
+            prod *= dimlens[j];
         res[i] = t / prod;
         t -= prod * res[i];
     }
@@ -34,9 +34,9 @@ spt::vecu<Dim> upos(std::size_t offset, const spt::vecu<Dim>& dim_lens) {
 }
 
 template <std::size_t Dim>
-bool inside(const spt::vecu<Dim>& pos, const spt::vecu<Dim>& dim_lens) {
+bool inside(const spt::vecu<Dim>& pos, const spt::vecu<Dim>& dimlens) {
     for (std::size_t i = 0; i < Dim; ++i)
-        if (pos[i] >= dim_lens[i])
+        if (pos[i] >= dimlens[i])
             return false;
 
     return true;

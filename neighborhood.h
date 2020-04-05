@@ -41,14 +41,14 @@ template <std::size_t Dim>
 using nbhood_pos = std::vector<spt::veci<Dim>>;
 
 template <std::size_t Dim>
-using nbhood_pos_shift_fn = std::function<nbhood_pos<Dim>(std::size_t)>;
+using nbhood_pos_shifts_fn = std::function<nbhood_pos<Dim>(std::size_t)>;
 
 template <std::size_t Dim, typename Real = double>
 using orientation_t = spt::mat<Dim, Real>; // |each vec| == 1
 
 
 template <std::size_t Dim>
-nbhood_pos<Dim> make_nbhood_pos_shift(norm_fn<Dim> normfn, std::size_t range) {
+nbhood_pos<Dim> make_nbhood_pos_shifts(norm_fn<Dim> normfn, std::size_t range) {
     std::vector<spt::veci<Dim>> res;
     std::size_t buf = 2 * range + 1;
     std::int64_t srange = range;
@@ -87,31 +87,31 @@ nbhood_pos<Dim> make_nbhood_pos_shift(norm_fn<Dim> normfn, std::size_t range) {
 
 
 template <std::size_t Dim>
-nbhood_pos_shift_fn<Dim> make_nbhood_pos_shift_fn(norm_fn<Dim> normfn) {
+nbhood_pos_shifts_fn<Dim> make_nbhood_pos_shifts_fn(norm_fn<Dim> normfn) {
     return [normfn](std::size_t range) -> nbhood_pos<Dim> {
-        return make_nbhood_pos_shift<Dim>(normfn, range);
+        return make_nbhood_pos_shifts<Dim>(normfn, range);
     };
 }
 
 
 template <std::size_t Dim>
-nbhood_offset nbhood_pos_to_offset(const nbhood_pos<Dim>& nbhpos, const spt::vecu<Dim>& dim_lens) {
+nbhood_offset nbhood_pos_to_offset(const nbhood_pos<Dim>& nbhpos, const spt::vecu<Dim>& dimlens) {
     nbhood_offset res;
     res.reserve(nbhpos.size());
     for (auto pos : nbhpos)
-        res.push_back(cgr::offset(pos, dim_lens));
+        res.push_back(cgr::offset(pos, dimlens));
     return res;
 }
 
 
 template <std::size_t Dim>
-nbhood_pos<Dim> apply_nbhood_pos_shift(
-    const spt::veci<Dim>& center, const nbhood_pos<Dim>& nbhshift,
+nbhood_pos<Dim> apply_nbhood_pos_shifts(
+    const spt::veci<Dim>& center, const nbhood_pos<Dim>& nbhshifts,
     std::optional<inside_fn<Dim>> infn) {
 
     nbhood_pos<Dim> res;
-    res.reserve(nbhshift.size());
-    for (auto shift : nbhshift) {
+    res.reserve(nbhshifts.size());
+    for (auto shift : nbhshifts) {
         auto new_pos = center + shift;
         if (!infn)
             res.push_back(new_pos);
@@ -126,10 +126,10 @@ nbhood_pos<Dim> apply_nbhood_pos_shift(
 
 template <std::size_t Dim>
 nbhood_pos<Dim> make_nbhood_pos(
-    nbhood_pos_shift_fn<Dim> shfn, const spt::veci<Dim>& center, std::size_t range,
+    nbhood_pos_shifts_fn<Dim> shfn, const spt::veci<Dim>& center, std::size_t range,
     std::optional<inside_fn<Dim>> infn) {
 
-    return apply_nbhood_pos_shift<Dim>(center, shfn(range), infn);
+    return apply_nbhood_pos_shifts<Dim>(center, shfn(range), infn);
 }
 
 
@@ -138,29 +138,29 @@ nbhood_pos<Dim> make_nbhood_pos(
     norm_fn<Dim> normfn, const spt::veci<Dim>& center, std::size_t range,
     std::optional<inside_fn<Dim>> infn) {
 
-    return apply_nbhood_pos_shift<Dim>(center, make_nbhood_pos_shift<Dim>(normfn, range), infn);
+    return apply_nbhood_pos_shifts<Dim>(center, make_nbhood_pos_shifts<Dim>(normfn, range), infn);
 }
 
 
 template <std::size_t Dim>
 nbhood_offset make_nbhood_offset(
-    nbhood_pos_shift_fn<Dim> shfn, std::size_t center, const spt::vecu<Dim>& dim_lens,
+    nbhood_pos_shifts_fn<Dim> shfn, std::size_t center, const spt::vecu<Dim>& dimlens,
     std::size_t range, std::optional<inside_fn<Dim>> infn) {
 
-    spt::veci<Dim> center_pos = cgr::upos(center, dim_lens);
+    spt::veci<Dim> center_pos = cgr::upos(center, dimlens);
     auto nbhpos = make_nbhood_pos<Dim>(shfn, center_pos, range, infn);
-    return nbhood_pos_to_offset<Dim>(nbhpos, dim_lens);
+    return nbhood_pos_to_offset<Dim>(nbhpos, dimlens);
 }
 
 
 template <std::size_t Dim>
 nbhood_offset make_nbhood_offset(
-    norm_fn<Dim> normfn, std::size_t center, const spt::vecu<Dim>& dim_lens,
+    norm_fn<Dim> normfn, std::size_t center, const spt::vecu<Dim>& dimlens,
     std::size_t range, std::optional<inside_fn<Dim>> infn) {
 
-    spt::veci<Dim> center_pos = cgr::upos(center, dim_lens);
+    spt::veci<Dim> center_pos = cgr::upos(center, dimlens);
     auto nbhpos = make_nbhood_pos<Dim>(normfn, center_pos, range, infn);
-    return nbhood_pos_to_offset<Dim>(nbhpos, dim_lens);
+    return nbhood_pos_to_offset<Dim>(nbhpos, dimlens);
 }
 
 

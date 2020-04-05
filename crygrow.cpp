@@ -109,7 +109,7 @@ int main_test() {
 int inner_main() {
     std::size_t size = 280;
     std::size_t range = 4;
-    automata_t automata(size, cgr::make_nbhood_pos_shift_fn<dim>(cgr::nbhood_kind::euclid), range);
+    automata_t automata(size, cgr::make_nbhood_pos_shifts_fn<dim>(cgr::nbhood_kind::euclid), range);
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
@@ -178,7 +178,7 @@ int inner_main() {
             //curpos[2] = size - 1;
             curpos[2] = 0;
             #endif
-            auto pcell = automata.get_cell(curpos);
+            auto pcell = automata.cell(curpos);
 
             std::array<std::uint8_t, 3> color;
             constexpr bool blackwhite = false;
@@ -217,7 +217,7 @@ int inner_main() {
 
         //std::size_t num_cells_gtdimpl1 = 0;
         //for (std::size_t i = 0; i < size * size; ++i) {
-        //    auto pcell = automata.get_cell(i);
+        //    auto pcell = automata.cell(i);
         //    if (pcell->grains.size() > dim + 1)
         //        ++num_cells_gtdimpl1;
         //}

@@ -38,25 +38,25 @@ public:
     std::size_t num_crystallized_cells() const {
         std::size_t res = 0;
         for (std::size_t i = 0; i < num_cells(); ++i)
-            if (get_cell(i)->crystallinity >= 1.0 - epsilon * (1.0 + get_cell(i)->crystallinity))
+            if (cell(i)->crystallinity >= 1.0 - epsilon * (1.0 + cell(i)->crystallinity))
                 ++res;
         return res;
     }
     std::size_t num_cells() const {
         return m_cells.size();
     }
-    const cells_container& get_cells() const {
+    const cells_container& cells() const {
         return m_cells;
     }
 
-    cell_type* get_cell(std::size_t offset) const {
+    cell_type* cell(std::size_t offset) const {
         return m_cells[offset];
     }
-    cell_type* get_cell(const vecu& pos) const {
-        return get_cell(offset(pos));
+    cell_type* cell(const vecu& pos) const {
+        return cell(offset(pos));
     }
-    cell_type* get_cell(const veci& pos) const {
-        return get_cell(offset(pos));
+    cell_type* cell(const veci& pos) const {
+        return cell(offset(pos));
     }
     void set_cell(std::size_t offset, const cell_type* new_cell) {
         m_cells[offset] = const_cast<cell_type*>(new_cell);
@@ -72,11 +72,11 @@ public:
             set_cell(*pos_it, &(*cell_it));
     }
 
-    cell_type* try_get_cell(const vecu& pos) const {
-        return inside(pos) ? get_cell(pos) : nullptr;
+    cell_type* try_cell(const vecu& pos) const {
+        return inside(pos) ? cell(pos) : nullptr;
     }
-    cell_type* try_get_cell(const veci& pos) const {
-        return inside(pos) ? get_cell(pos) : nullptr;
+    cell_type* try_cell(const veci& pos) const {
+        return inside(pos) ? cell(pos) : nullptr;
     }
     bool try_set_cell(const veci& pos, const cell_type* new_cell) {
         if (inside(pos)) {
@@ -152,7 +152,7 @@ public:
             m_nbhood_poses[offset(pos)].clear();
     }
 
-    const vecu& get_dim_lens() const {
+    const vecu& dim_lens() const {
         return m_dim_lens;
     }
 
@@ -170,7 +170,7 @@ public:
 
     bool stop_condition() const {
         for (std::size_t i = 0; i < num_cells(); ++i)
-            if (get_cell(i)->crystallinity < 1.0 - epsilon * (1.0 + get_cell(i)->crystallinity))
+            if (cell(i)->crystallinity < 1.0 - epsilon * (1.0 + cell(i)->crystallinity))
                 return false;
 
         return true;
@@ -198,7 +198,7 @@ public:
             #pragma omp for
             for (std::int64_t i = 0; i < static_cast<std::int64_t>(num_cells()); ++i) {
                 auto curpos = static_cast<veci>(upos(i));
-                auto pcell = get_cell(i);
+                auto pcell = cell(i);
                 if (std::abs(pcell->crystallinity - 1.0) <= epsilon * (1.0 + pcell->crystallinity))
                     continue;
                 
@@ -207,7 +207,7 @@ public:
                 std::int64_t accdpmagn2 = 0;
                 std::size_t numcrystednb = 0;
                 for (auto nboff : get_nbhood_offset(i)) {
-                    auto pnb = get_cell(nboff);
+                    auto pnb = cell(nboff);
                     
                     if (pnb->crystallinity < 1.0 - epsilon * (1.0 + pcell->crystallinity) ||
                         pnb->grains.size() != 1) {
@@ -253,7 +253,7 @@ public:
             #pragma omp barrier
             #pragma omp for
             for (std::int64_t i = 0; i < static_cast<std::int64_t>(num_cells()); ++i) {
-                auto pcell = get_cell(i);
+                auto pcell = cell(i);
                 pcell->crystallinity += m_cells_delta[i];
                 m_cells_delta[i] = 0.0;
 
@@ -267,9 +267,9 @@ public:
         return true;
     }
 
-    automata(std::size_t dimlen, nbhood_pos_shift_fn<Dim> default_shift_fn, std::size_t default_range = 1)
+    automata(std::size_t dimlen, nbhood_pos_shifts_fn<Dim> default_shift_fn, std::size_t default_range = 1)
         : automata(vecu::filled_with(dimlen), default_shift_fn, default_range) {}
-    automata(const vecu& dimlens, nbhood_pos_shift_fn<Dim> default_shift_fn, std::size_t default_range = 1) {
+    automata(const vecu& dimlens, nbhood_pos_shifts_fn<Dim> default_shift_fn, std::size_t default_range = 1) {
         m_default_shift_fn = default_shift_fn;
         set_dim_lens(dimlens);
         set_default_range(default_range);
@@ -284,7 +284,7 @@ public:
 
 
 private:
-    nbhood_pos_shift_fn<Dim> m_default_shift_fn;
+    nbhood_pos_shifts_fn<Dim> m_default_shift_fn;
     std::size_t m_default_range;
     std::size_t m_default_nbhood_size;
     vecu m_dim_lens;
@@ -307,10 +307,10 @@ private:
     void initialize_nbhood_offsets() {
         #pragma omp parallel for
         for (std::int64_t i = 0; i < static_cast<std::int64_t>(num_cells()); ++i)
-            if (std::abs(get_cell(i)->crystallinity - 1.0)
-                <= epsilon * (1.0 + get_cell(i)->crystallinity)) {
+            if (std::abs(cell(i)->crystallinity - 1.0)
+                <= epsilon * (1.0 + cell(i)->crystallinity)) {
                 for (auto nboff : make_nbhood_offset(i)) {
-                    if (get_cell(nboff)->crystallinity <= epsilon &&
+                    if (cell(nboff)->crystallinity <= epsilon &&
                         get_nbhood_offset(nboff).empty())
                         set_nbhood_offset(nboff);
                 }
@@ -320,7 +320,7 @@ private:
     }
     void update_nbhood_offsets_after_crystallization(std::size_t offset) {
         for (auto nboff : get_nbhood_offset(offset)) {
-            if (get_cell(nboff)->crystallinity <= epsilon &&
+            if (cell(nboff)->crystallinity <= epsilon &&
                 get_nbhood_offset(nboff).empty())
                 set_nbhood_offset(nboff);
         }

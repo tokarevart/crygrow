@@ -18,18 +18,18 @@ constexpr std::size_t dim = 2;
 #endif
 std::size_t seed = 0;
 constexpr auto kind = cgr::nbhood_kind::euclid;
-using pos_t = spt::veci<dim>;
+using poses_t = spt::veci<dim>;
 using automata_t = cgr::automata<dim>;
 using cell_t = cgr::cell<dim>;
 using crystallite_t = cgr::grain<dim>;
 using material_t = cgr::material<dim>;
-using nbhood_pos_t = cgr::nbhood_pos<dim>;
+using nbhood_pos_t = cgr::poses_t<dim>;
 
-using pair_pos_cell = std::pair<std::vector<pos_t>, std::vector<cell_t>>;
+using pair_pos_cell = std::pair<std::vector<poses_t>, std::vector<cell_t>>;
 
 
-std::vector<pos_t> make_poses_box(std::size_t size) {
-    std::vector<pos_t> res;
+std::vector<poses_t> make_poses_box(std::size_t size) {
+    std::vector<poses_t> res;
     std::size_t ressize = 1;
     for (std::size_t i = 0; i < dim; ++i)
         ressize *= size;
@@ -51,14 +51,14 @@ pair_pos_cell make_cells_box(std::size_t size, const cell_t& cell) {
     return res;
 }
 
-std::vector<pos_t> make_central_pos(std::size_t size) {
+std::vector<poses_t> make_central_pos(std::size_t size) {
     std::int64_t ssize = size;
-    std::vector<pos_t> res;
-    res.emplace_back(pos_t::filled_with(ssize * 1 / 2));
+    std::vector<poses_t> res;
+    res.emplace_back(poses_t::filled_with(ssize * 1 / 2));
     return res;
 }
 
-std::uint64_t min_distance2(pos_t pos, std::vector<pos_t> others) {
+std::uint64_t min_distance2(poses_t pos, std::vector<poses_t> others) {
     std::uint64_t res = std::numeric_limits<std::uint64_t>::max();
     for (auto& other : others) {
         std::uint64_t dist = (other - pos).magnitude2();
@@ -68,12 +68,12 @@ std::uint64_t min_distance2(pos_t pos, std::vector<pos_t> others) {
     return res;
 }
 
-std::vector<pos_t> make_random_central_poses(std::size_t size, std::size_t num, std::uint64_t min_dist2 = 0) {
-    std::vector<pos_t> res;
+std::vector<poses_t> make_random_central_poses(std::size_t size, std::size_t num, std::uint64_t min_dist2 = 0) {
+    std::vector<poses_t> res;
     std::mt19937_64 gen(seed);
     std::uniform_int_distribution<std::size_t> dis(0, size - 1);
     for (std::size_t i = 0; i < num;) {
-        pos_t curpos;
+        poses_t curpos;
         for (auto& e : curpos.x)
             e = dis(gen);
 
@@ -109,7 +109,7 @@ int main_test() {
 int inner_main() {
     std::size_t size = 280;
     std::size_t range = 4;
-    automata_t automata(size, cgr::make_nbhood_pos_shifts_fn<dim>(cgr::nbhood_kind::euclid), range);
+    automata_t automata(size, cgr::make_shifts_fn<dim>(cgr::nbhood_kind::euclid), range);
     auto [default_poses, default_cells] = make_cells_box(size, cell_t());
     automata.set_cells(default_poses, default_cells);
 
@@ -151,7 +151,7 @@ int inner_main() {
     std::vector<nbhood_pos_t> init_nbhood_poses;
     init_nbhood_poses.reserve(init_central_poses.size());
     for (auto& pos : init_central_poses)
-        init_nbhood_poses.emplace_back(cgr::make_nbhood_pos<dim>(kind, pos, range, std::nullopt));
+        init_nbhood_poses.emplace_back(cgr::make_poses<dim>(kind, pos, range, std::nullopt));
 
     std::vector<std::vector<cell_t>> init_nbhood_cells;
     init_nbhood_cells.reserve(init_nbhood_poses.size());

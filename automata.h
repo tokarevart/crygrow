@@ -25,9 +25,9 @@ public:
     using vecu = spt::vecu<Dim>;
     using cell_type = cgr::cell<Dim, Real>;
     using cells_container = std::vector<cell_type*>;
-    using nbhood_type = cgr::nbhood<Dim, cell_type>;
-    using nbhood_pos_type = cgr::nbhood_pos<Dim>;
-    using nbhood_offset_type = cgr::nbhood_offset;
+    using nbhood_type = cgr::nbh::nbhood_t<Dim, cell_type>;
+    using nbhood_pos_type = cgr::nbh::poses_t<Dim>;
+    using nbhood_offset_type = cgr::nbh::offsets_t;
     using nbhood_offsets_container = std::vector<nbhood_offset_type>;
     using cells_delta_container = std::vector<Real>;
     using grain_type = typename cell_type::grain_type;
@@ -110,8 +110,8 @@ public:
         return cgr::offset(static_cast<veci>(pos), m_dim_lens);
     }
 
-    nbhood_offset_type make_nbhood_offset(std::size_t pos_offset) const {
-        return cgr::make_nbhood_offset<Dim>(m_default_shift_fn,
+    nbhood_offset_type make_offsets(std::size_t pos_offset) const {
+        return cgr::make_offsets<Dim>(m_default_shift_fn,
             pos_offset, m_dim_lens, m_default_range,
             [this](const veci& pos) -> bool { return inside(pos); });
     }
@@ -119,7 +119,7 @@ public:
         return m_nbhood_offsets[pos_offset];
     }
     void set_nbhood_offset(std::size_t pos_offset) {
-        m_nbhood_offsets[pos_offset] = make_nbhood_offset(pos_offset);
+        m_nbhood_offsets[pos_offset] = make_offsets(pos_offset);
     }
     void set_nbhood_offset(std::size_t pos_offset, nbhood_offset_type&& nbh_offset) {
         m_nbhood_offsets[pos_offset] = std::move(nbh_offset);
@@ -185,7 +185,7 @@ public:
         for (auto& delta : m_cells_delta)
             delta = 0.0;
 
-        auto defnbhoffset = make_nbhood_offset();
+        auto defnbhoffset = make_offsets();
         std::int64_t accdefdpmagn2 = 0;
         for (auto nboff : defnbhoffset)
             accdefdpmagn2 += (
@@ -267,9 +267,9 @@ public:
         return true;
     }
 
-    automata(std::size_t dimlen, nbhood_pos_shifts_fn<Dim> default_shift_fn, std::size_t default_range = 1)
+    automata(std::size_t dimlen, shifts_fn<Dim> default_shift_fn, std::size_t default_range = 1)
         : automata(vecu::filled_with(dimlen), default_shift_fn, default_range) {}
-    automata(const vecu& dimlens, nbhood_pos_shifts_fn<Dim> default_shift_fn, std::size_t default_range = 1) {
+    automata(const vecu& dimlens, shifts_fn<Dim> default_shift_fn, std::size_t default_range = 1) {
         m_default_shift_fn = default_shift_fn;
         set_dim_lens(dimlens);
         set_default_range(default_range);
@@ -284,7 +284,7 @@ public:
 
 
 private:
-    nbhood_pos_shifts_fn<Dim> m_default_shift_fn;
+    shifts_fn<Dim> m_default_shift_fn;
     std::size_t m_default_range;
     std::size_t m_default_nbhood_size;
     vecu m_dim_lens;
@@ -296,7 +296,7 @@ private:
     // todo: store common cells, such as empty cell and crystallized cell for each grain
 
     void set_default_nbhood_size() {
-        m_default_nbhood_size = cgr::make_nbhood_offset<Dim>(m_default_shift_fn,
+        m_default_nbhood_size = cgr::make_offsets<Dim>(m_default_shift_fn,
             0, m_dim_lens, m_default_range, std::nullopt).size();
     }
     void set_dim_lens(const vecu& dimlens) {
@@ -309,7 +309,7 @@ private:
         for (std::int64_t i = 0; i < static_cast<std::int64_t>(num_cells()); ++i)
             if (std::abs(cell(i)->crystallinity - 1.0)
                 <= epsilon * (1.0 + cell(i)->crystallinity)) {
-                for (auto nboff : make_nbhood_offset(i)) {
+                for (auto nboff : make_offsets(i)) {
                     if (cell(nboff)->crystallinity <= epsilon &&
                         get_nbhood_offset(nboff).empty())
                         set_nbhood_offset(nboff);
@@ -329,9 +329,9 @@ private:
             clear_nbhood_offset(offset);
     }
 
-    nbhood_offset_type make_nbhood_offset() const {
+    nbhood_offset_type make_offsets() const {
         vecu dimlens = vecu::filled_with(2 * m_default_range + 1);
-        return cgr::make_nbhood_offset<Dim>(m_default_shift_fn,
+        return cgr::make_offsets<Dim>(m_default_shift_fn,
             cgr::offset(veci::filled_with(m_default_range), dimlens),
             dimlens, m_default_range, std::nullopt);
     }

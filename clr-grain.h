@@ -14,9 +14,9 @@ template <std::size_t Dim, typename Real = double>
 class clr_grain {
 public:
     using grain_type = cgr::grain<Dim, Real>;
-    using orientation_type = orientation_t<Dim, Real>;
     using offdel_pair = std::pair<std::size_t, Real>; // offset and delta
     using offset_fn = std::function<std::size_t(const spt::veci<Dim>&)>;
+    using crysted_fn = std::function<bool(std::size_t)>;
 
     const grain_type* grain() const {
         return m_grain;
@@ -26,7 +26,7 @@ public:
         return m_range;
     }
     void set_range(std::size_t range) {
-        m_shifts = make_nbhood_pos_shifts<Dim>(m_normfn, range);
+        m_shifts = make_shifts<Dim>(m_normfn, range);
     }
 
     void set_insidefn(inside_fn infn) {
@@ -75,11 +75,22 @@ public:
 private:
     const grain_type* m_grain;
     norm_fn<Dim> m_normfn;
-    nbhood_pos<Dim> m_shifts;
+    nbh::poses_t<Dim> m_shifts;
     std::size_t m_range = 0;
-    inside_fn m_infn;
+    nbh::inside_fn m_infn;
     offset_fn m_offfn;
+    crysted_fn m_crfn;
     std::vector<offdel_pair> m_offdels;
+
+    bool crysted(std::size_t off) const {
+        return m_crfn(off);
+    }
+
+    void add_offdel(offdel_pair od) {
+        m_offdels.push_back(od);
+    }
+
+    nbh::poses_t<Dim> apply_shifts()
 
     std::vector<spt::vec<Dim, Real>> orientate_grow_dirs() const {
         auto transposed_orien = m_grain->orientation().transposed();

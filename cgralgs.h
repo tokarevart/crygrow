@@ -3,12 +3,21 @@
 
 #pragma once
 #include "vec.h"
+#include "mat.h"
 
 
 namespace cgr {
 
 template <std::size_t Dim>
-std::int64_t offset(const spt::veci<Dim>& pos, const spt::vecu<Dim>& dimlens) {
+using pos_t = spt::veci<Dim>;
+template <std::size_t Dim>
+using upos_t = spt::vecu<Dim>;
+
+template <std::size_t Dim, typename Real = double>
+using orientation_t = spt::mat<Dim, Real>; // |each vec| == 1
+
+template <std::size_t Dim>
+std::int64_t offset(const pos_t<Dim>& pos, const upos_t<Dim>& dimlens) {
     std::int64_t res = pos.x[0];
     std::int64_t mul = dimlens[0];
     for (std::size_t i = 1; i < Dim; ++i) {
@@ -19,8 +28,8 @@ std::int64_t offset(const spt::veci<Dim>& pos, const spt::vecu<Dim>& dimlens) {
 }
 
 template <std::size_t Dim>
-spt::vecu<Dim> upos(std::size_t offset, const spt::vecu<Dim>& dimlens) {
-    spt::vecu<Dim> res;
+upos_t<Dim> upos(std::size_t offset, const upos_t<Dim>& dimlens) {
+    upos_t<Dim> res;
     std::size_t t = offset;
     for (std::size_t i = Dim - 1; i > 0; --i) {
         std::size_t prod = dimlens[0];
@@ -34,7 +43,7 @@ spt::vecu<Dim> upos(std::size_t offset, const spt::vecu<Dim>& dimlens) {
 }
 
 template <std::size_t Dim>
-bool inside(const spt::vecu<Dim>& pos, const spt::vecu<Dim>& dimlens) {
+bool inside(const upos_t<Dim>& pos, const upos_t<Dim>& dimlens) {
     for (std::size_t i = 0; i < Dim; ++i)
         if (pos[i] >= dimlens[i])
             return false;
@@ -44,12 +53,12 @@ bool inside(const spt::vecu<Dim>& pos, const spt::vecu<Dim>& dimlens) {
 
 
 template <std::size_t Dim>
-using norm_fn = std::function<std::size_t(const spt::veci<Dim>&)>;
+using norm_fn = std::function<std::size_t(const pos_t<Dim>&)>;
 
 
 template <std::size_t Dim, typename ValueType>
 std::size_t norm_cryst(
-    const spt::veci<Dim>& dir, 
+    const pos_t<Dim>& dir,
     const std::vector<spt::vec<Dim, ValueType>>& growdirs) {
 
     auto cdir = static_cast<spt::vec<Dim, ValueType>>(dir);
@@ -73,7 +82,7 @@ norm_fn<Dim> make_norm_cryst_fn(std::vector<spt::vec<Dim, ValueType>> growdirs) 
     for (auto& e : growdirs)
         es_inv_dots.push_back(static_cast<ValueType>(1) / spt::dot(e, e));
 
-    return [std::move(growdirs), std::move(es_inv_dots)](const spt::veci<Dim>& dir) -> std::size_t {
+    return [std::move(growdirs), std::move(es_inv_dots)](const pos_t<Dim>& dir) -> std::size_t {
         auto cdir = static_cast<spt::vec<Dim, ValueType>>(dir);
         ValueType maxpn = 0;
         for (std::size_t i = 0; i < growdirs.size(); ++i) {
@@ -89,7 +98,7 @@ norm_fn<Dim> make_norm_cryst_fn(std::vector<spt::vec<Dim, ValueType>> growdirs) 
 }
 
 template <std::size_t Dim>
-std::size_t norm_taxicab(const spt::veci<Dim>& dir) {
+std::size_t norm_taxicab(const pos_t<Dim>& dir) {
     std::int64_t sum_abs = 0;
     for (auto e : dir.x)
         sum_abs += std::abs(e);
@@ -97,7 +106,7 @@ std::size_t norm_taxicab(const spt::veci<Dim>& dir) {
 }
 
 template <std::size_t Dim>
-std::size_t norm_chebyshev(const spt::veci<Dim>& dir) {
+std::size_t norm_chebyshev(const pos_t<Dim>& dir) {
     std::size_t max_abs = 0;
     for (auto e : dir.x) {
         auto abse = static_cast<std::size_t>(std::abs(e));
@@ -108,12 +117,12 @@ std::size_t norm_chebyshev(const spt::veci<Dim>& dir) {
 }
 
 template <std::size_t Dim>
-std::size_t norm_euclid(const spt::veci<Dim>& dir) {
+std::size_t norm_euclid(const pos_t<Dim>& dir) {
     return std::sqrt(dir.magnitude2()) + std::numeric_limits<double>::epsilon();
 }
 
 template <std::size_t Dim>
-std::size_t norm2_euclid(const spt::veci<Dim>& dir) {
+std::size_t norm2_euclid(const pos_t<Dim>& dir) {
     return dir.magnitude2();
 }
 

@@ -2,8 +2,8 @@
 // Licensed under the MIT License.
 
 #pragma once
-#include "mat.h"
 #include "material.h"
+#include "cgralgs.h"
 
 
 namespace cgr {
@@ -12,7 +12,7 @@ template <std::size_t Dim, typename Real = double>
 class grain {
 public:
     using material_type = cgr::material<Dim, Real>;
-    using orientation_type = spt::mat<Dim, Real>; // |each vec| == 1
+    using orientation_type = orientation_t<Dim, Real>; // |each vec| == 1
 
     const material_type* material() const {
         return m_material;

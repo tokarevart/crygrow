@@ -9,7 +9,7 @@
 #include "cgralgs.h"
 
 
-namespace cgr {
+namespace cgr::nbh {
 
 enum class nbhood_kind {
     von_neumann,
@@ -20,43 +20,39 @@ enum class nbhood_kind {
 
 
 template <std::size_t Dim>
-bool inside_nbhood(norm_fn<Dim> normfn, const spt::veci<Dim>& pos, std::size_t range) {
+bool inside_nbhood(norm_fn<Dim> normfn, const pos_t<Dim>& pos, std::size_t range) {
     return normfn(pos) <= range;
 }
 
 
-using nbhood_offset = std::vector<std::size_t>;
+template <std::size_t Dim>
+using poses_t = std::vector<pos_t<Dim>>;
+
+template <std::size_t Dim>
+using shifts_fn = std::function<poses_t<Dim>(std::size_t)>;
+
+using offsets_t = std::vector<std::size_t>;
 
 template <std::size_t Dim, typename Cell>
-using get_cell_by_offset_fn = std::function<Cell*(const std::size_t)>;
+using cell_by_offset_fn = std::function<Cell*(const std::size_t)>;
 
 template <std::size_t Dim, typename Cell>
-using try_get_cell_fn = std::function<Cell*(const spt::veci<Dim>&)>;
+using try_cell_fn = std::function<Cell*(const pos_t<Dim>&)>;
 
 template <std::size_t Dim>
-using inside_fn = std::function<bool(const spt::veci<Dim>&)>;
-
-
-template <std::size_t Dim>
-using nbhood_pos = std::vector<spt::veci<Dim>>;
-
-template <std::size_t Dim>
-using nbhood_pos_shifts_fn = std::function<nbhood_pos<Dim>(std::size_t)>;
-
-template <std::size_t Dim, typename Real = double>
-using orientation_t = spt::mat<Dim, Real>; // |each vec| == 1
+using inside_fn = std::function<bool(const pos_t<Dim>&)>;
 
 
 template <std::size_t Dim>
-nbhood_pos<Dim> make_nbhood_pos_shifts(norm_fn<Dim> normfn, std::size_t range) {
-    std::vector<spt::veci<Dim>> res;
+poses_t<Dim> make_shifts(norm_fn<Dim> normfn, std::size_t range) {
+    std::vector<pos_t<Dim>> res;
     std::size_t buf = 2 * range + 1;
     std::int64_t srange = range;
     if constexpr (Dim == 2) {
         res.reserve(buf * buf - 1);
         for (std::int64_t y = -srange; y <= srange; ++y) {
             for (std::int64_t x = -srange; x <= srange; ++x) {
-                auto sh = spt::veci<Dim>{ x, y };
+                auto sh = pos_t<Dim>{ x, y };
                 if (!(x == 0 && y == 0) &&
                     inside_nbhood<Dim>(normfn, sh, range))
                     res.push_back(sh);
@@ -69,7 +65,7 @@ nbhood_pos<Dim> make_nbhood_pos_shifts(norm_fn<Dim> normfn, std::size_t range) {
         for (std::int64_t z = -srange; z <= srange; ++z) {
             for (std::int64_t y = -srange; y <= srange; ++y) {
                 for (std::int64_t x = -srange; x <= srange; ++x) {
-                    auto sh = spt::veci<Dim>{ x, y, z };
+                    auto sh = pos_t<Dim>{ x, y, z };
                     if (!(x == 0 && y == 0 && z == 0) &&
                         inside_nbhood<Dim>(normfn, sh, range))
                         res.push_back(sh);
@@ -87,31 +83,31 @@ nbhood_pos<Dim> make_nbhood_pos_shifts(norm_fn<Dim> normfn, std::size_t range) {
 
 
 template <std::size_t Dim>
-nbhood_pos_shifts_fn<Dim> make_nbhood_pos_shifts_fn(norm_fn<Dim> normfn) {
-    return [normfn](std::size_t range) -> nbhood_pos<Dim> {
-        return make_nbhood_pos_shifts<Dim>(normfn, range);
+shifts_fn<Dim> make_shifts_fn(norm_fn<Dim> normfn) {
+    return [normfn](std::size_t range) -> poses_t<Dim> {
+        return make_shifts<Dim>(normfn, range);
     };
 }
 
 
 template <std::size_t Dim>
-nbhood_offset nbhood_pos_to_offset(const nbhood_pos<Dim>& nbhpos, const spt::vecu<Dim>& dimlens) {
-    nbhood_offset res;
-    res.reserve(nbhpos.size());
-    for (auto pos : nbhpos)
+offsets_t pos_to_offset(const poses_t<Dim>& poses, const spt::vecu<Dim>& dimlens) {
+    offsets_t res;
+    res.reserve(poses.size());
+    for (auto pos : poses)
         res.push_back(cgr::offset(pos, dimlens));
     return res;
 }
 
 
 template <std::size_t Dim>
-nbhood_pos<Dim> apply_nbhood_pos_shifts(
-    const spt::veci<Dim>& center, const nbhood_pos<Dim>& nbhshifts,
+poses_t<Dim> apply_shifts(
+    const pos_t<Dim>& center, const poses_t<Dim>& shifts,
     std::optional<inside_fn<Dim>> infn) {
 
-    nbhood_pos<Dim> res;
-    res.reserve(nbhshifts.size());
-    for (auto shift : nbhshifts) {
+    poses_t<Dim> res;
+    res.reserve(shifts.size());
+    for (auto shift : shifts) {
         auto new_pos = center + shift;
         if (!infn)
             res.push_back(new_pos);
@@ -125,60 +121,60 @@ nbhood_pos<Dim> apply_nbhood_pos_shifts(
 
 
 template <std::size_t Dim>
-nbhood_pos<Dim> make_nbhood_pos(
-    nbhood_pos_shifts_fn<Dim> shfn, const spt::veci<Dim>& center, std::size_t range,
+poses_t<Dim> make_poses(
+    shifts_fn<Dim> shfn, const pos_t<Dim>& center, std::size_t range,
     std::optional<inside_fn<Dim>> infn) {
 
-    return apply_nbhood_pos_shifts<Dim>(center, shfn(range), infn);
+    return apply_shifts<Dim>(center, shfn(range), infn);
 }
 
 
 template <std::size_t Dim>
-nbhood_pos<Dim> make_nbhood_pos(
-    norm_fn<Dim> normfn, const spt::veci<Dim>& center, std::size_t range,
+poses_t<Dim> make_poses(
+    norm_fn<Dim> normfn, const pos_t<Dim>& center, std::size_t range,
     std::optional<inside_fn<Dim>> infn) {
 
-    return apply_nbhood_pos_shifts<Dim>(center, make_nbhood_pos_shifts<Dim>(normfn, range), infn);
+    return apply_shifts<Dim>(center, make_shifts<Dim>(normfn, range), infn);
 }
 
 
 template <std::size_t Dim>
-nbhood_offset make_nbhood_offset(
-    nbhood_pos_shifts_fn<Dim> shfn, std::size_t center, const spt::vecu<Dim>& dimlens,
+offsets_t make_offsets(
+    shifts_fn<Dim> shfn, std::size_t center, const spt::vecu<Dim>& dimlens,
     std::size_t range, std::optional<inside_fn<Dim>> infn) {
 
-    spt::veci<Dim> center_pos = cgr::upos(center, dimlens);
-    auto nbhpos = make_nbhood_pos<Dim>(shfn, center_pos, range, infn);
-    return nbhood_pos_to_offset<Dim>(nbhpos, dimlens);
+    pos_t<Dim> center_pos = cgr::upos(center, dimlens);
+    auto nbhpos = make_poses<Dim>(shfn, center_pos, range, infn);
+    return pos_to_offset<Dim>(nbhpos, dimlens);
 }
 
 
 template <std::size_t Dim>
-nbhood_offset make_nbhood_offset(
+offsets_t make_offsets(
     norm_fn<Dim> normfn, std::size_t center, const spt::vecu<Dim>& dimlens,
     std::size_t range, std::optional<inside_fn<Dim>> infn) {
 
-    spt::veci<Dim> center_pos = cgr::upos(center, dimlens);
-    auto nbhpos = make_nbhood_pos<Dim>(normfn, center_pos, range, infn);
-    return nbhood_pos_to_offset<Dim>(nbhpos, dimlens);
+    pos_t<Dim> center_pos = cgr::upos(center, dimlens);
+    auto nbhpos = make_poses<Dim>(normfn, center_pos, range, infn);
+    return pos_to_offset<Dim>(nbhpos, dimlens);
 }
 
 
 template <std::size_t Dim, typename Cell>
-using nbhood = std::vector<Cell*>;
+using nbhood_t = std::vector<Cell*>;
 
 
 template <std::size_t Dim, typename Cell>
-nbhood<Dim, Cell> make_nbhood(
-    norm_fn<Dim> normfn, const spt::veci<Dim>& center, std::size_t range,
-    try_get_cell_fn<Dim, Cell> trygetcell) {
+nbhood_t<Dim, Cell> make_nbhood(
+    norm_fn<Dim> normfn, const pos_t<Dim>& center, std::size_t range,
+    try_cell_fn<Dim, Cell> trygetcell) {
 
-    nbhood<Dim, Cell> res;
+    nbhood_t<Dim, Cell> res;
     auto nbhpos = trygetcell ? 
-        make_nbhood_pos<Dim>(normfn, center, range,
-            [trygetcell](const spt::veci<Dim>& pos) -> bool { 
+        make_poses<Dim>(normfn, center, range,
+            [trygetcell](const pos_t<Dim>& pos) -> bool {
                 return trygetcell.value()(pos); }) 
-        : make_nbhood_pos<Dim>(normfn, center, range);
+        : make_poses<Dim>(normfn, center, range);
 
     for (auto& pos : nbhpos) {
         auto pcell = trygetcell(pos);
@@ -191,11 +187,11 @@ nbhood<Dim, Cell> make_nbhood(
 
 
 template <std::size_t Dim, typename Cell>
-nbhood<Dim, Cell> make_nbhood(
-    const nbhood_offset& nbhoff,
-    get_cell_by_offset_fn<Dim, Cell> getcell) {
+nbhood_t<Dim, Cell> make_nbhood(
+    const offsets_t& nbhoff,
+    cell_by_offset_fn<Dim, Cell> getcell) {
 
-    nbhood<Dim, Cell> res;
+    nbhood_t<Dim, Cell> res;
     res.reserve(nbhoff.size());
     for (auto& off : nbhoff)
         res.push_back(getcell(off));
@@ -204,10 +200,10 @@ nbhood<Dim, Cell> make_nbhood(
 
 
 template <std::size_t Dim, typename Cell>
-nbhood<Dim, Cell> make_nbhood(
-    const nbhood_pos<Dim>& nbhpos,
-    try_get_cell_fn<Dim, Cell> trygetcell) {
-    nbhood<Dim, Cell> res;
+nbhood_t<Dim, Cell> make_nbhood(
+    const poses_t<Dim>& nbhpos,
+    try_cell_fn<Dim, Cell> trygetcell) {
+    nbhood_t<Dim, Cell> res;
     for (auto& pos : nbhpos) {
         auto pcell = trygetcell(pos);
         if (pcell)

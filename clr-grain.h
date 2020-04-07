@@ -15,7 +15,6 @@ class clr_grain {
 public:
     using grain_type = cgr::grain<Dim, Real>;
     using offdel_pair = std::pair<std::size_t, Real>; // offset and delta
-    using offset_fn = std::function<std::size_t(const spt::veci<Dim>&)>;
     using crysted_fn = std::function<bool(std::size_t)>;
 
     const grain_type* grain() const {
@@ -27,10 +26,6 @@ public:
     }
     void set_range(std::size_t range) {
         m_shifts = make_shifts<Dim>(m_normfn, range);
-    }
-
-    void set_dimlens(const spt::vecu<Dim>& dimlens) {
-        m_dim_lens = dimlens;
     }
 
     offdel_pair next_offdel() {
@@ -48,19 +43,23 @@ public:
         return m_offdels.empty();
     }
 
-    clr_grain(const grain_type* grain, nbhood_kind kind)
-        : m_grain{ grain }, m_orientation{ orien } {
+    const std::vector<std::size_t>& cryst_front() const {
+        return m_front;
+    }
+
+    clr_grain(const grain_type* grain, nbh::nbhood_kind kind, const upos_t<Dim>& dimlens, std::size_t nucleus_off, crysted_fn crfn, )
+        : m_grain{ grain }, m_orientation{ orien }, m_dim_lens{ dimlens }, m_front{ nucleus_off }{
         switch (kind) {
-        case nbhood_kind::von_neumann:
+        case nbh::nbhood_kind::von_neumann:
             m_normfn = norm_taxicab<Dim>; break;
 
-        case nbhood_kind::moore:
+        case nbh::nbhood_kind::moore:
             m_normfn = norm_chebyshev<Dim>; break;
 
-        case nbhood_kind::euclid:
+        case nbh::nbhood_kind::euclid:
             m_normfn = norm_euclid<Dim>; break;
 
-        case nbhood_kind::crystallographic:
+        case nbh::nbhood_kind::crystallographic:
             m_normfn = make_norm_cryst_fn<Dim>(orientate_grow_dirs()); break;
 
         default:
@@ -77,20 +76,44 @@ private:
     upos_t<Dim> m_dim_lens;
     crysted_fn m_crfn;
     std::vector<offdel_pair> m_offdels;
+    std::vector<std::size_t> m_front;
 
     bool crysted(std::size_t off) const {
         return m_crfn(off);
     }
 
-    void add_offdel(offdel_pair od) {
-        m_offdels.push_back(od);
+    std::size_t offset(const pos_t<Dim>& pos) const {
+        return cgr::offset(pos, m_dim_lens);
     }
 
-    bool inside(pos_t<Dim> pos) const {
+    bool inside(const pos_t<Dim>& pos) const {
         for (auto& e : pos.x)
             if (e < 0)
                 return false;
         return cgr::inside(static_cast<upos_t<Dim>>(pos), m_dim_lens);
+    }
+
+    void front_push(std::size_t off) {
+        m_front.push_back(off);
+    }
+    void front_swap_remove(std::size_t idx) {
+        std::swap(m_front[idx], m_front.back());
+        m_front.pop_back();
+    }
+
+    std::size_t front_position_exists(std::size_t off) const {
+        for (std::size_t i = 0; i < m_front.size(); ++i)
+            if (m_front[i] == off)
+                return i;
+
+        std::terminate();
+    }
+    bool front_contains(std::size_t off) const {
+        return std::find(m_front.begin(), m_front.end(), off) != m_front.end();
+    }
+
+    void add_offdel(offdel_pair od) {
+        m_offdels.push_back(od);
     }
 
     nbh::poses_t<Dim> apply_shifts(const pos_t<Dim>& pos) const {

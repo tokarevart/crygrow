@@ -102,13 +102,13 @@ offsets_t pos_to_offset(const poses_t<Dim>& poses, const spt::vecu<Dim>& dimlens
 
 template <std::size_t Dim>
 poses_t<Dim> apply_shifts(
-    const pos_t<Dim>& center, const poses_t<Dim>& shifts,
+    const pos_t<Dim>& pos, const poses_t<Dim>& shifts,
     std::optional<inside_fn<Dim>> infn) {
 
     poses_t<Dim> res;
     res.reserve(shifts.size());
     for (auto shift : shifts) {
-        auto new_pos = center + shift;
+        auto new_pos = pos + shift;
         if (!infn)
             res.push_back(new_pos);
         else 

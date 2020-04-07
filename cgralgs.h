@@ -16,6 +16,9 @@ using upos_t = spt::vecu<Dim>;
 template <std::size_t Dim, typename Real = double>
 using orientation_t = spt::mat<Dim, Real>; // |each vec| == 1
 
+template <std::size_t Dim, typename Real = double>
+using grow_dir_t = spt::vec<Dim, Real>;
+
 template <std::size_t Dim>
 std::int64_t offset(const pos_t<Dim>& pos, const upos_t<Dim>& dimlens) {
     std::int64_t res = pos.x[0];
@@ -76,7 +79,7 @@ std::size_t norm_cryst(
 }
 
 template <std::size_t Dim, typename ValueType>
-norm_fn<Dim> make_norm_cryst_fn(std::vector<spt::vec<Dim, ValueType>> growdirs) {
+norm_fn<Dim> make_norm_cryst_fn(std::vector<grow_dir_t<Dim, ValueType>> growdirs) {
     std::vector<spt::vec<Dim, ValueType>> es_inv_dots;
     es_inv_dots.reserve(growdirs.size());
     for (auto& e : growdirs)

@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <vector>
 #include "vec.h"
+#include "cgralgs.h"
 
 
 namespace cgr {
@@ -12,18 +13,18 @@ namespace cgr {
 template <std::size_t Dim, typename Real = double>
 class material {
 public:
-    using grow_dir = spt::vec<Dim, Real>;
+    using grow_dir_type = grow_dir_t<Dim, Real>;
 
-    const std::vector<grow_dir>& grow_dirs() const {
+    const std::vector<grow_dir_type>& grow_dirs() const {
         return m_grow_dirs;
     }
 
-    material(std::vector<grow_dir> gdirs = {})
+    material(std::vector<grow_dir_type> gdirs = {})
         : m_grow_dirs{ std::move(gdirs) } {}
 
 
 private:
-    std::vector<grow_dir> m_grow_dirs;
+    std::vector<grow_dir_type> m_grow_dirs;
 };
 
 } // namespace cgr

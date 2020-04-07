@@ -22,18 +22,15 @@ public:
         return m_grain;
     }
 
-    void range() const {
+    std::size_t range() const {
         return m_range;
     }
     void set_range(std::size_t range) {
         m_shifts = make_shifts<Dim>(m_normfn, range);
     }
 
-    void set_insidefn(inside_fn infn) {
-        m_infn = infn;
-    }
-    void set_offsetfn(offset_fn offfn) {
-        m_offfn = offfn;
+    void set_dimlens(const spt::vecu<Dim>& dimlens) {
+        m_dim_lens = dimlens;
     }
 
     offdel_pair next_offdel() {
@@ -77,8 +74,7 @@ private:
     norm_fn<Dim> m_normfn;
     nbh::poses_t<Dim> m_shifts;
     std::size_t m_range = 0;
-    nbh::inside_fn m_infn;
-    offset_fn m_offfn;
+    upos_t<Dim> m_dim_lens;
     crysted_fn m_crfn;
     std::vector<offdel_pair> m_offdels;
 
@@ -90,9 +86,18 @@ private:
         m_offdels.push_back(od);
     }
 
-    nbh::poses_t<Dim> apply_shifts()
+    bool inside(pos_t<Dim> pos) const {
+        for (auto& e : pos.x)
+            if (e < 0)
+                return false;
+        return cgr::inside(static_cast<upos_t<Dim>>(pos), m_dim_lens);
+    }
 
-    std::vector<spt::vec<Dim, Real>> orientate_grow_dirs() const {
+    nbh::poses_t<Dim> apply_shifts(const pos_t<Dim>& pos) const {
+        return nbh::apply_shifts(pos, m_shifts, inside);
+    }
+
+    std::vector<grow_dir_t<Dim, Real>> orientate_grow_dirs() const {
         auto transposed_orien = m_grain->orientation().transposed();
         auto growdirs = m_grain->material()->grow_dirs();
         for (auto& gd : growdirs)

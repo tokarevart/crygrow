@@ -21,8 +21,6 @@ class automata {
 public:
     static constexpr std::size_t dim = Dim;
     static constexpr Real epsilon = std::numeric_limits<Real>::epsilon();
-    using veci = spt::veci<Dim>;
-    using vecu = spt::vecu<Dim>;
     using cell_type = cgr::cell<Dim, Real>;
     using cells_container = std::vector<cell_type*>;
     using nbhood_type = cgr::nbh::nbhood_t<Dim, cell_type>;
@@ -33,7 +31,7 @@ public:
     using grain_type = typename cell_type::grain_type;
     using material_type = typename grain_type::material_type;
     using orientation_type = typename grain_type::orientation_type;
-    using grow_dir = typename material_type::grow_dir;
+    using grow_dir_type = grow_dir_t<Dim, Real>;
 
     std::size_t num_crystallized_cells() const {
         std::size_t res = 0;
@@ -52,16 +50,16 @@ public:
     cell_type* cell(std::size_t offset) const {
         return m_cells[offset];
     }
-    cell_type* cell(const vecu& pos) const {
+    cell_type* cell(const upos_t<Dim>& pos) const {
         return cell(offset(pos));
     }
-    cell_type* cell(const veci& pos) const {
+    cell_type* cell(const pos_t<Dim>& pos) const {
         return cell(offset(pos));
     }
     void set_cell(std::size_t offset, const cell_type* new_cell) {
         m_cells[offset] = const_cast<cell_type*>(new_cell);
     }
-    void set_cell(const veci& pos, const cell_type* new_cell) {
+    void set_cell(const pos_t<Dim>& pos, const cell_type* new_cell) {
         m_cells[offset(pos)] = const_cast<cell_type*>(new_cell);
     }
     template <typename PosesContainer, typename CellsContainer>
@@ -72,13 +70,13 @@ public:
             set_cell(*pos_it, &(*cell_it));
     }
 
-    cell_type* try_cell(const vecu& pos) const {
+    cell_type* try_cell(const upos_t<Dim>& pos) const {
         return inside(pos) ? cell(pos) : nullptr;
     }
-    cell_type* try_cell(const veci& pos) const {
+    cell_type* try_cell(const pos_t<Dim>& pos) const {
         return inside(pos) ? cell(pos) : nullptr;
     }
-    bool try_set_cell(const veci& pos, const cell_type* new_cell) {
+    bool try_set_cell(const pos_t<Dim>& pos, const cell_type* new_cell) {
         if (inside(pos)) {
             m_cells[offset(pos)] = const_cast<cell_type*>(new_cell);
             return true;
@@ -94,26 +92,26 @@ public:
             try_set_cell(*pos_it, &(*cell_it));
     }
 
-    bool inside(const vecu& pos) const {
+    bool inside(const upos_t<Dim>& pos) const {
         return cgr::inside(pos, m_dim_lens);
     }
-    bool inside(const veci& pos) const {
+    bool inside(const pos_t<Dim>& pos) const {
         for (auto& e : pos.x)
             if (e < 0)
                 return false;
-        return cgr::inside(static_cast<vecu>(pos), m_dim_lens);
+        return cgr::inside(static_cast<upos_t<Dim>>(pos), m_dim_lens);
     }
-    vecu upos(std::size_t offset) const {
+    upos_t<Dim> upos(std::size_t offset) const {
         return cgr::upos(offset, m_dim_lens);
     }
-    std::size_t offset(const vecu& pos) const {
-        return cgr::offset(static_cast<veci>(pos), m_dim_lens);
+    std::size_t offset(const upos_t<Dim>& pos) const {
+        return cgr::offset(static_cast<pos_t<Dim>>(pos), m_dim_lens);
     }
 
     nbhood_offset_type make_offsets(std::size_t pos_offset) const {
         return cgr::make_offsets<Dim>(m_default_shift_fn,
             pos_offset, m_dim_lens, m_default_range,
-            [this](const veci& pos) -> bool { return inside(pos); });
+            [this](const pos_t<Dim>& pos) -> bool { return inside(pos); });
     }
     const nbhood_offset_type& get_nbhood_offset(std::size_t pos_offset) const {
         return m_nbhood_offsets[pos_offset];
@@ -140,19 +138,19 @@ public:
         m_nbhood_offsets.reserve(count);
     }
 
-    void erase(const veci& pos) {
+    void erase(const pos_t<Dim>& pos) {
         erase_cell(pos);
         erase_nbhood_poses(pos);
     }
-    void erase_cell(const veci& pos) {
+    void erase_cell(const pos_t<Dim>& pos) {
         set_cell(pos, nullptr);
     }
-    void erase_nbhood_poses(const veci& pos) {
+    void erase_nbhood_poses(const pos_t<Dim>& pos) {
         if (inside(pos))
             m_nbhood_poses[offset(pos)].clear();
     }
 
-    const vecu& dim_lens() const {
+    const upos_t<Dim>& dim_lens() const {
         return m_dim_lens;
     }
 
@@ -189,21 +187,21 @@ public:
         std::int64_t accdefdpmagn2 = 0;
         for (auto nboff : defnbhoffset)
             accdefdpmagn2 += (
-                veci::filled_with(default_range())
-                - cgr::upos(nboff, vecu::filled_with(2 * default_range() + 1))
+                pos_t<Dim>::filled_with(default_range())
+                - cgr::upos(nboff, upos_t<Dim>::filled_with(2 * default_range() + 1))
                 ).magnitude2();
         
         #pragma omp parallel 
         {
             #pragma omp for
             for (std::int64_t i = 0; i < static_cast<std::int64_t>(num_cells()); ++i) {
-                auto curpos = static_cast<veci>(upos(i));
+                auto curpos = static_cast<pos_t<Dim>>(upos(i));
                 auto pcell = cell(i);
                 if (std::abs(pcell->crystallinity - 1.0) <= epsilon * (1.0 + pcell->crystallinity))
                     continue;
                 
                 Real delta = 0.0;
-                std::map<grain_type*, grow_dir> nbhpcrysts_accdps;
+                std::map<grain_type*, grow_dir_type> nbhpcrysts_accdps;
                 std::int64_t accdpmagn2 = 0;
                 std::size_t numcrystednb = 0;
                 for (auto nboff : get_nbhood_offset(i)) {
@@ -219,10 +217,10 @@ public:
                                   pnb->grains.front()) == pcell->grains.end())
                         pcell->grains.push_back(pnb->grains.front());
                     
-                    veci deltapos = curpos - static_cast<veci>(upos(nboff));
+                    pos_t<Dim> deltapos = curpos - static_cast<pos_t<Dim>>(upos(nboff));
                     accdpmagn2 += deltapos.magnitude2();
 
-                    nbhpcrysts_accdps[pnb->grains.front()] += static_cast<grow_dir>(deltapos);
+                    nbhpcrysts_accdps[pnb->grains.front()] += static_cast<grow_dir_type>(deltapos);
                     ++numcrystednb;
                 }
 
@@ -268,8 +266,8 @@ public:
     }
 
     automata(std::size_t dimlen, shifts_fn<Dim> default_shift_fn, std::size_t default_range = 1)
-        : automata(vecu::filled_with(dimlen), default_shift_fn, default_range) {}
-    automata(const vecu& dimlens, shifts_fn<Dim> default_shift_fn, std::size_t default_range = 1) {
+        : automata(upos_t<Dim>::filled_with(dimlen), default_shift_fn, default_range) {}
+    automata(const upos_t<Dim>& dimlens, shifts_fn<Dim> default_shift_fn, std::size_t default_range = 1) {
         m_default_shift_fn = default_shift_fn;
         set_dim_lens(dimlens);
         set_default_range(default_range);
@@ -287,7 +285,7 @@ private:
     shifts_fn<Dim> m_default_shift_fn;
     std::size_t m_default_range;
     std::size_t m_default_nbhood_size;
-    vecu m_dim_lens;
+    upos_t<Dim> m_dim_lens;
 
     cells_container m_cells;
     nbhood_offsets_container m_nbhood_offsets;
@@ -299,7 +297,7 @@ private:
         m_default_nbhood_size = cgr::make_offsets<Dim>(m_default_shift_fn,
             0, m_dim_lens, m_default_range, std::nullopt).size();
     }
-    void set_dim_lens(const vecu& dimlens) {
+    void set_dim_lens(const upos_t<Dim>& dimlens) {
         m_dim_lens = dimlens;
     }
 
@@ -330,9 +328,9 @@ private:
     }
 
     nbhood_offset_type make_offsets() const {
-        vecu dimlens = vecu::filled_with(2 * m_default_range + 1);
+        upos_t<Dim> dimlens = upos_t<Dim>::filled_with(2 * m_default_range + 1);
         return cgr::make_offsets<Dim>(m_default_shift_fn,
-            cgr::offset(veci::filled_with(m_default_range), dimlens),
+            cgr::offset(pos_t<Dim>::filled_with(m_default_range), dimlens),
             dimlens, m_default_range, std::nullopt);
     }
 };

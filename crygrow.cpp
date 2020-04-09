@@ -17,13 +17,13 @@ constexpr std::size_t dim = 3;
 constexpr std::size_t dim = 2;
 #endif
 std::size_t seed = 0;
-constexpr auto kind = cgr::nbhood_kind::euclid;
+constexpr auto kind = cgr::nbh::nbhood_kind::euclid;
 using poses_t = spt::veci<dim>;
 using automata_t = cgr::automata<dim>;
 using cell_t = cgr::cell<dim>;
 using crystallite_t = cgr::grain<dim>;
 using material_t = cgr::material<dim>;
-using nbhood_pos_t = cgr::poses_t<dim>;
+using nbhood_pos_t = cgr::nbh::poses_t<dim>;
 
 using pair_pos_cell = std::pair<std::vector<poses_t>, std::vector<cell_t>>;
 
@@ -145,13 +145,13 @@ int inner_main() {
     std::vector<cell_t> init_central_cells;
     init_central_cells.reserve(crysts.size());
     for (auto& cryst : crysts)
-        init_central_cells.emplace_back(1.0, &cryst);
+        init_central_cells.emplace_back(true, &cryst);
     automata.set_cells(init_central_poses, init_central_cells);
 
     std::vector<nbhood_pos_t> init_nbhood_poses;
     init_nbhood_poses.reserve(init_central_poses.size());
     for (auto& pos : init_central_poses)
-        init_nbhood_poses.emplace_back(cgr::make_poses<dim>(kind, pos, range, std::nullopt));
+        init_nbhood_poses.emplace_back(cgr::nbh::make_poses<dim>(kind, pos, range, std::nullopt));
 
     std::vector<std::vector<cell_t>> init_nbhood_cells;
     init_nbhood_cells.reserve(init_nbhood_poses.size());
@@ -168,7 +168,7 @@ int inner_main() {
         //for (std::size_t i = 0; i < 100; ++i)
         while (!automata.stop_condition()) {
             automata.iterate();
-            bar.set_count(automata.num_crystallized_cells());
+            bar.set_count(automata.num_crysted_cells());
         }
         
         for (std::size_t i = 0; i < size * size; ++i) {

@@ -14,11 +14,11 @@ struct cell {
     using grain_type = cgr::grain<Dim, Real>;
     using grains_container = std::vector<const grain_type*>;
 
-    Real crystallinity; // 0.0 to 1.0
+    bool crysted;
     grains_container grains;
 
-    cell(Real crystallinity = 0.0, const grain_type* grain = nullptr)
-        : crystallinity{crystallinity} {
+    cell(const grain_type* grain = nullptr, bool crysted = false)
+        : crysted{ crysted } {
         if (grain)
             grains.push_back(grain);
     }

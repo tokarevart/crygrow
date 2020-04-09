@@ -14,7 +14,6 @@ template <std::size_t Dim, typename Real = double>
 class clr_grain {
 public:
     using grain_type = cgr::grain<Dim, Real>;
-    using offdel_pair = std::pair<std::size_t, Real>; // offset and delta
     using crysted_fn = std::function<bool(std::size_t)>;
 
     const grain_type* grain() const {
@@ -28,22 +27,7 @@ public:
         m_shifts = make_shifts<Dim>(m_normfn, range);
     }
 
-    offdel_pair next_offdel() {
-        offdel_pair temp = m_offdels.back();
-        m_offdels.pop_back();
-        return temp;
-    }
-    std::optional<offdel_pair> try_next_offdel() {
-        if (empty_offdels())
-            return std::nullopt;
-        else
-            return next_offdel();
-    }
-    bool empty_offdels() const {
-        return m_offdels.empty();
-    }
-
-    const std::vector<std::size_t>& cryst_front() const {
+    const std::vector<std::size_t>& front() const {
         return m_front;
     }
 
@@ -75,7 +59,6 @@ private:
     std::size_t m_range = 0;
     upos_t<Dim> m_dim_lens;
     crysted_fn m_crfn;
-    std::vector<offdel_pair> m_offdels;
     std::vector<std::size_t> m_front;
 
     bool crysted(std::size_t off) const {
@@ -96,24 +79,10 @@ private:
     void front_push(std::size_t off) {
         m_front.push_back(off);
     }
-    void front_swap_remove(std::size_t idx) {
-        std::swap(m_front[idx], m_front.back());
+    std::size_t front_pop() {
+        std::size_t tmp = m_front.back();
         m_front.pop_back();
-    }
-
-    std::size_t front_position_exists(std::size_t off) const {
-        for (std::size_t i = 0; i < m_front.size(); ++i)
-            if (m_front[i] == off)
-                return i;
-
-        std::terminate();
-    }
-    bool front_contains(std::size_t off) const {
-        return std::find(m_front.begin(), m_front.end(), off) != m_front.end();
-    }
-
-    void add_offdel(offdel_pair od) {
-        m_offdels.push_back(od);
+        return tmp;
     }
 
     nbh::poses_t<Dim> apply_shifts(const pos_t<Dim>& pos) const {

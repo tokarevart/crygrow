@@ -31,6 +31,20 @@ public:
         return m_front;
     }
 
+    template <typename CrystedFn>
+    void advance_front(CrystedFn crysted) {
+        std::vector<std::size_t> new_front;
+        while (!m_front.empty()) {
+            auto poses = apply_shifts(upos(front_pop()));
+            for (auto& p : poses) {
+                std::size_t o = offset(p);
+                if (!crysted(o))
+                    new_front.push_back(o);
+            }
+        }
+        m_front = std::move(new_front);
+    }
+
     clr_grain(const grain_type* grain, nbh::nbhood_kind kind, const upos_t<Dim>& dimlens, std::size_t nucleus_off, crysted_fn crfn)
         : m_grain{ grain }, m_orientation{ orien }, m_dim_lens{ dimlens }, m_front{ nucleus_off }, m_crfn{ crfn } {
         switch (kind) {
@@ -58,13 +72,11 @@ private:
     std::vector<pos_t<Dim>> m_shifts;
     std::size_t m_range = 0;
     upos_t<Dim> m_dim_lens;
-    crysted_fn m_crfn;
     std::vector<std::size_t> m_front;
 
-    bool crysted(std::size_t off) const {
-        return m_crfn(off);
+    upos_t<Dim> upos(std::size_t off) const {
+        return cgr::upos(off, m_dim_lens);
     }
-
     std::size_t offset(const pos_t<Dim>& pos) const {
         return cgr::offset(pos, m_dim_lens);
     }

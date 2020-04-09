@@ -18,18 +18,16 @@ constexpr std::size_t dim = 2;
 #endif
 std::size_t seed = 0;
 constexpr auto kind = cgr::nbh::nbhood_kind::euclid;
-using poses_t = spt::veci<dim>;
 using automata_t = cgr::automata<dim>;
 using cell_t = cgr::cell<dim>;
 using crystallite_t = cgr::grain<dim>;
 using material_t = cgr::material<dim>;
-using nbhood_pos_t = cgr::nbh::poses_t<dim>;
 
-using pair_pos_cell = std::pair<std::vector<poses_t>, std::vector<cell_t>>;
+using pair_pos_cell = std::pair<std::vector<cgr::pos_t<dim>>, std::vector<cell_t>>;
 
 
-std::vector<poses_t> make_poses_box(std::size_t size) {
-    std::vector<poses_t> res;
+std::vector<cgr::pos_t<dim>> make_poses_box(std::size_t size) {
+    std::vector<cgr::pos_t<dim>> res;
     std::size_t ressize = 1;
     for (std::size_t i = 0; i < dim; ++i)
         ressize *= size;
@@ -51,14 +49,14 @@ pair_pos_cell make_cells_box(std::size_t size, const cell_t& cell) {
     return res;
 }
 
-std::vector<poses_t> make_central_pos(std::size_t size) {
+std::vector<cgr::pos_t<dim>> make_central_pos(std::size_t size) {
     std::int64_t ssize = size;
-    std::vector<poses_t> res;
-    res.emplace_back(poses_t::filled_with(ssize * 1 / 2));
+    std::vector<cgr::pos_t<dim>> res;
+    res.emplace_back(cgr::pos_t<dim>::filled_with(ssize * 1 / 2));
     return res;
 }
 
-std::uint64_t min_distance2(poses_t pos, std::vector<poses_t> others) {
+std::uint64_t min_distance2(cgr::pos_t<dim> pos, std::vector<cgr::pos_t<dim>> others) {
     std::uint64_t res = std::numeric_limits<std::uint64_t>::max();
     for (auto& other : others) {
         std::uint64_t dist = (other - pos).magnitude2();
@@ -68,12 +66,12 @@ std::uint64_t min_distance2(poses_t pos, std::vector<poses_t> others) {
     return res;
 }
 
-std::vector<poses_t> make_random_central_poses(std::size_t size, std::size_t num, std::uint64_t min_dist2 = 0) {
-    std::vector<poses_t> res;
+std::vector<cgr::pos_t<dim>> make_random_central_poses(std::size_t size, std::size_t num, std::uint64_t min_dist2 = 0) {
+    std::vector<cgr::pos_t<dim>> res;
     std::mt19937_64 gen(seed);
     std::uniform_int_distribution<std::size_t> dis(0, size - 1);
     for (std::size_t i = 0; i < num;) {
-        poses_t curpos;
+        cgr::pos_t<dim> curpos;
         for (auto& e : curpos.x)
             e = dis(gen);
 

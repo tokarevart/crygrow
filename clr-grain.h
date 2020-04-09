@@ -44,7 +44,7 @@ public:
             m_normfn = norm_euclid<Dim>; break;
 
         case nbh::nbhood_kind::crystallographic:
-            m_normfn = make_norm_cryst_fn<Dim>(orientate_grow_dirs()); break;
+            m_normfn = make_norm_cryst_fn<Dim, Real>(orientate_grow_dirs()); break;
 
         default:
             std::terminate();
@@ -55,7 +55,7 @@ public:
 private:
     const grain_type* m_grain;
     norm_fn<Dim> m_normfn;
-    nbh::poses_t<Dim> m_shifts;
+    std::vector<pos_t<Dim>> m_shifts;
     std::size_t m_range = 0;
     upos_t<Dim> m_dim_lens;
     crysted_fn m_crfn;
@@ -85,7 +85,7 @@ private:
         return tmp;
     }
 
-    nbh::poses_t<Dim> apply_shifts(const pos_t<Dim>& pos) const {
+    std::vector<pos_t<Dim>> apply_shifts(const pos_t<Dim>& pos) const {
         return nbh::apply_shifts(pos, m_shifts, inside);
     }
 

@@ -61,13 +61,13 @@ using norm_fn = std::function<std::size_t(const pos_t<Dim>&)>;
 
 template <std::size_t Dim, typename ValueType>
 std::size_t norm_cryst(
-    const pos_t<Dim>& dir,
+    const pos_t<Dim>& pos,
     const std::vector<spt::vec<Dim, ValueType>>& growdirs) {
 
-    auto cdir = static_cast<spt::vec<Dim, ValueType>>(dir);
+    auto cpos = static_cast<spt::vec<Dim, ValueType>>(pos);
     ValueType maxpn = 0;
     for (auto& gd : growdirs) {
-        auto pn = std::abs(spt::dot(cdir, gd)) / spt::dot(gd, gd);
+        auto pn = std::abs(spt::dot(cpos, gd)) / spt::dot(gd, gd);
         if (pn > maxpn)
             maxpn = pn;
     }
@@ -101,17 +101,17 @@ norm_fn<Dim> make_norm_cryst_fn(std::vector<grow_dir_t<Dim, ValueType>> growdirs
 }
 
 template <std::size_t Dim>
-std::size_t norm_taxicab(const pos_t<Dim>& dir) {
+std::size_t norm_taxicab(const pos_t<Dim>& pos) {
     std::int64_t sum_abs = 0;
-    for (auto e : dir.x)
+    for (auto e : pos.x)
         sum_abs += std::abs(e);
     return static_cast<std::size_t>(sum_abs);
 }
 
 template <std::size_t Dim>
-std::size_t norm_chebyshev(const pos_t<Dim>& dir) {
+std::size_t norm_chebyshev(const pos_t<Dim>& pos) {
     std::size_t max_abs = 0;
-    for (auto e : dir.x) {
+    for (auto e : pos.x) {
         auto abse = static_cast<std::size_t>(std::abs(e));
         if (abse > max_abs)
             max_abs = abse;
@@ -120,13 +120,13 @@ std::size_t norm_chebyshev(const pos_t<Dim>& dir) {
 }
 
 template <std::size_t Dim>
-std::size_t norm_euclid(const pos_t<Dim>& dir) {
-    return std::sqrt(dir.magnitude2()) + std::numeric_limits<double>::epsilon();
+std::size_t norm_euclid(const pos_t<Dim>& pos) {
+    return std::sqrt(pos.magnitude2()) + std::numeric_limits<double>::epsilon();
 }
 
 template <std::size_t Dim>
-std::size_t norm2_euclid(const pos_t<Dim>& dir) {
-    return dir.magnitude2();
+std::size_t norm2_euclid(const pos_t<Dim>& pos) {
+    return pos.magnitude2();
 }
 
 } // namespace cgr

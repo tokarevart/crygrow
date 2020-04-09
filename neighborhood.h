@@ -26,10 +26,7 @@ bool inside_nbhood(norm_fn<Dim> normfn, const pos_t<Dim>& pos, std::size_t range
 
 
 template <std::size_t Dim>
-using poses_t = std::vector<pos_t<Dim>>;
-
-template <std::size_t Dim>
-using shifts_fn = std::function<poses_t<Dim>(std::size_t)>;
+using shifts_fn = std::function<std::vector<pos_t<Dim>>(std::size_t)>;
 
 using offsets_t = std::vector<std::size_t>;
 
@@ -44,7 +41,7 @@ using inside_fn = std::function<bool(const pos_t<Dim>&)>;
 
 
 template <std::size_t Dim>
-poses_t<Dim> make_shifts(norm_fn<Dim> normfn, std::size_t range) {
+std::vector<pos_t<Dim>> make_shifts(norm_fn<Dim> normfn, std::size_t range) {
     std::vector<pos_t<Dim>> res;
     std::size_t buf = 2 * range + 1;
     std::int64_t srange = range;
@@ -84,14 +81,14 @@ poses_t<Dim> make_shifts(norm_fn<Dim> normfn, std::size_t range) {
 
 template <std::size_t Dim>
 shifts_fn<Dim> make_shifts_fn(norm_fn<Dim> normfn) {
-    return [normfn](std::size_t range) -> poses_t<Dim> {
+    return [normfn](std::size_t range) -> std::vector<pos_t<Dim>> {
         return make_shifts<Dim>(normfn, range);
     };
 }
 
 
 template <std::size_t Dim>
-offsets_t pos_to_offset(const poses_t<Dim>& poses, const spt::vecu<Dim>& dimlens) {
+offsets_t pos_to_offset(const std::vector<pos_t<Dim>>& poses, const spt::vecu<Dim>& dimlens) {
     offsets_t res;
     res.reserve(poses.size());
     for (auto pos : poses)
@@ -101,11 +98,11 @@ offsets_t pos_to_offset(const poses_t<Dim>& poses, const spt::vecu<Dim>& dimlens
 
 
 template <std::size_t Dim>
-poses_t<Dim> apply_shifts(
-    const pos_t<Dim>& pos, const poses_t<Dim>& shifts,
+std::vector<pos_t<Dim>> apply_shifts(
+    const pos_t<Dim>& pos, const std::vector<pos_t<Dim>>& shifts,
     std::optional<inside_fn<Dim>> infn) {
 
-    poses_t<Dim> res;
+    std::vector<pos_t<Dim>> res;
     res.reserve(shifts.size());
     for (auto shift : shifts) {
         auto new_pos = pos + shift;
@@ -121,7 +118,7 @@ poses_t<Dim> apply_shifts(
 
 
 template <std::size_t Dim>
-poses_t<Dim> make_poses(
+std::vector<pos_t<Dim>> make_poses(
     shifts_fn<Dim> shfn, const pos_t<Dim>& center, std::size_t range,
     std::optional<inside_fn<Dim>> infn) {
 
@@ -130,7 +127,7 @@ poses_t<Dim> make_poses(
 
 
 template <std::size_t Dim>
-poses_t<Dim> make_poses(
+std::vector<pos_t<Dim>> make_poses(
     norm_fn<Dim> normfn, const pos_t<Dim>& center, std::size_t range,
     std::optional<inside_fn<Dim>> infn) {
 
@@ -201,7 +198,7 @@ nbhood_t<Dim, Cell> make_nbhood(
 
 template <std::size_t Dim, typename Cell>
 nbhood_t<Dim, Cell> make_nbhood(
-    const poses_t<Dim>& nbhpos,
+    const std::vector<pos_t<Dim>>& nbhpos,
     try_cell_fn<Dim, Cell> trygetcell) {
     nbhood_t<Dim, Cell> res;
     for (auto& pos : nbhpos) {

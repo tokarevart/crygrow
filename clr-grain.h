@@ -5,6 +5,7 @@
 #include <optional>
 #include "grain.h"
 #include "neighborhood.h"
+#include <unordered_set>
 
 
 namespace cgr {
@@ -14,7 +15,6 @@ template <std::size_t Dim, typename Real = double>
 class clr_grain {
 public:
     using grain_type = cgr::grain<Dim, Real>;
-    using crysted_fn = std::function<bool(std::size_t)>;
 
     const grain_type* grain() const {
         return m_grain;
@@ -24,29 +24,42 @@ public:
         return m_range;
     }
     void set_range(std::size_t range) {
-        m_shifts = make_shifts<Dim>(m_normfn, range);
+        m_range = range;
+        m_shifts = nbh::make_shifts<Dim>(m_normfn, m_range);
     }
 
     const std::vector<std::size_t>& front() const {
         return m_front;
     }
 
-    template <typename CrystedFn>
-    void advance_front(CrystedFn crysted) {
-        std::vector<std::size_t> new_front;
+    void front_swap_remove(std::size_t idx) {
+        std::swap(m_front[idx], m_front.back());
+        m_front.pop_back();
+    }
+
+    template <typename CrystedFn, typename NumGrainsFn>
+    void advance_front(CrystedFn crysted, NumGrainsFn numgrs) {
+        for (std::size_t i = 0; i < m_front.size();) {
+            if (numgrs(m_front[i]) > 1)
+                front_swap_remove(i);
+            else
+                ++i;
+        }
+
+        std::unordered_set<std::size_t> new_front;
         while (!m_front.empty()) {
             auto poses = apply_shifts(upos(front_pop()));
             for (auto& p : poses) {
                 std::size_t o = offset(p);
                 if (!crysted(o))
-                    new_front.push_back(o);
+                    new_front.insert(o);
             }
         }
-        m_front = std::move(new_front);
+        m_front.assign(new_front.begin(), new_front.end());
     }
 
-    clr_grain(const grain_type* grain, nbh::nbhood_kind kind, const upos_t<Dim>& dimlens, std::size_t nucleus_off, crysted_fn crfn)
-        : m_grain{ grain }, m_orientation{ orien }, m_dim_lens{ dimlens }, m_front{ nucleus_off }, m_crfn{ crfn } {
+    clr_grain(const grain_type* grain, nbh::nbhood_kind kind, const upos_t<Dim>& dimlens, std::size_t nucleus_off)
+        : m_grain{ grain }, m_dim_lens{ dimlens }, m_front{ nucleus_off } {
         switch (kind) {
         case nbh::nbhood_kind::von_neumann:
             m_normfn = norm_taxicab<Dim>; break;
@@ -98,7 +111,7 @@ private:
     }
 
     std::vector<pos_t<Dim>> apply_shifts(const pos_t<Dim>& pos) const {
-        return nbh::apply_shifts(pos, m_shifts, inside);
+        return nbh::apply_shifts(pos, m_shifts, std::optional([this](const pos_t<Dim>& pos) -> bool { return inside(pos); }));
     }
 
     std::vector<grow_dir_t<Dim, Real>> orientate_grow_dirs() const {

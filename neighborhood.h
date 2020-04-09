@@ -49,7 +49,7 @@ std::vector<pos_t<Dim>> make_shifts(norm_fn<Dim> normfn, std::size_t range) {
         res.reserve(buf * buf - 1);
         for (std::int64_t y = -srange; y <= srange; ++y) {
             for (std::int64_t x = -srange; x <= srange; ++x) {
-                auto sh = pos_t<Dim>{ x, y };
+                auto sh = pos_t<Dim>({ x, y });
                 if (!(x == 0 && y == 0) &&
                     inside_nbhood<Dim>(normfn, sh, range))
                     res.push_back(sh);
@@ -62,7 +62,7 @@ std::vector<pos_t<Dim>> make_shifts(norm_fn<Dim> normfn, std::size_t range) {
         for (std::int64_t z = -srange; z <= srange; ++z) {
             for (std::int64_t y = -srange; y <= srange; ++y) {
                 for (std::int64_t x = -srange; x <= srange; ++x) {
-                    auto sh = pos_t<Dim>{ x, y, z };
+                    auto sh = pos_t<Dim>({ x, y, z });
                     if (!(x == 0 && y == 0 && z == 0) &&
                         inside_nbhood<Dim>(normfn, sh, range))
                         res.push_back(sh);
@@ -96,11 +96,10 @@ offsets_t pos_to_offset(const std::vector<pos_t<Dim>>& poses, const spt::vecu<Di
     return res;
 }
 
-
-template <std::size_t Dim>
+template <std::size_t Dim, typename InsideFn>
 std::vector<pos_t<Dim>> apply_shifts(
     const pos_t<Dim>& pos, const std::vector<pos_t<Dim>>& shifts,
-    std::optional<inside_fn<Dim>> infn) {
+    std::optional<InsideFn> infn) {
 
     std::vector<pos_t<Dim>> res;
     res.reserve(shifts.size());

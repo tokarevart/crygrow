@@ -41,7 +41,7 @@ ValueType dot(const vec<Dim, ValueType>& vect0, const vec<Dim, ValueType>& vect1
 
 template <typename ValueType>
 vec<3, ValueType> cross(const vec<3, ValueType>& vect0, const vec<3, ValueType>& vect1) {
-    return {
+    return std::array{
         vect0.x[1] * vect1.x[2] - vect0.x[2] * vect1.x[1],
         vect0.x[2] * vect1.x[0] - vect0.x[0] * vect1.x[2],
         vect0.x[0] * vect1.x[1] - vect0.x[1] * vect1.x[0] };

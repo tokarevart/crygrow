@@ -40,18 +40,18 @@ struct mat<3, ValueType> {
 
     static mat identity() {
         return { 
-            line_type{ 
+            line_type({ 
             static_cast<value_type>(1), 
             static_cast<value_type>(0), 
-            static_cast<value_type>(0) },
-            line_type{ 
+            static_cast<value_type>(0) }),
+            line_type({ 
             static_cast<value_type>(0), 
             static_cast<value_type>(1), 
-            static_cast<value_type>(0) },
-            line_type{ 
+            static_cast<value_type>(0) }),
+            line_type({ 
             static_cast<value_type>(0), 
             static_cast<value_type>(0), 
-            static_cast<value_type>(1) } };
+            static_cast<value_type>(1) }) };
     }
 
     mat& transpose() const {
@@ -151,9 +151,9 @@ struct mat<3, ValueType> {
     mat(const std::array<line_type, 3> & x)
         : x{ x } {}
     mat(const std::array<value_type, 9> & x) {
-        this->x[0] = line_type{ x[0], x[1], x[2] };
-        this->x[1] = line_type{ x[3], x[4], x[5] };
-        this->x[2] = line_type{ x[6], x[7], x[8] };
+        this->x[0] = line_type({ x[0], x[1], x[2] });
+        this->x[1] = line_type({ x[3], x[4], x[5] });
+        this->x[2] = line_type({ x[6], x[7], x[8] });
     }
     mat(const line_type& x0, const line_type& x1, const line_type& x2) {
         x[0] = x0;
@@ -176,8 +176,8 @@ struct mat<2, ValueType> {
 
     static mat identity() {
         return {
-            line_type{ static_cast<value_type>(1), static_cast<value_type>(0) }, 
-            line_type{ static_cast<value_type>(0), static_cast<value_type>(1) } };
+            line_type({ static_cast<value_type>(1), static_cast<value_type>(0) }),
+            line_type({ static_cast<value_type>(0), static_cast<value_type>(1) }) };
     }
 
     mat& transpose() const {
@@ -256,8 +256,8 @@ struct mat<2, ValueType> {
     mat(const std::array<line_type, 2>& x)
         : x{x} {}
     mat(const std::array<value_type, 4>& x) {
-        this->x[0] = line_type{ x[0], x[1] };
-        this->x[1] = line_type{ x[2], x[3] };
+        this->x[0] = line_type({ x[0], x[1] });
+        this->x[1] = line_type({ x[2], x[3] });
     }
     mat(const line_type& x0, const line_type& x1) {
         x[0] = x0;
@@ -265,7 +265,7 @@ struct mat<2, ValueType> {
     }
     mat(value_type v0, value_type v1,
         value_type v2, value_type v3)
-        : x{ line_type{ v0, v1 }, line_type{ v2, v3 } } {}
+        : x{ line_type({ v0, v1 }), line_type({ v2, v3 }) } {}
 };
 
 }  // namespace spt

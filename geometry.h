@@ -38,7 +38,7 @@ public:
     using gr_geometry = grgeo::gr_geometry;
 
     void add_empty_gr_volumes(const std::vector<grains_container>& grconts) {
-        std::unordered_set<grain_type*> uniquegrs;
+        std::unordered_set<const grain_type*> uniquegrs;
         for (auto& grcont : grconts)
             for (auto& gr : grcont)
                 if (gr->material())
@@ -368,8 +368,8 @@ private:
     std::size_t num_cells() const {
         return m_automata->num_cells();
     }
-    cell_type* cell(std::size_t offset) const {
-        return m_automata->cell(offset);
+    const cell_type* cell(std::size_t offset) const {
+        return &m_automata->cell(offset);
     }
     void add_boxbry_grains() {
         auto box_vs = box_vertices();

@@ -9,7 +9,7 @@
 #include "geometry.h"
 #include "progress-bar.h"
 
-#define DIM3
+//#define DIM3
 
 #ifdef DIM3
 constexpr std::size_t dim = 3;
@@ -20,43 +20,17 @@ std::size_t seed = 0;
 constexpr auto kind = cgr::nbh::nbhood_kind::euclid;
 using automata_t = cgr::automata<dim>;
 using cell_t = cgr::cell<dim>;
-using crystallite_t = cgr::grain<dim>;
+using grain_t = cgr::grain<dim>;
 using material_t = cgr::material<dim>;
 
-using pair_pos_cell = std::pair<std::vector<cgr::pos_t<dim>>, std::vector<cell_t>>;
 
-
-std::vector<cgr::pos_t<dim>> make_poses_box(std::size_t size) {
-    std::vector<cgr::pos_t<dim>> res;
-    std::size_t ressize = 1;
-    for (std::size_t i = 0; i < dim; ++i)
-        ressize *= size;
-    res.reserve(ressize);
-    for (std::size_t i = 0; i < ressize; ++i)
-        res.emplace_back(cgr::upos(i, spt::vecu<dim>::filled_with(size)));
-
-    //for (std::size_t i = 0; i < size; ++i)
-    //    for (std::size_t j = 0; j < size; ++j)
-    //        res.emplace_back(i, j);
-
+std::vector<cgr::upos_t<dim>> make_central_pos(std::size_t size) {
+    std::vector<cgr::upos_t<dim>> res;
+    res.push_back(cgr::upos_t<dim>::filled_with(size / 2));
     return res;
 }
 
-pair_pos_cell make_cells_box(std::size_t size, const cell_t& cell) {
-    pair_pos_cell res;
-    res.first = make_poses_box(size);
-    res.second.assign(res.first.size(), cell);
-    return res;
-}
-
-std::vector<cgr::pos_t<dim>> make_central_pos(std::size_t size) {
-    std::int64_t ssize = size;
-    std::vector<cgr::pos_t<dim>> res;
-    res.emplace_back(cgr::pos_t<dim>::filled_with(ssize * 1 / 2));
-    return res;
-}
-
-std::uint64_t min_distance2(cgr::pos_t<dim> pos, std::vector<cgr::pos_t<dim>> others) {
+std::uint64_t min_distance2(const cgr::upos_t<dim>& pos, const std::vector<cgr::upos_t<dim>>& others) {
     std::uint64_t res = std::numeric_limits<std::uint64_t>::max();
     for (auto& other : others) {
         std::uint64_t dist = (other - pos).magnitude2();
@@ -66,12 +40,12 @@ std::uint64_t min_distance2(cgr::pos_t<dim> pos, std::vector<cgr::pos_t<dim>> ot
     return res;
 }
 
-std::vector<cgr::pos_t<dim>> make_random_central_poses(std::size_t size, std::size_t num, std::uint64_t min_dist2 = 0) {
-    std::vector<cgr::pos_t<dim>> res;
+std::vector<cgr::upos_t<dim>> make_random_poses(std::size_t size, std::size_t num, std::uint64_t min_dist2 = 0) {
+    std::vector<cgr::upos_t<dim>> res;
     std::mt19937_64 gen(seed);
     std::uniform_int_distribution<std::size_t> dis(0, size - 1);
     for (std::size_t i = 0; i < num;) {
-        cgr::pos_t<dim> curpos;
+        cgr::upos_t<dim> curpos;
         for (auto& e : curpos.x)
             e = dis(gen);
 
@@ -105,16 +79,16 @@ int main_test() {
 }
 
 int inner_main() {
-    std::size_t size = 280;
-    std::size_t range = 4;
-    automata_t automata(size, cgr::make_shifts_fn<dim>(cgr::nbhood_kind::euclid), range);
-    auto [default_poses, default_cells] = make_cells_box(size, cell_t());
-    automata.set_cells(default_poses, default_cells);
+    std::size_t size = 1400;
+    std::size_t range = 20;
+    automata_t automata(size);
+    automata.set_range(range);
 
-    //auto init_central_poses = make_central_pos(size);
-    auto init_central_poses = make_random_central_poses(size, 30, std::pow(range * 4, 2));
+    //auto init_poses = make_central_pos(size);
+    auto init_poses = make_random_poses(size, 30, std::pow(range * 1, 2));
 
-    material_t mater(cgr::material_property::isotropic, { 
+    material_t mater;
+    /*material_t mater({ 
         #ifdef DIM3
         spt::vecd<dim>{ 1.0, 0.0, 0.0 }.normalize(),
         spt::vecd<dim>{ 0.0, 1.0, 0.0 }.normalize(),
@@ -122,48 +96,33 @@ int inner_main() {
         #else
         spt::vecd<dim>{ 4.0, 1.0 }.normalize(), 
         spt::vecd<dim>{ -1.0, 4.0 }.normalize() });
-        #endif
-    //std::vector<crystallite_t> crysts(init_central_poses.size(), crystallite_t(&mater));
-    std::vector<crystallite_t> crysts;
-    crysts.reserve(init_central_poses.size());
-    std::mt19937_64 gen(seed);
-    std::uniform_real_distribution<double> dis(-1.0, std::nextafter(1.0, 2.0));
-    for (std::size_t i = 0; i < init_central_poses.size(); ++i) {
-        #ifdef DIM3
-        const double pi = 3.14159265359;
-        auto rot = spt::rotation(spt::vecd<dim>{ dis(gen), dis(gen), dis(gen) }.normalize(), std::abs(dis(gen)) * pi);
-        crysts.emplace_back(&mater, rot);
-        #else
-        auto first = spt::vecd<dim>{ dis(gen), dis(gen) }.normalize();
-        spt::vecd<dim> second{ -first[1], first[0] };
-        crysts.emplace_back(&mater, spt::matd<dim>{ first, second });
-        #endif
-    }
+        #endif*/
+    std::vector<grain_t> grains(init_poses.size(), grain_t(&mater));
+    //std::vector<grain_t> grains;
+    //grains.reserve(init_poses.size());
+    //std::mt19937_64 gen(seed);
+    //std::uniform_real_distribution<double> dis(-1.0, std::nextafter(1.0, 2.0));
+    //for (std::size_t i = 0; i < init_poses.size(); ++i) {
+    //    #ifdef DIM3
+    //    const double pi = 3.14159265359;
+    //    auto rot = spt::rotation(spt::vecd<dim>{ dis(gen), dis(gen), dis(gen) }.normalize(), std::abs(dis(gen)) * pi);
+    //    grains.emplace_back(&mater, rot);
+    //    #else
+    //    auto first = spt::vecd<dim>{ dis(gen), dis(gen) }.normalize();
+    //    spt::vecd<dim> second{ -first[1], first[0] };
+    //    grains.emplace_back(&mater, spt::matd<dim>{ first, second });
+    //    #endif
+    //}
 
-    std::vector<cell_t> init_central_cells;
-    init_central_cells.reserve(crysts.size());
-    for (auto& cryst : crysts)
-        init_central_cells.emplace_back(true, &cryst);
-    automata.set_cells(init_central_poses, init_central_cells);
+    for (std::size_t i = 0; i < init_poses.size(); ++i)
+        automata.spawn_grain(&grains[i], automata.offset(init_poses[i]), kind);
 
-    std::vector<nbhood_pos_t> init_nbhood_poses;
-    init_nbhood_poses.reserve(init_central_poses.size());
-    for (auto& pos : init_central_poses)
-        init_nbhood_poses.emplace_back(cgr::nbh::make_poses<dim>(kind, pos, range, std::nullopt));
-
-    std::vector<std::vector<cell_t>> init_nbhood_cells;
-    init_nbhood_cells.reserve(init_nbhood_poses.size());
-    for (std::size_t i = 0; i < init_nbhood_poses.size(); ++i)
-        init_nbhood_cells.emplace_back(init_nbhood_poses[i].size(), init_central_cells[i]);
-
-    for (std::size_t i = 0; i < init_nbhood_poses.size(); ++i)
-        automata.set_cells(init_nbhood_poses[i], init_nbhood_cells[i]);
     
     progress_bar bar("Crystallization", automata.num_cells(), 70);
     while (!automata.stop_condition()) {
         std::ofstream ofile("automata-image-data.txt");
         ofile << "size " << size << std::endl;
-        //for (std::size_t i = 0; i < 100; ++i)
+        //for (std::size_t i = 0; i < 5; ++i) {
         while (!automata.stop_condition()) {
             automata.iterate();
             bar.set_count(automata.num_crysted_cells());
@@ -176,27 +135,27 @@ int inner_main() {
             //curpos[2] = size - 1;
             curpos[2] = 0;
             #endif
-            auto pcell = automata.cell(curpos);
+            auto& cell = automata.cell(curpos);
 
             std::array<std::uint8_t, 3> color;
             constexpr bool blackwhite = false;
             if constexpr (!blackwhite) {
-                if (pcell->crystallinity < 1.0 - automata_t::epsilon * (1.0 + pcell->crystallinity) &&
-                    !pcell->grains.empty()) {
+                if (!cell.crysted &&
+                    !cell.grains.empty()) {
                     color = { 0, 255, 0 };
-                } else if (pcell->crystallinity < 1.0 - automata_t::epsilon * (1.0 + pcell->crystallinity) ||
-                           pcell->grains.empty()) {
+                } else if (!cell.crysted ||
+                           cell.grains.empty()) {
                     color = { 255, 255, 255 };
-                } else if (pcell->grains.size() == 1) {
+                } else if (cell.grains.size() == 1) {
                     color = { 0, 0, 0 };
-                } else if (pcell->grains.size() == 2) {
+                } else if (cell.grains.size() == 2) {
                     color = { 0, 0, 255 };
                 } else {
                     color = { 255, 0, 0 };
                 }
             } else {
-                if (pcell->grains.size() == 1 &&
-                    std::abs(pcell->crystallinity - 1.0) <= automata_t::epsilon * (1.0 + pcell->crystallinity)) {
+                if (cell.grains.size() == 1 &&
+                    cell.crysted) {
                     color = { 0, 0, 0 };
                 } else {
                     color = { 255, 255, 255 };
@@ -221,24 +180,24 @@ int inner_main() {
         //}
         //std::cout << "number of cells with grains number >= dim + 1: " << num_cells_gtdimpl1 << std::endl;
 
-        //std::system("python ./visualize.py");
+        std::system("python ./visualize.py");
     }
 
-    cgr::geo_from_automata simplegeo(&automata);
-    simplegeo.make();
+    //cgr::geo_from_automata simplegeo(&automata);
+    //simplegeo.make();
 
-    std::cout << "planarity: " << simplegeo.planarity() << std::endl;
-    std::cout << "before nonplanarity optimization:" << std::endl;
-    std::cout << "  best nonplanarity/side_len: " << simplegeo.best_nonplanarity() / size << std::endl;
-    std::cout << "  worst nonplanarity/side_len: " << simplegeo.worst_nonplanarity() / size << std::endl;
-    std::cout << "  gmsh nonplanarity/side_len: " << simplegeo.gmsh_nonplanarity() / size << std::endl;
-    simplegeo.optimize_nonplanarity();
-    std::cout << "after nonplanarity optimization:" << std::endl;
-    std::cout << "  gmsh nonplanarity/side_len: " << simplegeo.gmsh_nonplanarity() / size << std::endl;
+    //std::cout << "planarity: " << simplegeo.planarity() << std::endl;
+    //std::cout << "before nonplanarity optimization:" << std::endl;
+    //std::cout << "  best nonplanarity/side_len: " << simplegeo.best_nonplanarity() / size << std::endl;
+    //std::cout << "  worst nonplanarity/side_len: " << simplegeo.worst_nonplanarity() / size << std::endl;
+    //std::cout << "  gmsh nonplanarity/side_len: " << simplegeo.gmsh_nonplanarity() / size << std::endl;
+    //simplegeo.optimize_nonplanarity();
+    //std::cout << "after nonplanarity optimization:" << std::endl;
+    //std::cout << "  gmsh nonplanarity/side_len: " << simplegeo.gmsh_nonplanarity() / size << std::endl;
 
-    std::ofstream file("polycr.geo");
-    simplegeo.write_geo(file);
-    simplegeo.write_geo(std::cout);
+    //std::ofstream file("polycr.geo");
+    //simplegeo.write_geo(file);
+    //simplegeo.write_geo(std::cout);
 
     return 0;
 }

@@ -157,17 +157,11 @@ struct vec {
         x = other.x;
     }
     vec(const std::array<ValueType, Dim>& x) : x{x} {}
-    template<typename... ValueTypes>
-    vec(ValueTypes... xs)
-        : x{ static_cast<ValueType>(xs)... } {}
 };
 
 
 template<std::size_t Dim, typename ValueType>
 vec(const std::array<ValueType, Dim>& x) -> vec<Dim, ValueType>;
-
-template<typename ValueType, typename... TaleValues>
-vec(ValueType x0, TaleValues... xt) -> vec<1 + sizeof...(TaleValues), ValueType>;
 
 } // namespace spt
 

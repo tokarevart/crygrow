@@ -12,6 +12,7 @@
 #include "sptops.h"
 #include "cgralgs.h"
 #include "cell.h"
+#include "clr-grain.h"
 
 
 namespace cgr {
@@ -21,10 +22,10 @@ class automata {
 public:
     static constexpr std::size_t dim = Dim;
     using cell_type = cgr::cell<Dim, Real>;
-    using cells_container = std::vector<cell_type>;
     using grain_type = typename cell_type::grain_type;
     using material_type = typename grain_type::material_type;
     using orientation_type = typename grain_type::orientation_type;
+    using clr_grain_type = clr_grain<Dim, Real>;
     using grow_dir_type = grow_dir_t<Dim, Real>;
 
     std::size_t num_crysted_cells() const {
@@ -37,23 +38,23 @@ public:
     std::size_t num_cells() const {
         return m_cells.size();
     }
-    const cells_container& cells() const {
+    const std::vector<cell_type>& cells() const {
         return m_cells;
     }
 
-    cell_type cell(std::size_t offset) const {
+    const cell_type& cell(std::size_t offset) const {
         return m_cells[offset];
     }
-    cell_type cell(const upos_t<Dim>& pos) const {
+    const cell_type& cell(const upos_t<Dim>& pos) const {
         return cell(offset(pos));
     }
-    cell_type cell(const pos_t<Dim>& pos) const {
+    const cell_type& cell(const pos_t<Dim>& pos) const {
         return cell(offset(pos));
     }
-    void set_cell(std::size_t offset, cell_type new_cell) {
+    void set_cell(std::size_t offset, const cell_type& new_cell) {
         m_cells[offset] = new_cell;
     }
-    void set_cell(const pos_t<Dim>& pos, cell_type new_cell) {
+    void set_cell(const pos_t<Dim>& pos, const cell_type& new_cell) {
         m_cells[offset(pos)] = new_cell;
     }
     template <typename PosesContainer, typename CellsContainer>
@@ -64,13 +65,7 @@ public:
             set_cell(*pos_it, *cell_it);
     }
 
-    std::optional<cell_type> try_cell(const upos_t<Dim>& pos) const {
-        return inside(pos) ? cell(pos) : std::nullopt;
-    }
-    std::optional<cell_type> try_cell(const pos_t<Dim>& pos) const {
-        return inside(pos) ? cell(pos) : std::nullopt;
-    }
-    bool try_set_cell(const pos_t<Dim>& pos, cell_type new_cell) {
+    bool try_set_cell(const pos_t<Dim>& pos, const cell_type& new_cell) {
         if (inside(pos)) {
             m_cells[offset(pos)] = new_cell;
             return true;
@@ -114,6 +109,8 @@ public:
     }
     void set_range(std::size_t range) {
         m_range = range;
+        for (auto& clrg : m_clrgrains)
+            clrg.set_range(m_range);
     }
 
     bool stop_condition() const {
@@ -126,15 +123,36 @@ public:
         if (stop_condition())
             return false;
 
-        //
+        for (auto& clrg : m_clrgrains)
+            for (std::size_t off : clrg.front())
+                m_cells[off].crysted = true;
+
+        #pragma omp parallel for
+        for (std::int64_t i = 0; i < m_clrgrains.size(); ++i)
+            m_clrgrains[i].advance_front(
+                [this](std::size_t off) -> bool { return m_cells[off].crysted; },
+                [this](std::size_t off) -> std::size_t { return m_cells[off].grains.size(); });
+
+        for (auto& clrg : m_clrgrains)
+            for (std::size_t off : clrg.front())
+                m_cells[off].grains.push_back(clrg.grain());
 
         return true;
     }
 
+    void spawn_grain(const grain_type* grain, const upos_t<Dim>& nucleus_pos, nbh::nbhood_kind kind) {
+        spawn_grain(grain, offset(nucleus_pos), kind);
+    }
+    void spawn_grain(const grain_type* grain, std::size_t nucleus_off, nbh::nbhood_kind kind) {
+        m_clrgrains.emplace_back(grain, kind, m_dim_lens, nucleus_off);
+        m_clrgrains.back().set_range(m_range);
+        m_cells[nucleus_off].crysted = true;
+        m_cells[nucleus_off].grains.push_back(grain);
+    }
+
     automata(std::size_t dimlen)
         : automata(upos_t<Dim>::filled_with(dimlen)) {}
-    automata(const upos_t<Dim>& dimlens) {
-        m_dim_lens = dimlens;
+    automata(const upos_t<Dim>& dimlens) : m_dim_lens{ dimlens } {
         std::size_t new_num_cells = std::accumulate(
             m_dim_lens.x.begin(), m_dim_lens.x.end(),
             static_cast<std::size_t>(1), std::multiplies<std::size_t>());
@@ -146,7 +164,8 @@ private:
     std::size_t m_range = 0;
     upos_t<Dim> m_dim_lens;
 
-    cells_container m_cells;
+    std::vector<cell_type> m_cells;
+    std::vector<clr_grain_type> m_clrgrains;
     // todo: store common cells, such as empty cell and crystallized cell for each grain
 };
 

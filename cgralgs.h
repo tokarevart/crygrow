@@ -75,17 +75,17 @@ std::size_t norm_cryst(
     if constexpr (std::is_integral_v<ValueType>)
         return maxpn;
     else
-        return maxpn + std::numeric_limits<ValueType>::epsilon();
+        return static_cast<std::size_t>(maxpn + std::numeric_limits<ValueType>::epsilon());
 }
 
 template <std::size_t Dim, typename ValueType>
 norm_fn<Dim> make_norm_cryst_fn(std::vector<grow_dir_t<Dim, ValueType>> growdirs) {
-    std::vector<spt::vec<Dim, ValueType>> es_inv_dots;
+    std::vector<ValueType> es_inv_dots;
     es_inv_dots.reserve(growdirs.size());
     for (auto& e : growdirs)
         es_inv_dots.push_back(static_cast<ValueType>(1) / spt::dot(e, e));
 
-    return [std::move(growdirs), std::move(es_inv_dots)](const pos_t<Dim>& dir) -> std::size_t {
+    return [growdirs = std::move(growdirs), es_inv_dots = std::move(es_inv_dots)](const pos_t<Dim>& dir) -> std::size_t {
         auto cdir = static_cast<spt::vec<Dim, ValueType>>(dir);
         ValueType maxpn = 0;
         for (std::size_t i = 0; i < growdirs.size(); ++i) {
@@ -96,7 +96,7 @@ norm_fn<Dim> make_norm_cryst_fn(std::vector<grow_dir_t<Dim, ValueType>> growdirs
         if constexpr (std::is_integral_v<ValueType>)
             return maxpn;
         else
-            return maxpn + std::numeric_limits<ValueType>::epsilon();
+            return static_cast<std::size_t>(maxpn + std::numeric_limits<ValueType>::epsilon());
     };
 }
 
@@ -116,17 +116,17 @@ std::size_t norm_chebyshev(const pos_t<Dim>& pos) {
         if (abse > max_abs)
             max_abs = abse;
     }
-    return max_abs;
+    return static_cast<std::size_t>(max_abs);
 }
 
 template <std::size_t Dim>
 std::size_t norm_euclid(const pos_t<Dim>& pos) {
-    return std::sqrt(pos.magnitude2()) + std::numeric_limits<double>::epsilon();
+    return static_cast<std::size_t>(std::sqrt(pos.magnitude2()) + std::numeric_limits<double>::epsilon());
 }
 
 template <std::size_t Dim>
 std::size_t norm2_euclid(const pos_t<Dim>& pos) {
-    return pos.magnitude2();
+    return static_cast<std::size_t>(pos.magnitude2());
 }
 
 } // namespace cgr

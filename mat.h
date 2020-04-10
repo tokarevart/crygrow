@@ -148,9 +148,9 @@ struct mat<3, ValueType> {
     mat(const mat& other) {
         x = other.x;
     }
-    mat(const std::array<line_type, 3> & x)
+    mat(const std::array<line_type, 3>& x)
         : x{ x } {}
-    mat(const std::array<value_type, 9> & x) {
+    mat(const std::array<value_type, 9>& x) {
         this->x[0] = line_type({ x[0], x[1], x[2] });
         this->x[1] = line_type({ x[3], x[4], x[5] });
         this->x[2] = line_type({ x[6], x[7], x[8] });

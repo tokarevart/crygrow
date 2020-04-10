@@ -41,14 +41,14 @@ using inside_fn = std::function<bool(const pos_t<Dim>&)>;
 
 
 template <std::size_t Dim>
-std::vector<pos_t<Dim>> make_shifts(norm_fn<Dim> normfn, std::size_t range) {
+std::vector<pos_t<Dim>> make_shifts(norm_fn<Dim> normfn, std::size_t range, std::size_t bbox_range = range) {
     std::vector<pos_t<Dim>> res;
-    std::size_t buf = 2 * range + 1;
-    std::int64_t srange = range;
+    std::size_t buf = 2 * bbox_range + 1;
+    std::int64_t sbbox_range = bbox_range;
     if constexpr (Dim == 2) {
         res.reserve(buf * buf - 1);
-        for (std::int64_t y = -srange; y <= srange; ++y) {
-            for (std::int64_t x = -srange; x <= srange; ++x) {
+        for (std::int64_t y = -sbbox_range; y <= sbbox_range; ++y) {
+            for (std::int64_t x = -sbbox_range; x <= sbbox_range; ++x) {
                 auto sh = pos_t<Dim>({ x, y });
                 if (!(x == 0 && y == 0) &&
                     inside_nbhood<Dim>(normfn, sh, range))
@@ -59,9 +59,9 @@ std::vector<pos_t<Dim>> make_shifts(norm_fn<Dim> normfn, std::size_t range) {
 
     } else if constexpr (Dim == 3) {
         res.reserve(buf * buf * buf - 1);
-        for (std::int64_t z = -srange; z <= srange; ++z) {
-            for (std::int64_t y = -srange; y <= srange; ++y) {
-                for (std::int64_t x = -srange; x <= srange; ++x) {
+        for (std::int64_t z = -sbbox_range; z <= sbbox_range; ++z) {
+            for (std::int64_t y = -sbbox_range; y <= sbbox_range; ++y) {
+                for (std::int64_t x = -sbbox_range; x <= sbbox_range; ++x) {
                     auto sh = pos_t<Dim>({ x, y, z });
                     if (!(x == 0 && y == 0 && z == 0) &&
                         inside_nbhood<Dim>(normfn, sh, range))

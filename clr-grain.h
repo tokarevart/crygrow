@@ -25,7 +25,7 @@ public:
     }
     void set_range(std::size_t range) {
         m_range = range;
-        m_shifts = nbh::make_shifts<Dim>(m_normfn, m_range);
+        m_shifts = nbh::make_shifts<Dim>(m_normfn, m_range, m_range * 2);
     }
 
     const std::vector<std::size_t>& front() const {

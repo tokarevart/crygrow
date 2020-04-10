@@ -17,7 +17,7 @@ constexpr std::size_t dim = 3;
 constexpr std::size_t dim = 2;
 #endif
 std::size_t seed = 0;
-constexpr auto kind = cgr::nbh::nbhood_kind::euclid;
+constexpr auto kind = cgr::nbh::nbhood_kind::crystallographic;
 using automata_t = cgr::automata<dim>;
 using cell_t = cgr::cell<dim>;
 using grain_t = cgr::grain<dim>;
@@ -79,40 +79,40 @@ int main_test() {
 }
 
 int inner_main() {
-    std::size_t size = 1400;
-    std::size_t range = 20;
+    std::size_t size = 1000;
+    std::size_t range = 10;
     automata_t automata(size);
     automata.set_range(range);
 
     //auto init_poses = make_central_pos(size);
     auto init_poses = make_random_poses(size, 30, std::pow(range * 1, 2));
 
-    material_t mater;
-    /*material_t mater({ 
+    //material_t mater;
+    material_t mater({ 
         #ifdef DIM3
-        spt::vecd<dim>{ 1.0, 0.0, 0.0 }.normalize(),
-        spt::vecd<dim>{ 0.0, 1.0, 0.0 }.normalize(),
-        spt::vecd<dim>{ 0.0, 0.0, 1.0 }.normalize() });
+        spt::vecd<dim>({ 1.0, 0.0, 0.0 }).normalize(),
+        spt::vecd<dim>({ 0.0, 1.0, 0.0 }).normalize(),
+        spt::vecd<dim>({ 0.0, 0.0, 1.0 }).normalize() });
         #else
-        spt::vecd<dim>{ 4.0, 1.0 }.normalize(), 
-        spt::vecd<dim>{ -1.0, 4.0 }.normalize() });
-        #endif*/
-    std::vector<grain_t> grains(init_poses.size(), grain_t(&mater));
-    //std::vector<grain_t> grains;
-    //grains.reserve(init_poses.size());
-    //std::mt19937_64 gen(seed);
-    //std::uniform_real_distribution<double> dis(-1.0, std::nextafter(1.0, 2.0));
-    //for (std::size_t i = 0; i < init_poses.size(); ++i) {
-    //    #ifdef DIM3
-    //    const double pi = 3.14159265359;
-    //    auto rot = spt::rotation(spt::vecd<dim>{ dis(gen), dis(gen), dis(gen) }.normalize(), std::abs(dis(gen)) * pi);
-    //    grains.emplace_back(&mater, rot);
-    //    #else
-    //    auto first = spt::vecd<dim>{ dis(gen), dis(gen) }.normalize();
-    //    spt::vecd<dim> second{ -first[1], first[0] };
-    //    grains.emplace_back(&mater, spt::matd<dim>{ first, second });
-    //    #endif
-    //}
+        spt::vecd<dim>({ 4.0, 1.0 }).normalize(), 
+        spt::vecd<dim>({ -1.0, 4.0 }).normalize() });
+        #endif
+    //std::vector<grain_t> grains(init_poses.size(), grain_t(&mater));
+    std::vector<grain_t> grains;
+    grains.reserve(init_poses.size());
+    std::mt19937_64 gen(seed);
+    std::uniform_real_distribution<double> dis(-1.0, std::nextafter(1.0, 2.0));
+    for (std::size_t i = 0; i < init_poses.size(); ++i) {
+        #ifdef DIM3
+        const double pi = 3.14159265359;
+        auto rot = spt::rotation(spt::vecd<dim>{ dis(gen), dis(gen), dis(gen) }.normalize(), std::abs(dis(gen)) * pi);
+        grains.emplace_back(&mater, rot);
+        #else
+        auto first = spt::vecd<dim>({ dis(gen), dis(gen) }).normalize();
+        spt::vecd<dim> second({ -first[1], first[0] });
+        grains.emplace_back(&mater, spt::matd<dim>{ first, second });
+        #endif
+    }
 
     for (std::size_t i = 0; i < init_poses.size(); ++i)
         automata.spawn_grain(&grains[i], automata.offset(init_poses[i]), kind);
@@ -122,8 +122,8 @@ int inner_main() {
     while (!automata.stop_condition()) {
         std::ofstream ofile("automata-image-data.txt");
         ofile << "size " << size << std::endl;
-        //for (std::size_t i = 0; i < 5; ++i) {
-        while (!automata.stop_condition()) {
+        for (std::size_t i = 0; i < 5; ++i) {
+        //while (!automata.stop_condition()) {
             automata.iterate();
             bar.set_count(automata.num_crysted_cells());
         }

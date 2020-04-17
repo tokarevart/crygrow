@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <set>
 #include "neighborhood.h"
 #include "vec.h"
 #include "sptops.h"
@@ -23,6 +24,7 @@ public:
     static constexpr std::size_t dim = Dim;
     using cell_type = cgr::cell<Dim, Real>;
     using grain_type = typename cell_type::grain_type;
+    using grains_container = typename cell_type::grains_container;
     using material_type = typename grain_type::material_type;
     using orientation_type = typename grain_type::orientation_type;
     using clr_grain_type = clr_grain<Dim, Real>;
@@ -148,6 +150,25 @@ public:
         m_clrgrains.back().set_range(m_range);
         m_cells[nucleus_off].crysted = true;
         m_cells[nucleus_off].grains.push_back(grain);
+    }
+
+    void smooth(std::size_t range) {
+        auto shs = nbh::make_shifts<Dim>(norm_euclid<Dim>, range);
+        std::vector<std::set<const grain_type*>> grconts(num_cells());
+        for (std::size_t i = 0; i < num_cells(); ++i) {
+            auto pos = static_cast<pos_t<Dim>>(upos(i));
+            std::vector<pos_t<Dim>> nbs = nbh::apply_shifts(pos, shs, 
+                std::optional([this](const pos_t<Dim>& pos) -> bool { return inside(pos); }));
+
+            for (auto& nbpos : nbs) {
+                auto& nbgrs = cell(nbpos).grains;
+                if (nbgrs.size() == 1)
+                    grconts[i].insert(nbgrs.front());
+            }
+        }
+
+        for (std::size_t i = 0; i < num_cells(); ++i)
+            m_cells[i].grains.assign(grconts[i].begin(), grconts[i].end());
     }
 
     automata(std::size_t dimlen)

@@ -163,7 +163,7 @@ struct mat<3, ValueType> {
     mat(value_type v0, value_type v1, value_type v2,
         value_type v3, value_type v4, value_type v5,
         value_type v6, value_type v7, value_type v8)
-        : x{ line_type{ v0, v1, v2 }, line_type{ v3, v4, v5 }, line_type{ v6, v7, v8 } } {}
+        : x{ line_type({ v0, v1, v2 }), line_type({ v3, v4, v5 }), line_type({ v6, v7, v8 }) } {}
 };
 
 template <typename ValueType>

@@ -9,7 +9,7 @@
 #include "geometry.h"
 #include "progress-bar.h"
 
-//#define DIM3
+#define DIM3
 
 #ifdef DIM3
 constexpr std::size_t dim = 3;
@@ -17,7 +17,6 @@ constexpr std::size_t dim = 3;
 constexpr std::size_t dim = 2;
 #endif
 std::size_t seed = 0;
-constexpr auto kind = cgr::nbh::nbhood_kind::crystallographic;
 using automata_t = cgr::automata<dim>;
 using cell_t = cgr::cell<dim>;
 using grain_t = cgr::grain<dim>;
@@ -78,8 +77,51 @@ int main_test() {
     return 0;
 }
 
+void write_image_pixels(std::ostream& os, const automata_t& atmt, bool blackwhite = false) {
+    for (std::size_t i = 0; i < atmt.num_cells(); ++i) {
+        auto curpos = atmt.upos(i);
+        #ifdef DIM3
+        //curpos[2] = static_cast<std::int64_t>(size) / 2;
+        //curpos[2] = size - 1;
+        curpos[2] = 0;
+        #endif
+        auto& cell = atmt.cell(curpos);
+
+        std::array<std::uint8_t, 3> color;
+        if (!blackwhite) {
+            if (!cell.crysted &&
+                !cell.grains.empty()) {
+                color = { 0, 255, 0 };
+            } else if (!cell.crysted ||
+                cell.grains.empty()) {
+                color = { 255, 255, 255 };
+            } else if (cell.grains.size() == 1) {
+                color = { 0, 0, 0 };
+            } else if (cell.grains.size() == 2) {
+                color = { 0, 0, 255 };
+            } else {
+                color = { 255, 0, 0 };
+            }
+        } else {
+            if (cell.grains.size() == 1 &&
+                cell.crysted) {
+                color = { 0, 0, 0 };
+            } else {
+                color = { 255, 255, 255 };
+            }
+        }
+
+
+        os  << curpos[0] << ' '
+            << curpos[1] << ' '
+            << static_cast<int>(color[0]) << ' '
+            << static_cast<int>(color[1]) << ' '
+            << static_cast<int>(color[2]) << std::endl;
+    }
+}
+
 int inner_main() {
-    std::size_t size = 1000;
+    std::size_t size = 500;
     std::size_t range = 10;
     automata_t automata(size);
     automata.set_range(range);
@@ -105,7 +147,7 @@ int inner_main() {
     for (std::size_t i = 0; i < init_poses.size(); ++i) {
         #ifdef DIM3
         const double pi = 3.14159265359;
-        auto rot = spt::rotation(spt::vecd<dim>{ dis(gen), dis(gen), dis(gen) }.normalize(), std::abs(dis(gen)) * pi);
+        auto rot = spt::rotation(spt::vecd<dim>({ dis(gen), dis(gen), dis(gen) }).normalize(), std::abs(dis(gen)) * pi);
         grains.emplace_back(&mater, rot);
         #else
         auto first = spt::vecd<dim>({ dis(gen), dis(gen) }).normalize();
@@ -115,89 +157,48 @@ int inner_main() {
     }
 
     for (std::size_t i = 0; i < init_poses.size(); ++i)
-        automata.spawn_grain(&grains[i], automata.offset(init_poses[i]), kind);
+        automata.spawn_grain(&grains[i], automata.offset(init_poses[i]), cgr::nbh::nbhood_kind::euclid);
 
     
     progress_bar bar("Crystallization", automata.num_cells(), 70);
     while (!automata.stop_condition()) {
-        std::ofstream ofile("automata-image-data.txt");
-        ofile << "size " << size << std::endl;
-        for (std::size_t i = 0; i < 5; ++i) {
-        //while (!automata.stop_condition()) {
+        //for (std::size_t i = 0; i < 5; ++i) {
+        while (!automata.stop_condition()) {
             automata.iterate();
             bar.set_count(automata.num_crysted_cells());
         }
         
-        for (std::size_t i = 0; i < size * size; ++i) {
-            auto curpos = automata.upos(i);
-            #ifdef DIM3
-            //curpos[2] = static_cast<std::int64_t>(size) / 2;
-            //curpos[2] = size - 1;
-            curpos[2] = 0;
-            #endif
-            auto& cell = automata.cell(curpos);
-
-            std::array<std::uint8_t, 3> color;
-            constexpr bool blackwhite = false;
-            if constexpr (!blackwhite) {
-                if (!cell.crysted &&
-                    !cell.grains.empty()) {
-                    color = { 0, 255, 0 };
-                } else if (!cell.crysted ||
-                           cell.grains.empty()) {
-                    color = { 255, 255, 255 };
-                } else if (cell.grains.size() == 1) {
-                    color = { 0, 0, 0 };
-                } else if (cell.grains.size() == 2) {
-                    color = { 0, 0, 255 };
-                } else {
-                    color = { 255, 0, 0 };
-                }
-            } else {
-                if (cell.grains.size() == 1 &&
-                    cell.crysted) {
-                    color = { 0, 0, 0 };
-                } else {
-                    color = { 255, 255, 255 };
-                }
-            }
-            
-            
-            ofile 
-                << curpos[0] << ' ' 
-                << curpos[1] << ' '
-                << static_cast<int>(color[0]) << ' ' 
-                << static_cast<int>(color[1]) << ' ' 
-                << static_cast<int>(color[2]) << std::endl;
-        }
-        ofile.close();
-
-        //std::size_t num_cells_gtdimpl1 = 0;
-        //for (std::size_t i = 0; i < size * size; ++i) {
-        //    auto pcell = automata.cell(i);
-        //    if (pcell->grains.size() > dim + 1)
-        //        ++num_cells_gtdimpl1;
-        //}
-        //std::cout << "number of cells with grains number >= dim + 1: " << num_cells_gtdimpl1 << std::endl;
-
-        std::system("python ./visualize.py");
+        //std::ofstream ofile("automata-image-data.txt");
+        //ofile << "size " << size << std::endl;
+        //write_image_pixels(ofile, automata, false);
+        //ofile.close();
+        //std::system("python ./visualize.py");
     }
 
-    //cgr::geo_from_automata simplegeo(&automata);
-    //simplegeo.make();
+    automata.smooth(range * 2);
+    //std::ofstream ofile("automata-image-data.txt");
+    //ofile << "size " << size << std::endl;
+    //write_image_pixels(ofile, automata, false);
+    //ofile.close();
+    //std::system("python ./visualize.py");
 
-    //std::cout << "planarity: " << simplegeo.planarity() << std::endl;
-    //std::cout << "before nonplanarity optimization:" << std::endl;
-    //std::cout << "  best nonplanarity/side_len: " << simplegeo.best_nonplanarity() / size << std::endl;
-    //std::cout << "  worst nonplanarity/side_len: " << simplegeo.worst_nonplanarity() / size << std::endl;
-    //std::cout << "  gmsh nonplanarity/side_len: " << simplegeo.gmsh_nonplanarity() / size << std::endl;
-    //simplegeo.optimize_nonplanarity();
-    //std::cout << "after nonplanarity optimization:" << std::endl;
-    //std::cout << "  gmsh nonplanarity/side_len: " << simplegeo.gmsh_nonplanarity() / size << std::endl;
+    #ifdef DIM3
+    cgr::geo_from_automata simplegeo(&automata);
+    simplegeo.make();
 
-    //std::ofstream file("polycr.geo");
-    //simplegeo.write_geo(file);
-    //simplegeo.write_geo(std::cout);
+    std::cout << "planarity: " << simplegeo.planarity() << std::endl;
+    std::cout << "before nonplanarity optimization:" << std::endl;
+    std::cout << "  best nonplanarity/side_len: " << simplegeo.best_nonplanarity() / size << std::endl;
+    std::cout << "  worst nonplanarity/side_len: " << simplegeo.worst_nonplanarity() / size << std::endl;
+    std::cout << "  gmsh nonplanarity/side_len: " << simplegeo.gmsh_nonplanarity() / size << std::endl;
+    simplegeo.optimize_nonplanarity();
+    std::cout << "after nonplanarity optimization:" << std::endl;
+    std::cout << "  gmsh nonplanarity/side_len: " << simplegeo.gmsh_nonplanarity() / size << std::endl;
+
+    std::ofstream file("polycr.geo");
+    simplegeo.write_geo(file);
+    simplegeo.write_geo(std::cout);
+    #endif // DIM3
 
     return 0;
 }

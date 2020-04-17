@@ -41,7 +41,10 @@ using inside_fn = std::function<bool(const pos_t<Dim>&)>;
 
 
 template <std::size_t Dim>
-std::vector<pos_t<Dim>> make_shifts(norm_fn<Dim> normfn, std::size_t range, std::size_t bbox_range = range) {
+std::vector<pos_t<Dim>> make_shifts(norm_fn<Dim> normfn, std::size_t range, std::size_t bbox_range = 0) {
+    if (bbox_range == 0)
+        bbox_range = range;
+
     std::vector<pos_t<Dim>> res;
     std::size_t buf = 2 * bbox_range + 1;
     std::int64_t sbbox_range = bbox_range;
@@ -88,7 +91,7 @@ shifts_fn<Dim> make_shifts_fn(norm_fn<Dim> normfn) {
 
 
 template <std::size_t Dim>
-offsets_t pos_to_offset(const std::vector<pos_t<Dim>>& poses, const spt::vecu<Dim>& dimlens) {
+offsets_t poses_to_offsets(const std::vector<pos_t<Dim>>& poses, const spt::vecu<Dim>& dimlens) {
     offsets_t res;
     res.reserve(poses.size());
     for (auto pos : poses)
@@ -141,7 +144,7 @@ offsets_t make_offsets(
 
     pos_t<Dim> center_pos = cgr::upos(center, dimlens);
     auto nbhpos = make_poses<Dim>(shfn, center_pos, range, infn);
-    return pos_to_offset<Dim>(nbhpos, dimlens);
+    return poses_to_offsets<Dim>(nbhpos, dimlens);
 }
 
 
@@ -152,7 +155,7 @@ offsets_t make_offsets(
 
     pos_t<Dim> center_pos = cgr::upos(center, dimlens);
     auto nbhpos = make_poses<Dim>(normfn, center_pos, range, infn);
-    return pos_to_offset<Dim>(nbhpos, dimlens);
+    return poses_to_offsets<Dim>(nbhpos, dimlens);
 }
 
 

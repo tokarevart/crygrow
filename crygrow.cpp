@@ -121,13 +121,13 @@ void write_image_pixels(std::ostream& os, const automata_t& atmt, bool blackwhit
 }
 
 int inner_main() {
-    std::size_t size = 500;
-    std::size_t range = 5;
+    std::size_t size = 300;
+    std::size_t range = 8;
     automata_t automata(size);
     automata.set_range(range);
 
     //auto init_poses = make_central_pos(size);
-    auto init_poses = make_random_poses(size, 30, std::pow(range * 1, 2));
+    auto init_poses = make_random_poses(size, 10, std::pow(range * 1, 2));
 
     //material_t mater;
     material_t mater({ 
@@ -178,7 +178,7 @@ int inner_main() {
         #endif // SHOWPIC
     }
     
-    automata.smooth(range);
+    automata.smooth(4);
     #ifdef SHOWPIC
     std::ofstream ofile("automata-image-data.txt");
     ofile << "size " << size << std::endl;
@@ -209,7 +209,7 @@ int inner_main() {
 }
 
 int main() {
-    seed = 0;
+    seed = 2;
     for (std::size_t i = 0;; ++i) {
         std::cout << "iteration: " << i << std::endl;
         std::cout << "seed: " << seed << std::endl;

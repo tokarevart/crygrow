@@ -169,7 +169,7 @@ public:
             std::vector<pos_t<Dim>> nbs = nbh::apply_shifts(pos, shs, 
                 [this](const pos_t<Dim>& pos) -> bool { return inside(pos); });
 
-            std::set<const grain_type*> grs;
+            std::set<const grain_type*> grs(m_cells[i]->grains.begin(), m_cells[i]->grains.end());
             for (auto& nbpos : nbs) {
                 auto& nbgrs = cell(nbpos)->grains;
                 if (nbgrs.size() == 1)
@@ -178,17 +178,6 @@ public:
             auto [it, success] = grconts.insert({ grs, std::vector<std::size_t>{} });
             it->second.push_back(i);
         }
-
-        //for (std::size_t i = 0; i < num_cells(); ++i) {
-        //    std::set<const grain_type*> grs(m_cells[i]->grains.begin(), m_cells[i]->grains.end());
-        //    if (grs == grconts[i])
-        //        continue;
-        //
-        //    auto pcell = std::make_unique<cell_type>(nullptr, true);
-        //    pcell->grains.assign(grconts[i].begin(), grconts[i].end());
-        //    auto [it, success] = m_unicells.insert({ grconts[i], std::move(pcell) });
-        //    m_cells[i] = it->second.get();
-        //}
 
         for (auto& p : grconts) {
             for (std::size_t i : p.second) {

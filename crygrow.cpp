@@ -121,8 +121,8 @@ void write_image_pixels(std::ostream& os, const automata_t& atmt, bool blackwhit
 }
 
 int inner_main() {
-    std::size_t size = 1000;
-    std::size_t range = 10;
+    std::size_t size = 500;
+    std::size_t range = 5;
     automata_t automata(size);
     automata.set_range(range);
 
@@ -166,7 +166,6 @@ int inner_main() {
         //for (std::size_t i = 0; i < 5; ++i) {
         while (!automata.stop_condition()) {
             automata.iterate();
-            std::cout << "kek\n";
             bar.set_count(automata.num_crysted_cells());
         }
         

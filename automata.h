@@ -8,6 +8,7 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <map>
 #include "neighborhood.h"
 #include "vec.h"
 #include "sptops.h"
@@ -33,7 +34,7 @@ public:
     std::size_t num_crysted_cells() const {
         std::size_t res = 0;
         for (std::size_t i = 0; i < num_cells(); ++i)
-            if (cell(i).crysted)
+            if (cell(i) && cell(i)->crysted)
                 ++res;
         return res;
     }
@@ -44,44 +45,44 @@ public:
         return m_cells;
     }
 
-    const cell_type& cell(std::size_t offset) const {
+    const cell_type* cell(std::size_t offset) const {
         return m_cells[offset];
     }
-    const cell_type& cell(const upos_t<Dim>& pos) const {
+    const cell_type* cell(const upos_t<Dim>& pos) const {
         return cell(offset(pos));
     }
-    const cell_type& cell(const pos_t<Dim>& pos) const {
+    const cell_type* cell(const pos_t<Dim>& pos) const {
         return cell(offset(pos));
     }
-    void set_cell(std::size_t offset, const cell_type& new_cell) {
-        m_cells[offset] = new_cell;
-    }
-    void set_cell(const pos_t<Dim>& pos, const cell_type& new_cell) {
-        m_cells[offset(pos)] = new_cell;
-    }
-    template <typename PosesContainer, typename CellsContainer>
-    void set_cells(const PosesContainer& poses, const CellsContainer& cells) {
-        auto pos_it = poses.begin();
-        auto cell_it = cells.begin();
-        for (; pos_it != poses.end(); ++pos_it, ++cell_it)
-            set_cell(*pos_it, *cell_it);
-    }
+    //void set_cell(std::size_t offset, const cell_type& new_cell) {
+    //    m_cells[offset] = new_cell;
+    //}
+    //void set_cell(const pos_t<Dim>& pos, const cell_type& new_cell) {
+    //    m_cells[offset(pos)] = new_cell;
+    //}
+    //template <typename PosesContainer, typename CellsContainer>
+    //void set_cells(const PosesContainer& poses, const CellsContainer& cells) {
+    //    auto pos_it = poses.begin();
+    //    auto cell_it = cells.begin();
+    //    for (; pos_it != poses.end(); ++pos_it, ++cell_it)
+    //        set_cell(*pos_it, *cell_it);
+    //}
 
-    bool try_set_cell(const pos_t<Dim>& pos, const cell_type& new_cell) {
-        if (inside(pos)) {
-            m_cells[offset(pos)] = new_cell;
-            return true;
-        }
+    //bool try_set_cell(const pos_t<Dim>& pos, const cell_type& new_cell) {
+    //    if (inside(pos)) {
+    //        m_cells[offset(pos)] = new_cell;
+    //        return true;
+    //    }
 
-        return false;
-    }
-    template <typename PosesContainer, typename CellsContainer>
-    void try_set_cells(const PosesContainer& poses, const CellsContainer& cells) {
-        auto pos_it = poses.begin();
-        auto cell_it = cells.begin();
-        for (; pos_it != poses.end(); ++pos_it, ++cell_it)
-            try_set_cell(*pos_it, *cell_it);
-    }
+    //    return false;
+    //}
+    //template <typename PosesContainer, typename CellsContainer>
+    //void try_set_cells(const PosesContainer& poses, const CellsContainer& cells) {
+    //    auto pos_it = poses.begin();
+    //    auto cell_it = cells.begin();
+    //    for (; pos_it != poses.end(); ++pos_it, ++cell_it)
+    //        try_set_cell(*pos_it, *cell_it);
+    //}
 
     bool inside(const upos_t<Dim>& pos) const {
         return cgr::inside(pos, m_dim_lens);
@@ -117,7 +118,7 @@ public:
 
     bool stop_condition() const {
         for (std::size_t i = 0; i < num_cells(); ++i)
-            if (!cell(i).crysted)
+            if (!cell(i) || !cell(i)->crysted)
                 return false;
         return true;
     }
@@ -125,19 +126,27 @@ public:
         if (stop_condition())
             return false;
 
-        for (auto& clrg : m_clrgrains)
-            for (std::size_t off : clrg.front())
-                m_cells[off].crysted = true;
-
         #pragma omp parallel for
         for (std::int64_t i = 0; i < m_clrgrains.size(); ++i)
             m_clrgrains[i].advance_front(
-                [this](std::size_t off) -> bool { return m_cells[off].crysted; },
-                [this](std::size_t off) -> std::size_t { return m_cells[off].grains.size(); });
+                [this](std::size_t off) -> bool { return m_cells[off] && m_cells[off]->crysted; },
+                [this](std::size_t off) -> std::size_t { return !m_cells[off] ? 0 : m_cells[off]->grains.size(); });
 
-        for (auto& clrg : m_clrgrains)
-            for (std::size_t off : clrg.front())
-                m_cells[off].grains.push_back(clrg.grain());
+        for (auto& clrg : m_clrgrains) {
+            for (std::size_t off : clrg.front()) {
+                if (!m_cells[off]) {
+                    m_cells[off] = m_unicells[{ clrg.grain() }].get();
+                } else {
+                    std::set<const grain_type*> grs(m_cells[off]->grains.begin(), m_cells[off]->grains.end());
+                    grs.insert(clrg.grain());
+                    auto pcell = std::make_unique<cell_type>(nullptr, true);
+                    pcell->grains.assign(m_cells[off]->grains.begin(), m_cells[off]->grains.end());
+                    pcell->grains.push_back(clrg.grain());
+                    auto [it, success] = m_unicells.insert({ grs, std::move(pcell) });
+                    m_cells[off] = it->second.get();
+                }
+            }
+        }
 
         return true;
     }
@@ -148,27 +157,51 @@ public:
     void spawn_grain(const grain_type* grain, std::size_t nucleus_off, nbh::nbhood_kind kind) {
         m_clrgrains.emplace_back(grain, kind, m_dim_lens, nucleus_off);
         m_clrgrains.back().set_range(m_range);
-        m_cells[nucleus_off].crysted = true;
-        m_cells[nucleus_off].grains.push_back(grain);
+        auto [it, success] = m_unicells.insert({ std::set{ grain }, std::make_unique<cell_type>(grain, true) });
+        m_cells[nucleus_off] = it->second.get();
     }
 
     void smooth(std::size_t range) {
         auto shs = nbh::make_shifts<Dim>(norm_euclid<Dim>, range);
-        std::vector<std::set<const grain_type*>> grconts(num_cells());
+        std::map<std::set<const grain_type*>, std::vector<std::size_t>> grconts;
         for (std::size_t i = 0; i < num_cells(); ++i) {
             auto pos = static_cast<pos_t<Dim>>(upos(i));
             std::vector<pos_t<Dim>> nbs = nbh::apply_shifts(pos, shs, 
-                std::optional([this](const pos_t<Dim>& pos) -> bool { return inside(pos); }));
+                [this](const pos_t<Dim>& pos) -> bool { return inside(pos); });
 
+            std::set<const grain_type*> grs;
             for (auto& nbpos : nbs) {
-                auto& nbgrs = cell(nbpos).grains;
+                auto& nbgrs = cell(nbpos)->grains;
                 if (nbgrs.size() == 1)
-                    grconts[i].insert(nbgrs.front());
+                    grs.insert(nbgrs.front());
             }
+            auto [it, success] = grconts.insert({ grs, std::vector<std::size_t>{} });
+            it->second.push_back(i);
         }
 
-        for (std::size_t i = 0; i < num_cells(); ++i)
-            m_cells[i].grains.assign(grconts[i].begin(), grconts[i].end());
+        //for (std::size_t i = 0; i < num_cells(); ++i) {
+        //    std::set<const grain_type*> grs(m_cells[i]->grains.begin(), m_cells[i]->grains.end());
+        //    if (grs == grconts[i])
+        //        continue;
+        //
+        //    auto pcell = std::make_unique<cell_type>(nullptr, true);
+        //    pcell->grains.assign(grconts[i].begin(), grconts[i].end());
+        //    auto [it, success] = m_unicells.insert({ grconts[i], std::move(pcell) });
+        //    m_cells[i] = it->second.get();
+        //}
+
+        for (auto& p : grconts) {
+            for (std::size_t i : p.second) {
+                std::set<const grain_type*> grs(m_cells[i]->grains.begin(), m_cells[i]->grains.end());
+                if (grs == p.first)
+                    continue;
+
+                auto pcell = std::make_unique<cell_type>(nullptr, true);
+                pcell->grains.assign(p.first.begin(), p.first.end());
+                auto [it, success] = m_unicells.insert({ p.first, std::move(pcell) });
+                m_cells[i] = it->second.get();
+            }
+        }
     }
 
     automata(std::size_t dimlen)
@@ -177,7 +210,7 @@ public:
         std::size_t new_num_cells = std::accumulate(
             m_dim_lens.x.begin(), m_dim_lens.x.end(),
             static_cast<std::size_t>(1), std::multiplies<std::size_t>());
-        m_cells.assign(new_num_cells, cell_type());
+        m_cells.assign(new_num_cells, nullptr);
     }
 
 
@@ -185,9 +218,9 @@ private:
     std::size_t m_range = 0;
     upos_t<Dim> m_dim_lens;
 
-    std::vector<cell_type> m_cells;
+    std::vector<cell_type*> m_cells;
     std::vector<clr_grain_type> m_clrgrains;
-    // todo: store common cells, such as empty cell and crystallized cell for each grain
+    std::map<std::set<const grain_type*>, std::unique_ptr<cell_type>> m_unicells;
 };
 
 } // namespace cgr

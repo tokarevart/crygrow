@@ -369,7 +369,7 @@ private:
         return m_automata->num_cells();
     }
     const cell_type* cell(std::size_t offset) const {
-        return &m_automata->cell(offset);
+        return m_automata->cell(offset);
     }
     void add_boxbry_grains() {
         auto box_vs = box_vertices();

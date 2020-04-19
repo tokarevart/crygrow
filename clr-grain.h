@@ -25,7 +25,8 @@ public:
     }
     void set_range(std::size_t range) {
         m_range = range;
-        m_shifts = nbh::make_shifts<Dim>(m_normfn, m_range, m_range * 2);
+        m_bbox_range = range * 2;
+        m_shifts = nbh::make_shifts<Dim>(m_normfn, m_range, m_bbox_range);
     }
 
     const std::vector<std::size_t>& front() const {
@@ -84,6 +85,7 @@ private:
     norm_fn<Dim> m_normfn;
     std::vector<pos_t<Dim>> m_shifts;
     std::size_t m_range = 0;
+    std::size_t m_bbox_range = 0;
     upos_t<Dim> m_dim_lens;
     std::vector<std::size_t> m_front;
 
@@ -111,7 +113,13 @@ private:
     }
 
     std::vector<pos_t<Dim>> apply_shifts(const pos_t<Dim>& pos) const {
-        return nbh::apply_shifts(pos, m_shifts, std::optional([this](const pos_t<Dim>& pos) -> bool { return inside(pos); }));
+        pos_t<Dim> del = pos_t<Dim>::filled_with(m_bbox_range);
+        pos_t<Dim> corner0 = pos - del;
+        pos_t<Dim> corner1 = pos + del;
+        if (inside(corner0) && inside(corner1))
+            return nbh::apply_shifts(pos, m_shifts);
+        else
+            return nbh::apply_shifts(pos, m_shifts, [this](const pos_t<Dim>& pos) -> bool { return inside(pos); });
     }
 
     std::vector<grow_dir_t<Dim, Real>> orientate_grow_dirs() const {

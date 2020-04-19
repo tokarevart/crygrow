@@ -78,14 +78,14 @@ int main_test() {
 }
 
 void write_image_pixels(std::ostream& os, const automata_t& atmt, bool blackwhite = false) {
-    for (std::size_t i = 0; i < atmt.num_cells(); ++i) {
+    for (std::size_t i = 0; i < atmt.dim_lens()[0] * atmt.dim_lens()[1]; ++i) {
         auto curpos = atmt.upos(i);
         #ifdef DIM3
         //curpos[2] = static_cast<std::int64_t>(size) / 2;
         //curpos[2] = size - 1;
         curpos[2] = 0;
         #endif
-        auto& cell = atmt.cell(curpos);
+        auto& cell = *atmt.cell(curpos);
 
         std::array<std::uint8_t, 3> color;
         if (!blackwhite) {
@@ -121,7 +121,7 @@ void write_image_pixels(std::ostream& os, const automata_t& atmt, bool blackwhit
 }
 
 int inner_main() {
-    std::size_t size = 500;
+    std::size_t size = 1000;
     std::size_t range = 10;
     automata_t automata(size);
     automata.set_range(range);
@@ -160,27 +160,33 @@ int inner_main() {
         automata.spawn_grain(&grains[i], automata.offset(init_poses[i]), cgr::nbh::nbhood_kind::euclid);
 
     
+    //#define SHOWPIC
     progress_bar bar("Crystallization", automata.num_cells(), 70);
     while (!automata.stop_condition()) {
         //for (std::size_t i = 0; i < 5; ++i) {
         while (!automata.stop_condition()) {
             automata.iterate();
+            std::cout << "kek\n";
             bar.set_count(automata.num_crysted_cells());
         }
         
-        //std::ofstream ofile("automata-image-data.txt");
-        //ofile << "size " << size << std::endl;
-        //write_image_pixels(ofile, automata, false);
-        //ofile.close();
-        //std::system("python ./visualize.py");
+        #ifdef SHOWPIC
+        std::ofstream ofile("automata-image-data.txt");
+        ofile << "size " << size << std::endl;
+        write_image_pixels(ofile, automata, false);
+        ofile.close();
+        std::system("python ./visualize.py");
+        #endif // SHOWPIC
     }
-
-    automata.smooth(range * 2);
-    //std::ofstream ofile("automata-image-data.txt");
-    //ofile << "size " << size << std::endl;
-    //write_image_pixels(ofile, automata, false);
-    //ofile.close();
-    //std::system("python ./visualize.py");
+    
+    automata.smooth(range);
+    #ifdef SHOWPIC
+    std::ofstream ofile("automata-image-data.txt");
+    ofile << "size " << size << std::endl;
+    write_image_pixels(ofile, automata, false);
+    ofile.close();
+    std::system("python ./visualize.py");
+    #endif // SHOWPIC
 
     #ifdef DIM3
     cgr::geo_from_automata simplegeo(&automata);
@@ -204,7 +210,7 @@ int inner_main() {
 }
 
 int main() {
-    seed = 2;
+    seed = 0;
     for (std::size_t i = 0;; ++i) {
         std::cout << "iteration: " << i << std::endl;
         std::cout << "seed: " << seed << std::endl;

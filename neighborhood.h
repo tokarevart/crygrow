@@ -102,19 +102,30 @@ offsets_t poses_to_offsets(const std::vector<pos_t<Dim>>& poses, const spt::vecu
 template <std::size_t Dim, typename InsideFn>
 std::vector<pos_t<Dim>> apply_shifts(
     const pos_t<Dim>& pos, const std::vector<pos_t<Dim>>& shifts,
-    std::optional<InsideFn> infn) {
+    InsideFn infn) {
 
     std::vector<pos_t<Dim>> res;
     res.reserve(shifts.size());
     for (auto shift : shifts) {
         auto new_pos = pos + shift;
-        if (!infn)
+        if (infn(new_pos))
             res.push_back(new_pos);
-        else 
-            if (infn.value()(new_pos))
-                res.push_back(new_pos);
     }
         
+    return res;
+}
+
+template <std::size_t Dim>
+std::vector<pos_t<Dim>> apply_shifts(
+    const pos_t<Dim>& pos, const std::vector<pos_t<Dim>>& shifts) {
+
+    std::vector<pos_t<Dim>> res;
+    res.reserve(shifts.size());
+    for (auto shift : shifts) {
+        auto new_pos = pos + shift;
+        res.push_back(new_pos);
+    }
+
     return res;
 }
 

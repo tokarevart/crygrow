@@ -59,6 +59,23 @@ public:
         m_front.assign(new_front.begin(), new_front.end());
     }
 
+    template <typename InnerFn>
+    void extract_front_from(const std::vector<std::size_t>& offs, InnerFn innfn) {
+        m_front.clear();
+        for (std::size_t off : offs) {
+            auto poses = apply_shifts(upos(off));
+            bool near_boundary = false;
+            for (auto& p : poses) {
+                if (!innfn(offset(p), grain())) {
+                    near_boundary = true;
+                    break;
+                }
+            }
+            if (near_boundary)
+                m_front.push_back(off);
+        }
+    }
+
     clr_grain(const grain_type* grain, nbh::nbhood_kind kind, const upos_t<Dim>& dimlens, std::size_t nucleus_off)
         : m_grain{ grain }, m_dim_lens{ dimlens }, m_front{ nucleus_off } {
         switch (kind) {

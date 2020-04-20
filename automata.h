@@ -54,35 +54,6 @@ public:
     const cell_type* cell(const pos_t<Dim>& pos) const {
         return cell(offset(pos));
     }
-    //void set_cell(std::size_t offset, const cell_type& new_cell) {
-    //    m_cells[offset] = new_cell;
-    //}
-    //void set_cell(const pos_t<Dim>& pos, const cell_type& new_cell) {
-    //    m_cells[offset(pos)] = new_cell;
-    //}
-    //template <typename PosesContainer, typename CellsContainer>
-    //void set_cells(const PosesContainer& poses, const CellsContainer& cells) {
-    //    auto pos_it = poses.begin();
-    //    auto cell_it = cells.begin();
-    //    for (; pos_it != poses.end(); ++pos_it, ++cell_it)
-    //        set_cell(*pos_it, *cell_it);
-    //}
-
-    //bool try_set_cell(const pos_t<Dim>& pos, const cell_type& new_cell) {
-    //    if (inside(pos)) {
-    //        m_cells[offset(pos)] = new_cell;
-    //        return true;
-    //    }
-
-    //    return false;
-    //}
-    //template <typename PosesContainer, typename CellsContainer>
-    //void try_set_cells(const PosesContainer& poses, const CellsContainer& cells) {
-    //    auto pos_it = poses.begin();
-    //    auto cell_it = cells.begin();
-    //    for (; pos_it != poses.end(); ++pos_it, ++cell_it)
-    //        try_set_cell(*pos_it, *cell_it);
-    //}
 
     bool inside(const upos_t<Dim>& pos) const {
         return cgr::inside(pos, m_dim_lens);
@@ -110,8 +81,8 @@ public:
     std::size_t range() const {
         return m_range;
     }
-    void set_range(std::size_t range) {
-        m_range = range;
+    void set_range(std::size_t rng) {
+        m_range = rng;
         for (auto& clrg : m_clrgrains)
             clrg.set_range(m_range);
     }
@@ -161,8 +132,8 @@ public:
         m_cells[nucleus_off] = it->second.get();
     }
 
-    void smooth(std::size_t range) {
-        auto shs = nbh::make_shifts<Dim>(norm_euclid<Dim>, range);
+    void smooth(std::size_t rng) {
+        auto shs = nbh::make_shifts<Dim>(norm_euclid<Dim>, rng);
         std::map<std::set<const grain_type*>, std::vector<std::size_t>> grconts;
         for (std::size_t i = 0; i < num_cells(); ++i) {
             auto pos = static_cast<pos_t<Dim>>(upos(i));
@@ -193,6 +164,54 @@ public:
         }
     }
 
+    void thin_boundary(std::size_t rng, std::size_t step = 1) {
+        while (true) {
+            if (rng + step >= range())
+                set_range(rng);
+            else
+                set_range(range() - step);
+            std::cout << "started range=" << range() << std::endl;
+
+            #pragma omp parallel for
+            for (std::int64_t i = 0; i < m_clrgrains.size(); ++i) {
+                std::vector<std::size_t> inner_cells;
+                for (std::size_t j = 0; j < num_cells(); ++j)
+                    if (m_cells[j]->grains.front() == m_clrgrains[i].grain() &&
+                        m_cells[j]->grains.size() == 1)
+                        inner_cells.push_back(j);
+
+                m_clrgrains[i].extract_front_from(inner_cells,
+                    [this](std::size_t off, const grain_type* gr) -> bool {
+                        return m_cells[off]->grains.front() == gr && m_cells[off]->grains.size() == 1;
+                    });
+            }
+
+            for (auto& cl : m_cells)
+                if (cl->grains.size() > 1)
+                    cl = nullptr;
+
+            while (!stop_condition()) {
+                bool all_empty_fronts = true;
+                for (auto& clrgr : m_clrgrains) {
+                    if (!clrgr.front().empty()) {
+                        all_empty_fronts = false;
+                        break;
+                    }
+                }
+                if (all_empty_fronts)
+                    extrapolate_rare_nullcells();
+                iterate();
+            }
+
+            std::size_t num_single_grained_cells = 0;
+            for (const cell_type* cl : m_cells)
+                if (cl->grains.size() == 1)
+                    ++num_single_grained_cells;
+            if (range() == rng || num_single_grained_cells == num_cells())
+                return;
+        }
+    }
+
     automata(std::size_t dimlen)
         : automata(upos_t<Dim>::filled_with(dimlen)) {}
     automata(const upos_t<Dim>& dimlens) : m_dim_lens{ dimlens } {
@@ -210,6 +229,43 @@ private:
     std::vector<cell_type*> m_cells;
     std::vector<clr_grain_type> m_clrgrains;
     std::map<std::set<const grain_type*>, std::unique_ptr<cell_type>> m_unicells;
+
+    void extrapolate_rare_nullcells() {
+        auto shs = nbh::make_shifts<Dim>(norm_euclid<Dim>, 1);
+        for (std::size_t i = 0; i < num_cells(); ++i) {
+            if (m_cells[i]) continue;
+
+            auto pos = static_cast<pos_t<Dim>>(upos(i));
+            std::vector<pos_t<Dim>> nbs = nbh::apply_shifts(pos, shs,
+                [this](const pos_t<Dim>& pos) -> bool { return inside(pos); });
+
+            std::vector<std::pair<const cell_type*, std::size_t>> prs;
+            auto prs_find_cell = [&prs](const cell_type* cl) -> std::size_t {
+                std::size_t i = 0;
+                for (; i < prs.size(); ++i)
+                    if (prs[i].first == cl)
+                        break;
+                return i;
+            };
+
+            for (auto& nb : nbs) {
+                const cell_type* nbcl = cell(nb);
+                if (!nbcl) continue;
+
+                std::size_t find_res = prs_find_cell(nbcl);
+                if (find_res == prs.size())
+                    prs.push_back({ nbcl, 1 });
+                else
+                    ++prs[find_res].second;
+            }
+            std::sort(prs.begin(), prs.end(),
+                [](const auto& pr0, const auto& pr1) -> bool {
+                    return pr0.second < pr1.second;
+                });
+
+            m_cells[i] = const_cast<cell_type*>(prs.back().first);
+        }
+    }
 };
 
 } // namespace cgr

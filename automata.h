@@ -206,7 +206,7 @@ public:
                     }
                 }
                 if (all_empty_fronts)
-                    extrapolate_rare_nullcells();
+                    while (!extrapolate_nullcells());
             }
 
             std::size_t num_single_grained_cells = 0;
@@ -214,8 +214,9 @@ public:
                 if (cl->grains.size() == 1)
                     ++num_single_grained_cells;
             if (range() == rng || num_single_grained_cells == num_cells())
-                return;
+                break;
         }
+        while (!extrapolate_cells_with_numgrains_gt2());
     }
 
     automata(std::size_t dimlen)
@@ -236,10 +237,13 @@ private:
     std::vector<clr_grain_type> m_clrgrains;
     std::map<std::set<const grain_type*>, std::unique_ptr<cell_type>> m_unicells;
 
-    void extrapolate_rare_nullcells() {
+    template <typename Pred>
+    bool extrapolate_cells(Pred pred) {
+        bool success = true;
+
         auto shs = nbh::make_shifts<Dim>(norm_euclid<Dim>, 1);
         for (std::size_t i = 0; i < num_cells(); ++i) {
-            if (m_cells[i]) continue;
+            if (!pred(i)) continue;
 
             auto pos = static_cast<pos_t<Dim>>(upos(i));
             std::vector<pos_t<Dim>> nbs = nbh::apply_shifts(pos, shs,
@@ -256,7 +260,7 @@ private:
 
             for (auto& nb : nbs) {
                 const cell_type* nbcl = cell(nb);
-                if (!nbcl) continue;
+                if (!nbcl || pred(offset(nb))) continue;
 
                 std::size_t find_res = prs_find_cell(nbcl);
                 if (find_res == prs.size())
@@ -269,8 +273,28 @@ private:
                     return pr0.second < pr1.second;
                 });
 
+            if (prs.empty()) {
+                success = false;
+                continue;
+            }
             m_cells[i] = const_cast<cell_type*>(prs.back().first);
         }
+
+        return success;
+    }
+
+    bool extrapolate_cells_with_numgrains_gt2() {
+        return extrapolate_cells(
+            [this](std::size_t off) -> bool {
+                return m_cells[off] && m_cells[off]->grains.size() > 2;
+            });
+    }
+
+    bool extrapolate_nullcells() {
+        return extrapolate_cells(
+            [this](std::size_t off) -> bool {
+                return !m_cells[off];
+            });
     }
 };
 

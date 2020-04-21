@@ -60,10 +60,23 @@ public:
     }
 
     template <typename InnerFn>
-    void extract_front_from(const std::vector<std::size_t>& offs, InnerFn innfn) {
-        m_front.clear();
-        for (std::size_t off : offs) {
-            auto poses = apply_shifts(upos(off));
+    void extract_front_from(std::vector<std::size_t> offs, InnerFn innfn, std::size_t thickness = 1) {
+        m_front = std::move(offs);
+        thin_front(innfn, thickness);
+    }
+
+    template <typename InnerFn>
+    void thin_front(InnerFn innfn, std::size_t thickness = 1) {
+        auto prev_front = std::move(m_front);
+        auto shs = nbh::make_shifts<Dim>(norm_euclid<Dim>, thickness, thickness);
+        for (std::size_t off : prev_front) {
+            auto pos = static_cast<pos_t<Dim>>(upos(off));
+            pos_t<Dim> del = pos_t<Dim>::filled_with(thickness);
+            pos_t<Dim> corner0 = pos - del;
+            pos_t<Dim> corner1 = pos + del;
+            auto poses = inside(corner0) && inside(corner1) ?
+                nbh::apply_shifts(pos, shs) :
+                nbh::apply_shifts(pos, shs, [this](const pos_t<Dim>& p) -> bool { return inside(p); });
             bool near_boundary = false;
             for (auto& p : poses) {
                 if (!innfn(offset(p), grain())) {

@@ -197,7 +197,7 @@ public:
                 res.push_back(i);
             // dirty hack
             if (grains(i).size() > 4) {
-                //std::cout << "oops!";
+                std::cout << "error: cell grains num > 4" << std::endl;
                 throw -1;
             }
         }

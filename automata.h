@@ -119,6 +119,12 @@ public:
             }
         }
 
+        for (auto& clrg : m_clrgrains)
+            clrg.thin_front(
+                [this](std::size_t off, const grain_type* gr) -> bool {
+                    return m_cells[off] && m_cells[off]->grains.front() == gr && m_cells[off]->grains.size() == 1;
+                });
+
         return true;
     }
 
@@ -191,6 +197,7 @@ public:
                     cl = nullptr;
 
             while (!stop_condition()) {
+                iterate();
                 bool all_empty_fronts = true;
                 for (auto& clrgr : m_clrgrains) {
                     if (!clrgr.front().empty()) {
@@ -200,7 +207,6 @@ public:
                 }
                 if (all_empty_fronts)
                     extrapolate_rare_nullcells();
-                iterate();
             }
 
             std::size_t num_single_grained_cells = 0;

@@ -51,8 +51,8 @@ std::vector<cgr::upos_t<dim>> make_random_poses(std::size_t size, std::size_t nu
         if (min_distance2(curpos, res) >= min_dist2) {
             bool flag = false;
             for (auto e : curpos.x)
-                if (!(static_cast<std::size_t>(e * e) >= min_dist2 &&
-                      static_cast<std::size_t>(e) < size - static_cast<std::size_t>(std::sqrt(min_dist2)))) {
+                if (!(static_cast<std::size_t>(e * e) >= min_dist2 / 4 &&
+                    static_cast<std::size_t>(e) < size - static_cast<std::size_t>(std::sqrt(min_dist2 / 4)))) {
                     flag = true;
                     break;
                 }
@@ -129,13 +129,13 @@ void show_picture(const automata_t& atmt) {
 }
 
 int inner_main() {
-    std::size_t size = 300;
-    std::size_t range = 15;
+    std::size_t size = 200;
+    std::size_t range = 12;
     automata_t atmt(size);
     atmt.set_range(range);
 
     //auto init_poses = make_central_pos(size);
-    auto init_poses = make_random_poses(size, 10, std::pow(range * 2, 2));
+    auto init_poses = make_random_poses(size, 10, std::pow(range * 5, 2));
 
     //material_t mater;
     material_t mater({ 
@@ -182,7 +182,7 @@ int inner_main() {
         #endif // SHOWPIC
     }
     
-    atmt.thin_boundary(1, 5);
+    atmt.thin_boundary(2, 2);
     #ifdef SHOWPIC
     show_picture(atmt);
     #endif // SHOWPIC

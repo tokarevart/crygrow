@@ -9,6 +9,7 @@
 #include <optional>
 #include <set>
 #include <map>
+#include <algorithm>
 #include "neighborhood.h"
 #include "vec.h"
 #include "sptops.h"
@@ -217,6 +218,48 @@ public:
                 break;
         }
         while (!extrapolate_cells_with_numgrains_gt2());
+    }
+
+    bool has_intergt4() const {
+        for (auto& [grs, upcell] : m_unicells)
+            if (grs.size() > 4)
+                return true;
+        return false;
+    }
+
+    Real diam(std::vector<pos_t<Dim>> poses) const {
+        std::int64_t max_diff2 = 0.0;
+        for (pos_t<Dim> p0 : poses) {
+            std::int64_t maxd2 = 0;
+            for (pos_t<Dim> p1 : poses) {
+                std::int64_t d2 = (p1 - p0).magnitude2();
+                maxd2 = std::max(maxd2, d2);
+            }
+            max_diff2 = std::max(max_diff2, maxd2);
+        }
+
+        return std::sqrt(max_diff2);
+    }
+
+    Real cells_diam(cell_type* cell) const {
+        std::vector<pos_t<Dim>> poses;
+        for (std::size_t i = 0; i < m_cells.size(); ++i)
+            if (cell == m_cells[i])
+                poses.push_back(static_cast<pos_t<Dim>>(upos(i)));
+
+        return diam(poses);
+    }
+
+    std::vector<Real> diams_inter4() const {
+        std::vector<Real> res;
+        for (auto& [grs, upcell] : m_unicells) {
+            if (grs.size() != 4)
+                continue;
+
+            res.push_back(cells_diam(upcell.get()));
+        }
+
+        return res;
     }
 
     automata(std::size_t dimlen)

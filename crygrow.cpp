@@ -9,7 +9,7 @@
 #include "geometry.h"
 #include "progress-bar.h"
 
-//#define DIM3
+#define DIM3
 
 #ifdef DIM3
 constexpr std::size_t dim = 3;
@@ -129,13 +129,13 @@ void show_picture(const automata_t& atmt) {
 }
 
 int inner_main() {
-    std::size_t size = 1000;
-    std::size_t range = 10;
+    std::size_t size = 200;
+    std::size_t range = 5;
     automata_t atmt(size);
     atmt.set_range(range);
 
     //auto init_poses = make_central_pos(size);
-    auto init_poses = make_random_poses(size, 100, std::pow(range * 8, 2));
+    auto init_poses = make_random_poses(size, 4, std::pow(range * 10, 2));
 
     //material_t mater;
     material_t mater({ 
@@ -168,8 +168,8 @@ int inner_main() {
         atmt.spawn_grain(&grains[i], atmt.offset(init_poses[i]), cgr::nbh::nbhood_kind::crystallographic);
 
     
-    #define SHOWPIC
-    progress_bar bar("Crystallization", atmt.num_cells(), 70);
+    //#define SHOWPIC
+    progress_bar bar("crystallization", atmt.num_cells(), 70);
     while (!atmt.stop_condition()) {
         //for (std::size_t i = 0; i < 5; ++i) {
         while (!atmt.stop_condition()) {
@@ -182,15 +182,22 @@ int inner_main() {
         #endif // SHOWPIC
     }
     
-    atmt.thin_boundary(1, 1);
+    atmt.thin_boundary(4, 1);
     #ifdef SHOWPIC
     show_picture(atmt);
     #endif // SHOWPIC
 
-    atmt.smooth(3);
+    atmt.smooth(5);
     #ifdef SHOWPIC
     show_picture(atmt);
     #endif // SHOWPIC
+
+    #ifdef DIM3
+    std::cout << std::boolalpha << "has intergt4: " << atmt.has_intergt4() << std::endl;
+    std::cout << "diams inter4: " << std::endl;
+    for (auto d : atmt.diams_inter4())
+        std::cout << d << std::endl;
+    #endif // DIM3
 
     #ifdef DIM3
     cgr::geo_from_automata simplegeo(&atmt);

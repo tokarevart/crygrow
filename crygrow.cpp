@@ -193,7 +193,6 @@ int inner_main() {
     #endif // SHOWPIC
 
     #ifdef DIM3
-    std::cout << std::boolalpha << "has intergt4: " << atmt.has_intergt4() << std::endl;
     std::cout << "diams inter4: " << std::endl;
     for (auto d : atmt.diams_inter4())
         std::cout << d << std::endl;

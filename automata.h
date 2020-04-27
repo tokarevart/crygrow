@@ -220,13 +220,6 @@ public:
         while (!extrapolate_cells_with_numgrains_gt2());
     }
 
-    bool has_intergt4() const {
-        for (auto& [grs, upcell] : m_unicells)
-            if (grs.size() > 4)
-                return true;
-        return false;
-    }
-
     Real diam(std::vector<pos_t<Dim>> poses) const {
         std::int64_t max_diff2 = 0.0;
         for (pos_t<Dim> p0 : poses) {

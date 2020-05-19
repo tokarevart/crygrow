@@ -129,13 +129,13 @@ void show_picture(const automata_t& atmt) {
 }
 
 int inner_main() {
-    std::size_t size = 200;
+    std::size_t size = 300;
     std::size_t range = 5;
     automata_t atmt(size);
     atmt.set_range(range);
 
     //auto init_poses = make_central_pos(size);
-    auto init_poses = make_random_poses(size, 4, std::pow(range * 10, 2));
+    auto init_poses = make_random_poses(size, 30, std::pow(range * 15, 2));
 
     //material_t mater;
     material_t mater({ 
@@ -168,26 +168,28 @@ int inner_main() {
         atmt.spawn_grain(&grains[i], atmt.offset(init_poses[i]), cgr::nbh::nbhood_kind::crystallographic);
 
     
-    //#define SHOWPIC
-    progress_bar bar("crystallization", atmt.num_cells(), 70);
-    while (!atmt.stop_condition()) {
-        //for (std::size_t i = 0; i < 5; ++i) {
-        while (!atmt.stop_condition()) {
-            atmt.iterate();
-            bar.set_count(atmt.num_crysted_cells());
-        }
-        
-        #ifdef SHOWPIC
-        show_picture(atmt);
-        #endif // SHOWPIC
-    }
+    #define SHOWPIC
+    //progress_bar bar("crystallization", atmt.num_cells(), 70);
+    //while (!atmt.stop_condition()) {
+    //    //for (std::size_t i = 0; i < 5; ++i) {
+    //    while (!atmt.stop_condition()) {
+    //        atmt.iterate();
+    //        bar.set_count(atmt.num_crysted_cells());
+    //    }
+    //    
+    //    #ifdef SHOWPIC
+    //    show_picture(atmt);
+    //    #endif // SHOWPIC
+    //}
     
-    atmt.thin_boundary(4, 1);
-    #ifdef SHOWPIC
-    show_picture(atmt);
-    #endif // SHOWPIC
+    //atmt.thin_boundary(4, 1);
+    //#ifdef SHOWPIC
+    //show_picture(atmt);
+    //#endif // SHOWPIC
 
-    atmt.smooth(5);
+    atmt.voronoi<cgr::nbh::nbhood_kind::euclid>();
+    std::cout << "started smoothing" << std::endl;
+    atmt.smooth(1);
     #ifdef SHOWPIC
     show_picture(atmt);
     #endif // SHOWPIC

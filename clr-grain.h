@@ -19,6 +19,12 @@ public:
     const grain_type* grain() const {
         return m_grain;
     }
+    upos_t<Dim> center() const {
+        return m_center;
+    }
+    std::size_t norm(const pos_t<Dim>& pos) const {
+        return m_normfn(pos);
+    }
 
     std::size_t range() const {
         return m_range;
@@ -91,6 +97,7 @@ public:
 
     clr_grain(const grain_type* grain, nbh::nbhood_kind kind, const upos_t<Dim>& dimlens, std::size_t nucleus_off)
         : m_grain{ grain }, m_dim_lens{ dimlens }, m_front{ nucleus_off } {
+        m_center = upos(nucleus_off);
         switch (kind) {
         case nbh::nbhood_kind::von_neumann:
             m_normfn = norm_taxicab<Dim>; break;
@@ -112,6 +119,7 @@ public:
 
 private:
     const grain_type* m_grain;
+    upos_t<Dim> m_center;
     norm_fn<Dim> m_normfn;
     std::vector<pos_t<Dim>> m_shifts;
     std::size_t m_range = 0;

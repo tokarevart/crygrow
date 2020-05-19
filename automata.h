@@ -88,6 +88,38 @@ public:
             clrg.set_range(m_range);
     }
 
+    template <nbh::nbhood_kind NbhKind>
+    void voronoi() {
+        #pragma omp parallel for
+        for (std::int64_t i = 0; i < num_cells(); ++i) {
+            auto pos = static_cast<pos_t<Dim>>(upos(i));
+            const grain_type* closest_gr = nullptr;
+            std::size_t min_dist = std::numeric_limits<std::size_t>::max();
+
+            for (auto& clrg : m_clrgrains) {
+                auto diff = static_cast<pos_t<Dim>>(clrg.center()) - pos;
+                std::size_t dist = std::numeric_limits<std::size_t>::max();
+                if constexpr (NbhKind == nbh::nbhood_kind::crystallographic)
+                    dist = clrg.norm(diff);
+                else if constexpr (NbhKind == nbh::nbhood_kind::euclid)
+                    dist = norm2_euclid(diff);
+                else if constexpr (NbhKind == nbh::nbhood_kind::moore)
+                    dist = norm_taxicab(diff);
+                else 
+                    dist = norm_chebyshev(diff);
+
+                if (dist < min_dist) {
+                    min_dist = dist;
+                    closest_gr = clrg.grain();
+                }
+            }
+
+            if (!m_cells[i]) {
+                m_cells[i] = m_unicells[{ closest_gr }].get();
+            }
+        }
+    }
+
     bool stop_condition() const {
         for (std::size_t i = 0; i < num_cells(); ++i)
             if (!cell(i) || !cell(i)->crysted)

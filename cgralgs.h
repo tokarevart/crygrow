@@ -120,6 +120,11 @@ std::size_t norm_chebyshev(const pos_t<Dim>& pos) {
 }
 
 template <std::size_t Dim>
+double norm_euclid_dbl(const pos_t<Dim>& pos) {
+    return std::sqrt(pos.magnitude2()) + std::numeric_limits<double>::epsilon();
+}
+
+template <std::size_t Dim>
 std::size_t norm_euclid(const pos_t<Dim>& pos) {
     return static_cast<std::size_t>(std::sqrt(pos.magnitude2()) + std::numeric_limits<double>::epsilon());
 }
